@@ -1,0 +1,42 @@
+﻿Opcodes:
+	store-field <field> // Stores the value on top of the stack into the named field
+	load-field <field> // Loads a named field onto the stack
+	store-local <local> // Stores the value on top of the stack into the named local
+	load-local <local> // Loads a local field onto the stack
+	push-literal <literal> // Pushes the specified literal onto the stack
+	pop // Discards the top stack element
+
+	new-object // Creates a new instance of the class found at the top of the stack	
+	send-message // Sends the message located on top of the stack to the object found arg-count elements down
+	return
+	
+	label:
+	jump <label>
+	jump-if-true <label>
+	jump-if-false <label>
+	
+	throw // Throws the exception located on the stack
+	.try { // C# style try-catch-clause
+	} catch(<exception-class>) {
+	} catch(<exception-class>) {
+	}
+	
+
+Classes:
+	class <class-name> extends <class-names> {
+		.fields { <names> }
+		
+		.handler <message-name>( <names> ) {
+			.locals { <names> }
+			
+			<opcodes>
+		}
+		
+		.default {
+			.locals { <names> }
+			
+			<opcodes>
+		}
+		
+		<class-declarations>
+	}
