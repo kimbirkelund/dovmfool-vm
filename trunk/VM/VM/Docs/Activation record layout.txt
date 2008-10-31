@@ -8,7 +8,7 @@ and which are integers. Each map-word looks like this:
 --------------------------------------\-- 0 if this word is the last map
                  |                        1 if the next word is also a map
                  |
-                 \----------------------- Each bit indicates it the corresponding stack element
+                 \----------------------- Each bit indicates if the corresponding stack element
                                           is a reference or an integer: 1 means integer, 0 means reference.
                                           The right most bit corresponds to the first stack element (i.e. 
                                           the return address) and the left most corresponds to the last element.

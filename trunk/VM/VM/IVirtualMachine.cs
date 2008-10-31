@@ -6,6 +6,7 @@ using System.Text;
 namespace VM {
 	public interface IVirtualMachine {
 		MemoryManagerBase MemoryManager { get; }
-		Handle<ClassManager> ClassManager { get; }
+		Handles.ClassManager ClassManager { get; }
+		Handles.ConstantPool ConstantPool { get; }
 	}
 }

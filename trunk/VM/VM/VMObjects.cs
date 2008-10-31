@@ -17,8 +17,16 @@ namespace VM {
 
 	public class DelegateMessageHandler : InternalObject { public new const uint TypeId = 7; protected DelegateMessageHandler() { } }
 
+	public class MessageHandlerWrapper : InternalObject { public new const uint TypeId = 8; protected MessageHandlerWrapper() { } }
+
+	public class ConstantPool : InternalObject { public new const uint TypeId = 9; protected ConstantPool() { } }
+
 
 	public class AppObject : VMObject { public const uint TypeId = 0; protected AppObject() { } }
 
 	public class AppObjectSet : VMObject { public const uint TypeId = 1; protected AppObjectSet() { } }
+
+	public class String : VMObject { public const uint TypeId = 2; protected String() { } }
+
+	public class Integer : VMObject { public const uint TypeId = 3; protected Integer() { } }
 }
