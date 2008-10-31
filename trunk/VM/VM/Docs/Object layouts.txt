@@ -1,0 +1,50 @@
+﻿Class:
+________________________________________
+|        default object header         |
+----------------------------------------
+|             class header             | ---------------------> 0000 0000 0000 0000 0000 0000 0000 0000
+----------------------------------------                        |                                   |||
+|         class instance size          |                        ---------------------------------------
+----------------------------------------                                         |                    \-- 00: private
+|   def-handler & first class offset   |                                         |                        01: protected
+----------------------------------------                                         |                        10: public
+|   constant-pool indices for fields   |                                         |                       
+|                .                     |                                         \----------------------- Constant pool index 
+|                .                     |
+|                .                     |
+|                .                     |
+----------------------------------------
+|  pointer to default message handler  |
+----------------------------------------
+|        message handler header        | ---------------------> 0000 0000 0000 0000 0000 0000 0000 0000
+| pointer to handler/internal delegate |                        |                                  || |
+|                .                     |                        ---------------------------------------
+|                .                     |                                         |                   \-- 3. bit: 1 if internal method, 0 if not
+|                .                     |                                         |                       x00: private
+|                .                     |                                         |                       x01: protected
+----------------------------------------                                         |                       x10: public
+|     class declaration pointers       |                                         |                       
+|                .                     |                                         \---------------------- Constant pool index 
+|                .                     |
+|                .                     |
+|                .                     |
+----------------------------------------                                         
+
+
+The 4. word, def-handler & first class offset, is the offsets to the default handler
+and the first class declaration encoded in one word such that:
+
+defHand = obj + (obj[3] & 0x0000FFFF)
+firstClassDec = obj + ((obj[3] & 0xFFFF0000) >> 16)
+
+
+Message handler:
+
+________________________________________
+|        default object header         |
+----------------------------------------
+|            instructions              |
+----------------------------------------
+
+Instructions are packed with 8 bits specifying the opcode and thus the 
+number of bits used by this instruction.

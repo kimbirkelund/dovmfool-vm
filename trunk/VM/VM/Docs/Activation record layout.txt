@@ -1,0 +1,62 @@
+﻿Activation record layout:
+
+The 'maps' entry below specifies which entries in the frame are references
+and which are integers. Each map-word looks like this:
+
+0000 0000 0000 0000 0000 0000 0000 0000
+|                                    ||
+--------------------------------------\-- 0 if this word is the last map
+                 |                        1 if the next word is also a map
+                 |
+                 \----------------------- Each bit indicates it the corresponding stack element
+                                          is a reference or an integer: 1 means integer, 0 means reference.
+                                          The right most bit corresponds to the first stack element (i.e. 
+                                          the return address) and the left most corresponds to the last element.
+                                          
+
+For normal message handlers:
+	_________________ 
+	|    ret adr    | <-- base pointer
+	| ret frame adr |
+	|    receiver   |
+	-----------------
+	|      maps     |
+	|       .       |
+	|       .       |
+	|       .       |
+	-----------------
+	|     arg1      |
+	|       .       |
+	|       .       |
+	|       .       |
+	|     argn      |
+	|    local1     |
+	|       .       |
+	|       .       |
+	|       .       |
+	|    localn     |
+	----------------- <-- stack pointer
+	
+For default message handler:
+
+	_________________ 
+	|    ret adr    | <-- base pointer
+	| ret frame adr |
+	|    receiver   |
+	-----------------
+	|      maps     |
+	|       .       |
+	|       .       |
+	|       .       |
+	-----------------
+	|    arglist    |
+	|    local1     |
+	|       .       |
+	|       .       |
+	|       .       |
+	|    localn     |
+	----------------- <-- stack pointer
+
+	For the default message handlers the arguments are 
+	given via a heap allocated list (the arglist). 
+	
