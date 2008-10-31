@@ -45,16 +45,19 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Field.cs" />
-    <Compile Include="Handle.cs" />
-    <Compile Include="HandleExtensions\AppObjectExt.cs" />
-    <Compile Include="HandleExtensions\AppObjectSetExt.cs" />
-    <Compile Include="HandleExtensions\ClassExt.cs" />
-    <Compile Include="HandleExtensions\ClassManagerExt.cs" />
-    <Compile Include="HandleExtensions\InternalObjectExt.cs" />
+    <Compile Include="Enums.cs" />
+    <Compile Include="Handles\AppObject.cs" />
+    <Compile Include="Handles\AppObjectSet.cs" />
+    <Compile Include="Handles\Class.cs" />
+    <Compile Include="Handles\ClassManager.cs" />
+    <Compile Include="Handles\ConstantPool.cs" />
+    <Compile Include="Handles\HandleBase.cs" />
+    <Compile Include="Handles\InternalObjectBase.cs" />
+    <Compile Include="Handles\MessageHandlerBase.cs" />
+    <Compile Include="Handles\ObjectBase.cs" />
+    <Compile Include="Handles\String.cs" />
     <Compile Include="VMObjects.cs" />
     <Compile Include="MemoryManagerBase.cs" />
-    <Compile Include="HandleExtensions\VMObjectExt.cs" />
     <Compile Include="Masks.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

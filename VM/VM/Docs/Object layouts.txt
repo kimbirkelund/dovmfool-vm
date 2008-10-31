@@ -14,17 +14,19 @@ ________________________________________
 |                .                     |
 |                .                     |
 ----------------------------------------
-|  pointer to default message handler  |
-----------------------------------------
 |        message handler header        | ---------------------> 0000 0000 0000 0000 0000 0000 0000 0000
-| pointer to handler/internal delegate |                        |                                  || |
-|                .                     |                        ---------------------------------------
-|                .                     |                                         |                   \-- 3. bit: 1 if internal method, 0 if not
-|                .                     |                                         |                       x00: private
+|  pointer to default message handler  |                        |                                  || |
+----------------------------------------                        ---------------------------------------
+|        message handler header        |                                         |                   \-- 3. bit: 1 if internal method, 0 if not
+| pointer to handler/internal delegate |                                         |                       x00: private
 |                .                     |                                         |                       x01: protected
-----------------------------------------                                         |                       x10: public
-|     class declaration pointers       |                                         |                       
+|                .                     |                                         |                       x10: public
+|                .                     |                                         |                       
 |                .                     |                                         \---------------------- Constant pool index 
+----------------------------------------
+|             class header             |
+|     class declaration pointers       |
+|                .                     |
 |                .                     |
 |                .                     |
 |                .                     |
@@ -43,8 +45,27 @@ Message handler:
 ________________________________________
 |        default object header         |
 ----------------------------------------
+|        message handler header        |
+----------------------------------------
 |            instructions              |
 ----------------------------------------
 
 Instructions are packed with 8 bits specifying the opcode and thus the 
 number of bits used by this instruction.
+
+
+AppObject:
+
+________________________________________
+|        default object header         |
+----------------------------------------
+|            class pointer             |
+----------------------------------------
+|  maps (see activation record layout) |
+|                 .                    |
+|                 .                    |
+----------------------------------------
+|              fields                  |
+|                 .                    |
+|                 .                    |
+----------------------------------------

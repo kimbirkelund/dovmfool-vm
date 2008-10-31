@@ -1,9 +1,7 @@
 ﻿0000 0000 0000 0000 0000 0000 0000 0000
-                               | | |  |
-                               --- ----
-								|	 |
-								|	 \--  =0: AppObject, meaning rest of word is class index
-								|	      =1: AppObjectSet, meaning rest of word is object count
-								|	     >=4: Internal object, meaning bit 4 - 6 is internal object type and rest of word is size in words
-								|
-								\------- If internal object these bit designate the type of internal object
+                                   |  |
+                                   ----
+								 	 |
+								 	 \--  =0: AppObject, meaning rest of word is class index
+								 	      =1: AppObjectSet, meaning rest of word is object count
+								 	     >=4: Internal object, meaning bit 4 - 6 is internal object type and rest of word is size in words
