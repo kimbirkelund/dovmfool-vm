@@ -6,7 +6,7 @@
 	push-literal <literal> // Pushes the specified literal onto the stack
 	pop // Discards the top stack element
 
-	new-object // Creates a new instance of the class found at the top of the stack	
+	new-instance // Creates a new instance of the class found at the top of the stack	
 	send-message // Sends the message located on top of the stack to the object found arg-count elements down
 	return
 	

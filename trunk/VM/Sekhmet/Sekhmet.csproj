@@ -1,0 +1,139 @@
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="3.5">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>9.0.30428</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{879263E1-25E5-4BE7-B185-FEBA869F0A7F}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Sekhmet</RootNamespace>
+    <AssemblyName>Sekhmet</AssemblyName>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <OldToolsVersion>2.0</OldToolsVersion>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Debug\Sekhmet.XML</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.configuration" />
+    <Reference Include="System.Core">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Assert.cs" />
+    <Compile Include="AssertionException.cs" />
+    <Compile Include="Collections\Enums.cs" />
+    <Compile Include="Collections\Graph.cs" />
+    <Compile Include="Collections\IIndexer.cs" />
+    <Compile Include="Collections\SingletonManager.cs" />
+    <Compile Include="Collections\Tree.cs" />
+    <Compile Include="Collections\Trie.cs" />
+    <Compile Include="Collections\Trie.TrieNode.cs" />
+    <Compile Include="CommandLineArguments\ArgumentBase.cs" />
+    <Compile Include="CommandLineArguments\ArgumentException.cs" />
+    <Compile Include="CommandLineArguments\ArgumentsManager.cs" />
+    <Compile Include="CommandLineArguments\PathArgument.cs" />
+    <Compile Include="CommandLineArguments\FlagArgument.cs" />
+    <Compile Include="CommandLineArguments\IArgument.cs" />
+    <Compile Include="CommandLineArguments\InconclusiveAbbreviationException.cs" />
+    <Compile Include="CommandLineArguments\IntegerArgument.cs" />
+    <Compile Include="CommandLineArguments\LongArgument.cs" />
+    <Compile Include="CommandLineArguments\RegexStringArgument.cs" />
+    <Compile Include="CommandLineArguments\SelectArgument.cs" />
+    <Compile Include="CommandLineArguments\StringArgument.cs" />
+    <Compile Include="Editing\Property.cs" />
+    <Compile Include="Editing\CompositeRenderFactory.cs" />
+    <Compile Include="Editing\Errors.cs" />
+    <Compile Include="Editing\HeadingTag.cs" />
+    <Compile Include="Editing\IHeadingRender.cs" />
+    <Compile Include="Editing\ILinebreakRender.cs" />
+    <Compile Include="Editing\IncludeRender.cs" />
+    <Compile Include="Editing\IParagraphRender.cs" />
+    <Compile Include="Editing\IRender.cs" />
+    <Compile Include="Editing\IRenderFactory.cs" />
+    <Compile Include="Editing\IRenderTag.cs" />
+    <Compile Include="Editing\ITextRender.cs" />
+    <Compile Include="Editing\LinebreakTag.cs" />
+    <Compile Include="Editing\ParagraphTag.cs" />
+    <Compile Include="Editing\Parser.cs" />
+    <Compile Include="Editing\ParsingError.cs" />
+    <Compile Include="Editing\ParsingException.cs" />
+    <Compile Include="Editing\SourcePosition.cs" />
+    <Compile Include="Editing\PropertyParser.cs" />
+    <Compile Include="Editing\Render.cs" />
+    <Compile Include="Editing\SourceSpan.cs" />
+    <Compile Include="Editing\Tag.cs" />
+    <Compile Include="Editing\TagHierachyNode.cs" />
+    <Compile Include="Editing\TOCTag.cs" />
+    <Compile Include="Editing\Token.cs" />
+    <Compile Include="Editing\Tokenizer.cs" />
+    <Compile Include="Editing\Tokenizer.Helper.cs" />
+    <Compile Include="Extensions\Misc.cs" />
+    <Compile Include="IO\RotatingTextWriter.cs" />
+    <Compile Include="IReadOnly.cs" />
+    <Compile Include="Collections\List.ArrayWrapper.cs" />
+    <Compile Include="Collections\List.ComparisonWrapper.cs" />
+    <Compile Include="Collections\List.cs" />
+    <Compile Include="Collections\ListChangedEvent.cs" />
+    <Compile Include="Collections\ListChangingEvent.cs" />
+    <Compile Include="Logging\Error.cs" />
+    <Compile Include="Logging\ErrorException.cs" />
+    <Compile Include="Logging\ILogReader.cs" />
+    <Compile Include="ReadOnlyBase.cs" />
+    <Compile Include="Editing\AST.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Logging\CompositeLogHandler.cs" />
+    <Compile Include="Logging\ConsoleLogHandler.cs" />
+    <Compile Include="Logging\ILogHandler.cs" />
+    <Compile Include="Logging\LogHandlerBase.cs" />
+    <Compile Include="Logging\Logger.cs" />
+    <Compile Include="Logging\PlainTextLogHandler.cs" />
+    <Compile Include="IO\StructuredWriter.cs" />
+    <Compile Include="Tuple.cs" />
+    <Compile Include="Visualization\DefaultNodeCreator.cs" />
+    <Compile Include="Visualization\DummyVisualizer.cs" />
+    <Compile Include="Visualization\EnumerableNodeCreator.cs" />
+    <Compile Include="Visualization\VisualizationNode.cs" />
+    <Compile Include="Visualization\VisualizationManager.cs" />
+    <Compile Include="Visualization\IVisualizationNode.cs" />
+    <Compile Include="Visualization\IVisualizationNodeCreator.cs" />
+    <Compile Include="Visualization\IVisualizer.cs" />
+    <Compile Include="Visualization\VisualizationNodeCreatorBase.cs" />
+    <Compile Include="Visualization\XmlVisualizer.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{B4F97281-0DBD-4835-9ED8-7DFB966E87FF}" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Messages.resources" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+</Project>
