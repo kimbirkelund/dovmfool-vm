@@ -1,0 +1,94 @@
+\documentclass[onside,10pt,left=1cm]{article}
+\oddsidemargin 0in
+\evensidemargin 1in
+\topmargin 0in
+\textheight 9in
+\textwidth 6in
+
+\author{Christer Vindberg \and Kim Birkelund}
+\title{DoVMfOOL - project plan}
+
+\usepackage{listings}
+\usepackage{graphicx}
+
+\lstset{language=c,breaklines=true,prebreak={\space},frame=single,numbers=left}
+
+\newcommand{\csharp}{C\#}
+\newcommand{\dotnet}{.NET}
+\newcommand{\cpp}{C++}
+\newcommand{\java}{Java}
+\newcommand{\jit}{JIT}
+\newcommand{\gbeta}{gbeta}
+\newcommand{\vm}{VM}
+\newcommand{\api}{API}
+
+\newcommand{\bold}[1]{$\mathbf{#1}$}
+
+\begin{document}
+
+\maketitle
+
+\pagenumbering{arabic}
+\setcounter{secnumdepth}{2}
+
+The purpose of our project is not so much solving a problem as it is
+simply implementing a virtual machine. Seeing as how we have no
+experience in this field it seemed like the obvious choice. Likewise
+since we have no experience in creating large projects in \cpp~we have
+chosen to do the implementation in \csharp/\dotnet. Obviously this is not
+without problems, both performance wise and technical, since we don't
+have direct memory access. We feel however that the amount of time
+we would spent trying to make \cpp~do what we want it better spent on
+designing the actual CM.
+
+The \vm itself will be executing a dynamic class based language. We
+have opted to take a (almost) pure message-passing approach. Each
+class can define any number of message-handlers along with a default
+handler. Each class can also define fields but these are only
+accessible from inside the class - all fields are, in \java~terms,
+declared as private. 
+
+Memory management wise hope to be able to implement a generational
+garbage collector, but will probably start with a simple copying
+collector - which might simply evolve into our generation zero
+collector. In terms of execution we will start out with an interpretor
+but hope to be able to implement an \jit-compiler utilizing the built-in
+emitting \api of the \dotnet~framework.
+
+With all this in mind we have defined the following milestones:
+
+\begin{itemize}
+
+\item \bold{M1}: Can execute byte-code language. This will not
+  necessarily include accessibility enforcement or
+  multiple-inheritance resolution.
+
+\item \bold{M2}: Full language executable. In addition to the
+  omissions in M1 this should include an assembler from text to a
+  direct loadable binary format.
+
+\item \bold{M3}: Garbage collection. Simple copy-collector.
+
+\item \bold{M4}: Generational collector.
+
+\item \bold{M5}: \jit-compiler. May not include inline-caching.
+
+\item \bold{M6}: \dotnet~interoperability, threading,
+  inline-caching, trace-based compilation, compiling from \gbeta.
+
+\end{itemize}
+
+The schedule is currently to allocate one milestone for each week
+starting with this one (week 44). This means that we should be able to
+execute our first programs at the end of this week and going foreword
+satisfying each milestone at the end of the corresponding week. The
+features described in milestones M4 to M6 are to be seen as
+nice-to-have and not must-have. This means that should an earlier
+milestone slip we are prepared to sacrifice those features.
+
+\end{document}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: t
+%%% End: 
