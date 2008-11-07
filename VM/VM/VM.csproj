@@ -53,11 +53,13 @@
     <Compile Include="Handles\Class.cs" />
     <Compile Include="Handles\ClassManager.cs" />
     <Compile Include="Handles\ConstantPool.cs" />
+    <Compile Include="Handles\DelegateMessageHandler.cs" />
     <Compile Include="Handles\HandleBase.cs" />
     <Compile Include="Handles\InternalObjectBase.cs" />
     <Compile Include="Handles\MessageHandlerBase.cs" />
     <Compile Include="Handles\ObjectBase.cs" />
     <Compile Include="Handles\String.cs" />
+    <Compile Include="Handles\VMILMessageHandler.cs" />
     <Compile Include="VMObjects.cs" />
     <Compile Include="MemoryManagerBase.cs" />
     <Compile Include="Masks.cs" />

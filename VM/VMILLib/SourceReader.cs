@@ -66,7 +66,40 @@ namespace VMILLib {
 			return new MessageHandler( visibility, name, arguments, locals, instructions );
 		}
 
+		int VerifyTryCatches( Parser.List<Parser.Instruction> inss, int index ) {
+			var foundLabels = new List<string>();
+			var unfoundLabel = new List<string>();
+
+			for (int j = index + 1; j < inss.Count; j++) {
+				if (inss[j].OpCode == OpCode.Try) {
+					j = VerifyTryCatches( inss, j );
+					continue;
+				}
+				if (inss[j].OpCode == OpCode.EndTryCatch) {
+					if (unfoundLabel.Count != 0)
+						throw new ArgumentException( "Invalid input program: jump to outside of try-block found." );
+					return j;
+				}
+
+				if (index != -1) {
+					if (inss[j].OpCode == OpCode.Jump || inss[j].OpCode == OpCode.JumpIfFalse || inss[j].OpCode == OpCode.JumpIfTrue) {
+						if (!foundLabels.Contains( (string) inss[j].Operand ))
+							unfoundLabel.Add( (string) inss[j].Operand );
+					}
+
+					if (inss[j] is Parser.Label) {
+						var l = (Parser.Label) inss[j];
+						foundLabels.Add( l.Name );
+						unfoundLabel.RemoveAll( s => s == l.Name );
+					}
+				}
+			}
+
+			return -1;
+		}
+
 		InstructionList ReadInstructions( Parser.List<Parser.Instruction> list ) {
+			VerifyTryCatches( list, -1 );
 			return new InstructionList( list.Select( i => ReadInstruction( i ) ) );
 		}
 
@@ -86,6 +119,7 @@ namespace VMILLib {
 					return new Instruction( ins.OpCode, (string) ins.Operand );
 				case OpCode.Pop:
 				case OpCode.NewInstance:
+				case OpCode.SendMessage:
 				case OpCode.ReturnVoid:
 				case OpCode.Return:
 				case OpCode.Throw:
