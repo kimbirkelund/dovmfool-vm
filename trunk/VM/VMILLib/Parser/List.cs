@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace VMILAssembler {
-	class List<T> : ASTNode, IEnumerable<T> where T : ASTNode {
+namespace VMILLib.Parser {
+	class List<T> : ASTNode, IEnumerable<T> {
 		T[] elements;
 
 		public int Count { get; private set; }

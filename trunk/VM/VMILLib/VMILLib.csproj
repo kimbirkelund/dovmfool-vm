@@ -5,15 +5,13 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{B64CA0FD-3F02-414D-ACF1-BD1CEED657D4}</ProjectGuid>
+    <ProjectGuid>{464D1D09-B6CE-46D1-AC36-F06189FBD142}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>VM</RootNamespace>
-    <AssemblyName>VM</AssemblyName>
+    <RootNamespace>VMILLib</RootNamespace>
+    <AssemblyName>VMILLib</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <StartupObject>
-    </StartupObject>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -47,22 +45,51 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assembly.cs" />
+    <Compile Include="BinaryWriter.cs" />
+    <Compile Include="CIntegerPool.cs" />
+    <Compile Include="Class.cs" />
+    <Compile Include="ClassList.cs" />
+    <Compile Include="CInteger.cs" />
+    <Compile Include="CString.cs" />
+    <Compile Include="Extensions.cs" />
+    <Compile Include="Instruction.cs" />
+    <Compile Include="InstructionList.cs" />
+    <Compile Include="Label.cs" />
+    <Compile Include="Parser\Label.cs" />
+    <Compile Include="SourceReader.cs" />
+    <Compile Include="SourceWriter.cs" />
+    <Compile Include="NameList.cs" />
+    <Compile Include="MessageHandler.cs" />
+    <Compile Include="MessageHandlerList.cs" />
+    <Compile Include="Parser\ASTNode.cs" />
+    <Compile Include="Parser\Class.cs" />
+    <Compile Include="Parser\ClassBody.cs" />
     <Compile Include="Enums.cs" />
-    <Compile Include="Handles\AppObject.cs" />
-    <Compile Include="Handles\AppObjectSet.cs" />
-    <Compile Include="Handles\Class.cs" />
-    <Compile Include="Handles\ClassManager.cs" />
-    <Compile Include="Handles\ConstantPool.cs" />
-    <Compile Include="Handles\HandleBase.cs" />
-    <Compile Include="Handles\InternalObjectBase.cs" />
-    <Compile Include="Handles\MessageHandlerBase.cs" />
-    <Compile Include="Handles\ObjectBase.cs" />
-    <Compile Include="Handles\String.cs" />
-    <Compile Include="VMObjects.cs" />
-    <Compile Include="MemoryManagerBase.cs" />
-    <Compile Include="Masks.cs" />
+    <Compile Include="Parser\Instruction.cs" />
+    <Compile Include="Parser\LexLocation.cs" />
+    <Compile Include="Parser\List.cs" />
+    <Compile Include="Parser\MessageHandler.cs" />
+    <Compile Include="Parser\Parser.auto.cs" />
+    <Compile Include="Parser\PositionedError.cs" />
+    <Compile Include="Parser\Scanner.auto.cs" />
+    <Compile Include="Parser\Scanner.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="IVirtualMachine.cs" />
+    <Compile Include="CStringPool.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Parser\vmil.lex" />
+    <None Include="Parser\vmil.y" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\GPPG\GPPG.csproj">
+      <Project>{B05F8095-E88A-4E0A-BA5F-6248FB4064F1}</Project>
+      <Name>GPPG</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Sekhmet\Sekhmet.csproj">
+      <Project>{879263E1-25E5-4BE7-B185-FEBA869F0A7F}</Project>
+      <Name>Sekhmet</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
@@ -72,4 +99,8 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <PropertyGroup>
+    <PreBuildEvent>"$(SolutionDir)fputils.exe" gplex "$(ProjectDir)Parser\vmil.lex" "$(ProjectDir)Parser\Scanner.auto.cs"
+"$(SolutionDir)fputils.exe" gppg "$(ProjectDir)Parser\vmil.y" "$(ProjectDir)Parser\Parser.auto.cs"</PreBuildEvent>
+  </PropertyGroup>
 </Project>

@@ -11,7 +11,7 @@ namespace VM.Handles {
 		public const uint NAME_MASK = 0xFFFFFFF0;
 		public const int NAME_RSHIFT = 4;
 
-		public AccessModifier Visibility { get { return (AccessModifier) (this[1] & VISIBILITY_MASK); } }
+		public VisibilityModifier Visibility { get { return (VisibilityModifier) (this[1] & VISIBILITY_MASK); } }
 		public bool IsInternal { get { return ((this[1] & IS_INTERNAL_MASK) >> IS_INTERNAL_RSHIFT) != 0; } }
 
 		public String Name {

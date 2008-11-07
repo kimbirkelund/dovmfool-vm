@@ -3,15 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace VMILAssembler {
-	enum Tokens {
-		Class,
-		Extends,
-		Fields,
-		Handler,
-		Default,
-		Locals,
-
+namespace VMILLib {
+	public enum OpCode {
+		None = 0,
 		StoreField,
 		LoadField,
 		StoreLocal,
@@ -19,6 +13,7 @@ namespace VMILAssembler {
 		PushLiteral,
 		Pop,
 		NewInstance,
+		ReturnVoid,
 		Return,
 		Jump,
 		JumpIfTrue,
@@ -26,7 +21,12 @@ namespace VMILAssembler {
 		Throw,
 		Try,
 		Catch,
+		EndTryCatch
+	}
 
-
+	public enum VisibilityModifier {
+		Public = 0,
+		Protected = 1,
+		Private = 2
 	}
 }

@@ -1,19 +1,17 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="3.5" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<Project ToolsVersion="3.5" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{B64CA0FD-3F02-414D-ACF1-BD1CEED657D4}</ProjectGuid>
+    <ProjectGuid>{3A3CACF8-FD82-456B-BD98-669FEE60C080}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>VM</RootNamespace>
-    <AssemblyName>VM</AssemblyName>
+    <RootNamespace>VMTests</RootNamespace>
+    <AssemblyName>VMTests</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <StartupObject>
-    </StartupObject>
+    <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -33,38 +31,39 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=9.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
-    <Reference Include="System.Xml.Linq">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
+    <Reference Include="System.Data" />
     <Reference Include="System.Data.DataSetExtensions">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
-    <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Enums.cs" />
-    <Compile Include="Handles\AppObject.cs" />
-    <Compile Include="Handles\AppObjectSet.cs" />
-    <Compile Include="Handles\Class.cs" />
-    <Compile Include="Handles\ClassManager.cs" />
-    <Compile Include="Handles\ConstantPool.cs" />
-    <Compile Include="Handles\HandleBase.cs" />
-    <Compile Include="Handles\InternalObjectBase.cs" />
-    <Compile Include="Handles\MessageHandlerBase.cs" />
-    <Compile Include="Handles\ObjectBase.cs" />
-    <Compile Include="Handles\String.cs" />
-    <Compile Include="VMObjects.cs" />
-    <Compile Include="MemoryManagerBase.cs" />
-    <Compile Include="Masks.cs" />
+    <Compile Include="ExtensionsTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="IVirtualMachine.cs" />
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <ProjectReference Include="..\GPPG\GPPG.csproj">
+      <Project>{B05F8095-E88A-4E0A-BA5F-6248FB4064F1}</Project>
+      <Name>GPPG</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Sekhmet\Sekhmet.csproj">
+      <Project>{879263E1-25E5-4BE7-B185-FEBA869F0A7F}</Project>
+      <Name>Sekhmet</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\VMILLib\VMILLib.csproj">
+      <Project>{464D1D09-B6CE-46D1-AC36-F06189FBD142}</Project>
+      <Name>VMILLib</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

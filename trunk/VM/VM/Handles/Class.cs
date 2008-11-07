@@ -17,7 +17,7 @@ namespace VM.Handles {
 
 		public new const uint TypeId = 4;
 
-		public AccessModifier Visibility { get { return (AccessModifier) (this[1] & VISIBILITY_MASK); } }
+		public VisibilityModifier Visibility { get { return (VisibilityModifier) (this[1] & VISIBILITY_MASK); } }
 		public uint InstanceSize { get { return this[2]; } }
 
 		public String Name {
