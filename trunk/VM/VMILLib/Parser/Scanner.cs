@@ -23,10 +23,8 @@ namespace VMILLib.Parser {
 		public static T As<T>( this ASTNode node ) {
 			if (node == null)
 				return default( T );
-			if (node is Scanner.ConstantNode) {
-				Console.WriteLine( (T) ((Scanner.ConstantNode) node).Value );
+			if (node is Scanner.ConstantNode)
 				return (T) ((Scanner.ConstantNode) node).Value;
-			}
 
 			throw new ArgumentException( "Argument must be a ConstantNode, was '" + node.GetType() + "'." );
 		}

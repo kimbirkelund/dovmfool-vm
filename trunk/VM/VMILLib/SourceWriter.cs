@@ -45,7 +45,7 @@ namespace VMILLib {
 		}
 
 		void WriteMessageHandler( MessageHandler handler ) {
-			var prefix = handler.Name == null ? ".default" : ".handler " + handler.Visibility.ToString().ToLower() + handler.Name;
+			var prefix = handler.Name == null ? ".default" : ".handler " + handler.Visibility.ToString().ToLower() + " " + handler.Name;
 
 			output.WriteLine( prefix + "(" + handler.Arguments.Join( ", " ) + ") {" );
 			output.IndentationLevel++;
@@ -87,13 +87,16 @@ namespace VMILLib {
 					output.WriteLine( "load-local " + i.Operand );
 					break;
 				case OpCode.PushLiteral:
-					output.WriteLine( "push-literal " + (i.Operand is string ? "\"" + i.Operand + "\"" : i.Operand) );
+					output.WriteLine( "push-literal " + (i.Operand is CString ? "\"" + i.Operand + "\"" : i.Operand) );
 					break;
 				case OpCode.Pop:
 					output.WriteLine( "pop" );
 					break;
 				case OpCode.NewInstance:
 					output.WriteLine( "new-instance" );
+					break;
+				case OpCode.SendMessage:
+					output.WriteLine( "send-message" );
 					break;
 				case OpCode.ReturnVoid:
 					output.WriteLine( "return-void" );

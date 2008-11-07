@@ -8,7 +8,7 @@ namespace VMILLib.Parser {
 		public readonly string Name;
 
 		public Label( LexLocation location, string name )
-			: base( location, 0 ) {
+			: base( location, OpCode.None ) {
 			this.Name = name;
 		}
 	}

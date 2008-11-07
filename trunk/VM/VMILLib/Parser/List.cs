@@ -9,6 +9,10 @@ namespace VMILLib.Parser {
 
 		public int Count { get; private set; }
 
+		public T this[int index] {
+			get { return elements[index]; }
+		}
+
 		public List( params T[] elements )
 			: base( new LexLocation() ) {
 			this.elements = new T[elements.Length];

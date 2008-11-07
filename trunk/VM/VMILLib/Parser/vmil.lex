@@ -18,7 +18,7 @@ identifier [_a-zA-Z][_a-zA-Z0-9]*
 <0> "public" return (int) Tokens.Public;
 <0> "protected" return (int) Tokens.Protected;
 <0> "private" return (int) Tokens.Private;
-<0> "class" return (int) Tokens.Class;
+<0> ".class" return (int) Tokens.Class;
 <0> "extends" return (int) Tokens.Extends;
 <0> ".handler" return (int) Tokens.Handler;
 <0> ".default" return (int) Tokens.Default;
@@ -32,6 +32,7 @@ identifier [_a-zA-Z][_a-zA-Z0-9]*
 <0> "push-literal" return (int) Tokens.PushLiteral;
 <0> "pop" return (int) Tokens.Pop;
 <0> "new-instance" return (int) Tokens.NewInstance;
+<0> "send-message" return (int) Tokens.SendMessage;
 <0> "return" return (int) Tokens.Return;
 <0> "jump" return (int) Tokens.Jump;
 <0> "jump-if-true" return (int) Tokens.JumpIfTrue;
@@ -44,6 +45,7 @@ identifier [_a-zA-Z][_a-zA-Z0-9]*
 <0> "(" return (int) Tokens.LeftParen;
 <0> ")" return (int) Tokens.RightParen;
 <0> "," return (int) Tokens.Comma;
+<0> ":" return (int) Tokens.Colon;
 
 <0> {identifier} {
 	yylval = yytext.ToNode();
@@ -59,6 +61,9 @@ identifier [_a-zA-Z][_a-zA-Z0-9]*
 	yylval = int.Parse(yytext, System.Globalization.CultureInfo.InvariantCulture).ToNode();
 	return (int) Tokens.Integer;
 }
+
+<0> [\ \t\r\n] {}
+<0> . yyerror("Unexpected character: " + yytext);
 
 %{
 	yylloc = new LexLocation( SourceFile, tokLin, tokCol, tokELin, tokECol );
