@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace VMILAssembler {
+namespace VMILLib.Parser {
 	class ASTNode {
 		public readonly LexLocation Location;
 

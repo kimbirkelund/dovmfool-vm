@@ -4,11 +4,11 @@ using System.Linq;
 using System.Text;
 using gppg;
 
-namespace VMILAssembler {
+namespace VMILLib.Parser {
 	/// <summary>
 	/// For internal use only.
 	/// </summary>
-	public class LexLocation : IMerge<LexLocation> {
+	class LexLocation : IMerge<LexLocation> {
 		/// <summary>
 		/// For internal use only.
 		/// </summary>
@@ -54,6 +54,14 @@ namespace VMILAssembler {
 				throw new ArgumentException( "Argument specifies location in different file", "last" );
 
 			return new LexLocation( SourceFile, this.StartLine, this.StartColumn, last.EndLine, last.EndColumn );
+		}
+
+		public string ToLongString() {
+			return "[" + StartLine + ":" + StartColumn + "-" + EndLine + ":" + EndColumn + "]";
+		}
+
+		public override string ToString() {
+			return "[" + StartLine + ":" + StartColumn + "]";
 		}
 	}
 }

@@ -2,12 +2,16 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Sekhmet.Logging;
 
-namespace VMILAssembler {
+namespace VMILLib.Parser {
 	partial class Scanner {
+		public Logger Logger { get; set; }
+
 		public sealed class ConstantNode : ASTNode {
-			public override IEnumerable<ASTNode> Children { get { yield break; } }
 			public object Value { get; set; }
+
+			public ConstantNode() : base( new LexLocation() ) { }
 		}
 	}
 
@@ -19,10 +23,12 @@ namespace VMILAssembler {
 		public static T As<T>( this ASTNode node ) {
 			if (node == null)
 				return default( T );
-			if (node is Scanner.ConstantNode)
+			if (node is Scanner.ConstantNode) {
+				Console.WriteLine( (T) ((Scanner.ConstantNode) node).Value );
 				return (T) ((Scanner.ConstantNode) node).Value;
+			}
 
-			throw new ArgumentException( "Argument must be a ConstantNode" );
+			throw new ArgumentException( "Argument must be a ConstantNode, was '" + node.GetType() + "'." );
 		}
 	}
 }

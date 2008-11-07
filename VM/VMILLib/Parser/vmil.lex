@@ -1,21 +1,23 @@
-%namespace VMILAssembler
+%namespace VMILLib.Parser
 %using System.Text;
 %using Sekhmet.Logging;
 
 digit [0-9]
 int ([0]|[1-9][0-9]*)
 string \"[^\"\n\r]*\"
-identifier [_a-zA-Z][^\ ]*
+identifier [_a-zA-Z][_a-zA-Z0-9]*
 
 %{
 	public string SourceFile {get; set;}
-	StringBuilder sb;	
 %}
 
 %%
 %{
 %}
 
+<0> "public" return (int) Tokens.Public;
+<0> "protected" return (int) Tokens.Protected;
+<0> "private" return (int) Tokens.Private;
 <0> "class" return (int) Tokens.Class;
 <0> "extends" return (int) Tokens.Extends;
 <0> ".handler" return (int) Tokens.Handler;
@@ -41,6 +43,7 @@ identifier [_a-zA-Z][^\ ]*
 <0> "}" return (int) Tokens.RightCBrace;
 <0> "(" return (int) Tokens.LeftParen;
 <0> ")" return (int) Tokens.RightParen;
+<0> "," return (int) Tokens.Comma;
 
 <0> {identifier} {
 	yylval = yytext.ToNode();
