@@ -31,9 +31,11 @@ identifier [_a-zA-Z][_a-zA-Z0-9]*
 <0> "load-local" return (int) Tokens.LoadLocal;
 <0> "push-literal" return (int) Tokens.PushLiteral;
 <0> "pop" return (int) Tokens.Pop;
+<0> "dup" return (int) Tokens.Dup;
 <0> "new-instance" return (int) Tokens.NewInstance;
 <0> "send-message" return (int) Tokens.SendMessage;
 <0> "return" return (int) Tokens.Return;
+<0> "return-void" return (int) Tokens.ReturnVoid;
 <0> "jump" return (int) Tokens.Jump;
 <0> "jump-if-true" return (int) Tokens.JumpIfTrue;
 <0> "jump-if-false" return (int) Tokens.JumpIfFalse;

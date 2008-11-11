@@ -4,12 +4,14 @@ ________________________________________
 ----------------------------------------
 |             class header             | ---------------------> 0000 0000 0000 0000 0000 0000 0000 0000
 ----------------------------------------                        |                                   |||
-|         class instance size          |                        ---------------------------------------
+|        parent class pointer          |                        ---------------------------------------
 ----------------------------------------                                         |                    \-- 00: private
-|   def-handler & first class offset   |                                         |                        01: protected
+|         class instance size          |                                         |                        01: protected
 ----------------------------------------                                         |                        10: public
-|   constant-pool indices for fields   |                                         |                       
-|                .                     |                                         \----------------------- Constant pool index 
+|   def-handler & first class offset   |                                         |                       
+----------------------------------------                                         \----------------------- Constant pool index 
+|   constant-pool indices for fields   |
+|                .                     |
 |                .                     |
 |                .                     |
 |                .                     |
@@ -46,6 +48,8 @@ ________________________________________
 |        default object header         |
 ----------------------------------------
 |        message handler header        |
+----------------------------------------
+|      arg count and local count       | ------> 16 bit each, local count includes arg count
 ----------------------------------------
 |            instructions              |
 ----------------------------------------

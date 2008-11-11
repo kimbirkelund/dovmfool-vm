@@ -14,14 +14,14 @@ namespace VMILLib {
 			this.output = new StructuredWriter( new StreamWriter( output ), "  " );
 		}
 
-		public SourceWriter( string output ) : this( new FileStream( output, FileMode.OpenOrCreate, FileAccess.Write ) ) { }
+		public SourceWriter( string output ) : this( new FileStream( output, FileMode.Create, FileAccess.Write ) ) { }
 
 		public void Write( Assembly assembly ) {
 			assembly.Classes.ForEach( c => WriteClass( c ) );
 		}
 
 		void WriteClass( Class cls ) {
-			output.WriteLine( cls.Visibility.ToString().ToLower() + " class " + cls.Name + (cls.InheritsFrom.Count != 0 ? "extends " + cls.InheritsFrom.Join( ", " ) + " " : "") + "{" );
+			output.WriteLine( ".class " + cls.Visibility.ToString().ToLower() + " " + cls.Name + (cls.InheritsFrom.Count != 0 ? "extends " + cls.InheritsFrom.Join( ", " ) + " " : "") + " {" );
 			output.IndentationLevel++;
 
 			var actions = new List<Action>();
@@ -45,10 +45,12 @@ namespace VMILLib {
 		}
 
 		void WriteMessageHandler( MessageHandler handler ) {
-			var prefix = handler.Name == null ? ".default" : ".handler " + handler.Visibility.ToString().ToLower() + " " + handler.Name;
+			if (handler.Name == null)
+				output.WriteLine( ".default {" );
+			else
+				output.WriteLine( ".handler " + handler.Visibility.ToString().ToLower() + " " + handler.Name + "(" + handler.Arguments.Join( ", " ) + ") {" );
 
-			output.WriteLine( prefix + "(" + handler.Arguments.Join( ", " ) + ") {" );
-			output.IndentationLevel++;
+			output.IndentationLevel += 2;
 
 			var actions = new List<Action>();
 
@@ -60,7 +62,7 @@ namespace VMILLib {
 
 			actions.Join( a => a(), () => output.WriteLine() );
 
-			output.IndentationLevel--;
+			output.IndentationLevel -= 2;
 			output.WriteLine( "}" );
 		}
 
@@ -69,7 +71,7 @@ namespace VMILLib {
 				case OpCode.None:
 					if (i is Label) {
 						output.IndentationLevel--;
-						output.WriteLine( i.Operand + ": " );
+						output.WriteLine( ((Label) i).Name + ": " );
 						output.IndentationLevel++;
 					} else
 						throw new ArgumentOutOfRangeException( "Invalid OpCode encountered: '" + i.OpCode + "'." );
@@ -92,6 +94,9 @@ namespace VMILLib {
 				case OpCode.Pop:
 					output.WriteLine( "pop" );
 					break;
+				case OpCode.Dup:
+					output.WriteLine( "dup" );
+					break;
 				case OpCode.NewInstance:
 					output.WriteLine( "new-instance" );
 					break;
@@ -105,13 +110,13 @@ namespace VMILLib {
 					output.WriteLine( "return" );
 					break;
 				case OpCode.Jump:
-					output.WriteLine( "jump " + i.Operand );
+					output.WriteLine( "jump " + ((Label) i.Operand).Name );
 					break;
 				case OpCode.JumpIfTrue:
-					output.WriteLine( "jump-if-true " + i.Operand );
+					output.WriteLine( "jump-if-true " + ((Label) i.Operand).Name );
 					break;
 				case OpCode.JumpIfFalse:
-					output.WriteLine( "jump-if-false " + i.Operand );
+					output.WriteLine( "jump-if-false " + ((Label) i.Operand).Name );
 					break;
 				case OpCode.Throw:
 					output.WriteLine( "throw" );
@@ -122,7 +127,7 @@ namespace VMILLib {
 					break;
 				case OpCode.Catch:
 					output.IndentationLevel--;
-					output.WriteLine( "} catch(" + i.Operand + ") {" );
+					output.WriteLine( "} catch {" );
 					output.IndentationLevel++;
 					break;
 				case OpCode.EndTryCatch:

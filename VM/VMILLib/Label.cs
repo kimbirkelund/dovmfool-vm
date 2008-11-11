@@ -11,5 +11,9 @@ namespace VMILLib {
 			: base( OpCode.None, null ) {
 			this.Name = name;
 		}
+
+		public override string ToString() {
+			return "Label: " + Name;
+		}
 	}
 }

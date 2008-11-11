@@ -1,0 +1,63 @@
+.class public Foo {
+  .fields { console, bar2, initialized }
+  
+  .default {
+      .locals { args }
+      
+      load-field initialized
+      jump-if-true alreadyInitialized
+      store-local args
+      load-local args
+      push-literal "argument-count:0"
+      send-message
+      push-literal 2
+      push-literal "are-equal:1"
+      send-message
+      jump-if-false invalidArgCount
+      load-local args
+      push-literal 0
+      push-literal "get-argument:1"
+      send-message
+      store-field console
+      load-local args
+      push-literal 1
+      push-literal "get-argument:1"
+      send-message
+      store-field bar2
+      push-literal 1
+      store-field initialized
+      return-void
+    invalidArgCount: 
+      .try {
+        push-literal "System.ArgumentOutOfRange"
+      	new-instance
+        dup
+      	push-literal "The expected number of arguments was two"
+      	push-literal "initialize:1"
+      	send-message
+      	throw
+      } catch {
+        load-field console
+        push-literal "jsdlkfjl"
+        push-literal "write-line:0"
+	send-message
+      }
+    alreadyInitialized: 
+      push-literal "System.InvalidOperationException"
+      new-instance
+      dup
+      push-literal "The object has already been initialized"
+      push-literal "initialize:1"
+      send-message
+      throw
+  }
+  
+  .class public InnerClass {
+    .handler public WriteHelloWorld(console) {
+        load-local console
+        push-literal "Hello World!"
+        push-literal "write-line:1"
+        send-message
+    }
+  }
+}
