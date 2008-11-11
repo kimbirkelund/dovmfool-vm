@@ -45,7 +45,7 @@ namespace VMILLib {
 			var visibility = cls.Visibility;
 			var name = ReadString( cls.Name );
 			var inheritsFrom = ReadNames( cls.InheritsFrom );
-			var fields = ReadNames( cls.Fields );
+			var fields = cls.Fields;
 			var defaultHandler = ReadMessageHandler( cls.DefaultHandler );
 			var handlers = new MessageHandlerList( cls.Handlers.Select( h => ReadMessageHandler( h ) ) );
 			var classes = new ClassList( cls.Classes.Select( c => ReadClass( c ) ) );
@@ -59,8 +59,8 @@ namespace VMILLib {
 
 			var visibility = handler.Visibility;
 			var name = handler.Name != null ? ReadString( handler.Name ) : null;
-			var arguments = ReadNames( handler.Arguments );
-			var locals = ReadNames( handler.Locals );
+			var arguments = handler.Arguments;
+			var locals = handler.Locals;
 			var instructions = ReadInstructions( handler.Instructions );
 
 			return new MessageHandler( visibility, name, arguments, locals, instructions );
@@ -109,8 +109,7 @@ namespace VMILLib {
 				case OpCode.LoadField:
 				case OpCode.StoreLocal:
 				case OpCode.LoadLocal:
-				case OpCode.Catch:
-					return new Instruction( ins.OpCode, ReadString( (string) ins.Operand ) );
+					return new Instruction( ins.OpCode, (string) ins.Operand );
 				case OpCode.PushLiteral:
 					return new Instruction( OpCode.PushLiteral, ins.Operand is string ? (object) ReadString( (string) ins.Operand ) : ReadInteger( (int) ins.Operand ) );
 				case OpCode.Jump:
@@ -118,12 +117,14 @@ namespace VMILLib {
 				case OpCode.JumpIfFalse:
 					return new Instruction( ins.OpCode, (string) ins.Operand );
 				case OpCode.Pop:
+				case OpCode.Dup:
 				case OpCode.NewInstance:
 				case OpCode.SendMessage:
 				case OpCode.ReturnVoid:
 				case OpCode.Return:
 				case OpCode.Throw:
 				case OpCode.Try:
+				case OpCode.Catch:
 				case OpCode.EndTryCatch:
 					return new Instruction( ins.OpCode );
 				case OpCode.None:

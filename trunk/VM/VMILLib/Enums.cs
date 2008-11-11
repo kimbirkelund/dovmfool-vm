@@ -12,17 +12,18 @@ namespace VMILLib {
 		LoadLocal = 3,
 		PushLiteral = 4,
 		Pop = 5,
-		NewInstance = 6,
-		SendMessage = 7,
-		ReturnVoid = 8,
-		Return = 9,
-		Jump = 10,
-		JumpIfTrue = 11,
-		JumpIfFalse = 12,
-		Throw = 13,
-		Try = 14,
-		Catch = 15,
-		EndTryCatch = 16
+		Dup = 6,
+		NewInstance = 7,
+		SendMessage = 8,
+		ReturnVoid = 9,
+		Return = 10,
+		Jump = 11,
+		JumpIfTrue = 12,
+		JumpIfFalse = 13,
+		Throw = 14,
+		Try = 15,
+		Catch = 16,
+		EndTryCatch = 17
 	}
 
 	public enum VisibilityModifier {

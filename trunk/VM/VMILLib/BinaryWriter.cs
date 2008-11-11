@@ -11,69 +11,115 @@ namespace VMILLib {
 		int pos;
 		List<int> integerMap, stringMap;
 		Dictionary<MessageHandler, int> handlers;
+		Dictionary<Class, int> classes;
 
 		public BinaryWriter( Stream output ) {
 			this.output = output;
 		}
 
-		public BinaryWriter( string output ) : this( new FileStream( output, FileMode.OpenOrCreate, FileAccess.Write ) ) { }
+		public BinaryWriter( string output ) : this( new FileStream( output, FileMode.Create, FileAccess.Write ) ) { }
 
 		public void Write( Assembly assembly ) {
 			integerMap = new List<int>();
 			stringMap = new List<int>();
 			handlers = new Dictionary<MessageHandler, int>();
+			classes = new Dictionary<Class, int>();
 
 			WriteIntegers( assembly.Integers );
 			WriteStrings( assembly.Strings );
+			WriteHandlers( assembly.Classes );
+			WriteClasses( assembly.Classes );
+		}
+
+		void WriteClasses( ClassList classList ) {
+			MapClasses( classList );
+			Write( this.classes.Count );
+
+			var classes = new Queue<Class>();
+			this.classes.Keys.ToArray().Where( c => !WriteClass( c ) ).ForEach( c => classes.Enqueue( c ) );
+
+			while (classes.Count > 0)
+				if (WriteClass( classes.Peek() ))
+					classes.Dequeue();
+		}
+
+		bool WriteClass( Class cls ) {
+			if (cls.Classes.Any( c => classes[c] == 0 ))
+				return false;
+
+			classes[cls] = pos;
+			uint size = (uint) (6 + cls.InheritsFrom.Count + cls.Handlers.Count * 2 + cls.Classes.Count * 2);
+
+			Write( (size << 4) | (uint) InternalObjectType.Class );
+			Write( (stringMap[cls.Name.Index] << 3) | (int) cls.Visibility );
+			Write( 0 );
+			Write( (cls.Fields.Count << 18) | ((0x00003FFF & cls.Handlers.Count) << 4) | (cls.InheritsFrom.Count & 0x0000000F) );
+
+			cls.InheritsFrom.ForEach( s => Write( stringMap[s.Index] ) );
+
+			if (cls.DefaultHandler == null)
+				Write( 0, 0 );
+			else
+				Write( (int) VisibilityModifier.Private, handlers[cls.DefaultHandler] );
+
+			foreach (var handler in cls.Handlers)
+				Write( (stringMap[handler.Name.Index] << 3) | (int) handler.Visibility, handlers[handler] );
+
+			foreach (var innerCls in cls.Classes)
+				Write( (stringMap[innerCls.Name.Index] << 3) | (int) innerCls.Visibility, classes[innerCls] );
+
+			return true;
+		}
+
+		void MapClasses( ClassList classes ) {
+			foreach (var cls in classes) {
+				this.classes.Add( cls, 0 );
+				MapClasses( cls.Classes );
+			}
 		}
 
 		void WriteHandlers( ClassList classes ) {
 			MapHandlers( classes );
-
 			Write( handlers.Count );
 
-			WriteHandlers2( classes );
-		}
-
-		void WriteHandlers2( ClassList classes ) {
-			foreach (var cls in classes) {
-				if (cls.DefaultHandler != null)
-					WriteHandler( cls.DefaultHandler );
-				cls.Handlers.ForEach( h => WriteHandler( h ) );
-				WriteHandlers2( cls.Classes );
-			}
+			handlers.Keys.ToArray().ForEach( h => WriteHandler( h ) );
 		}
 
 		void WriteHandler( MessageHandler handler ) {
 			handlers[handler] = pos;
-			uint size = (uint) handler.Instructions.Count + 2;
+			uint size = (uint) handler.Instructions.Where( i => !(i is Label) ).Count() + 3;
 
 			Write( (size << 4) | (uint) InternalObjectType.VMILMessageHandler );
-			Write( (stringMap[handler.Name.Index] << 3) | (int) handler.Visibility );
+			Write( ((handler.Name == null ? 0 : stringMap[handler.Name.Index]) << 3) | (int) handler.Visibility );
+			Write( (handler.Arguments.Count << 16) | ((handler.Arguments.Count + handler.Locals.Count)) );
 			WriteInstructions( handler.Instructions );
 		}
 
-		void WriteInstructions( InstructionList inss ) {
+		void WriteInstructions( InstructionList inssList ) {
 			var labelMap = new Dictionary<string, int>();
+			inssList.ForEach( ( ins, i ) => { if (ins is Label) labelMap.Add( ((Label) ins).Name, i - labelMap.Count ); } );
+			var inss = inssList.Where( i => !(i is Label) );
+
 			var trycatchMap = MapTryCatches( inss );
 			var trycatchStack = new Stack<TryCatchRecord>();
 
-			inss.OfType<Label>().ForEach( ( l, i ) => labelMap.Add( l.Name, i - labelMap.Count ) );
-
 			int index = 0;
-			foreach (var ins in inss.Where( i => !(i is Label) )) {
+			foreach (var ins in inss) {
 				uint eins = (uint) ins.OpCode << 27;
 				switch (ins.OpCode) {
 					case OpCode.StoreField:
 					case OpCode.LoadField:
+						eins |= (uint) ins.MessageHandler.Class.Fields.IndexOf( (string) ins.Operand );
+						break;
 					case OpCode.StoreLocal:
 					case OpCode.LoadLocal:
-						eins |= (uint) ((CString) ins.Operand).Index;
+						eins |= (uint) (ins.MessageHandler.Arguments.Contains( (string) ins.Operand ) ? ins.MessageHandler.Arguments.IndexOf( (string) ins.Operand ) : ins.MessageHandler.Arguments.Count + ins.MessageHandler.Locals.IndexOf( (string) ins.Operand ));
 						break;
 					case OpCode.PushLiteral:
 						eins |= (uint) (ins.Operand is CString ? stringMap[((CString) ins.Operand).Index] : integerMap[((CInteger) ins.Operand).Index]);
 						break;
 					case OpCode.Pop:
+					case OpCode.Dup:
 					case OpCode.NewInstance:
 					case OpCode.SendMessage:
 					case OpCode.ReturnVoid:
@@ -102,14 +148,15 @@ namespace VMILLib {
 						trycatchStack.Pop();
 						break;
 					default:
-						break;
+						throw new ArgumentException( "Unexpected opcode : " + ins.OpCode );
 				}
 
+				Write( eins );
 				index++;
 			}
 		}
 
-		Dictionary<int, TryCatchRecord> MapTryCatches( InstructionList inss ) {
+		Dictionary<int, TryCatchRecord> MapTryCatches( IEnumerable<Instruction> inss ) {
 			var stack = new Stack<TryCatchRecord>();
 			var map = new Dictionary<int, TryCatchRecord>();
 
@@ -154,7 +201,7 @@ namespace VMILLib {
 				var remainder = bytes.Length % 4;
 				if (remainder != 0) {
 					var temp = new byte[bytes.Length + (4 - remainder)];
-					Array.ConstrainedCopy( bytes, 0, temp, 0, bytes.Length );
+					Array.Copy( bytes, 0, temp, 0, bytes.Length );
 					bytes = temp;
 				}
 

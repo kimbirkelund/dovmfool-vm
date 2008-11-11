@@ -5,7 +5,7 @@
 %YYSTYPE VMILLib.Parser.ASTNode
 %YYLTYPE VMILLib.Parser.LexLocation
 
-%token Class Extends Fields Handler Default Locals StoreField LoadField StoreLocal LoadLocal PushLiteral Pop NewInstance SendMessage Return Jump JumpIfTrue JumpIfFalse Throw Try Catch Colon LeftParen RightParen LeftCBrace RightCBrace Comma Identifier String Integer Public Private Protected
+%token Class Extends Fields Handler Default Locals StoreField LoadField StoreLocal LoadLocal PushLiteral Pop Dup NewInstance SendMessage Return ReturnVoid Jump JumpIfTrue JumpIfFalse Throw Try Catch Colon LeftParen RightParen LeftCBrace RightCBrace Comma Identifier String Integer Public Private Protected
 
 %start program
 
@@ -87,20 +87,22 @@ instructions :
 |	PushLiteral Integer instructions { $$ = new Instruction(@$, OpCode.PushLiteral, $2.As<int>()) + (List<Instruction>) $3; }
 |	PushLiteral String instructions { $$ = new Instruction(@$, OpCode.PushLiteral, $2.As<string>()) + (List<Instruction>) $3; }
 |	Pop instructions { $$ = new Instruction(@$, OpCode.Pop) + (List<Instruction>) $2; }
+|	Dup instructions { $$ = new Instruction(@$, OpCode.Dup) + (List<Instruction>) $2; }
 |	NewInstance instructions { $$ = new Instruction(@$, OpCode.NewInstance) + (List<Instruction>) $2; }
 |	SendMessage instructions { $$ = new Instruction(@$, OpCode.SendMessage) + (List<Instruction>) $2; }
 |	Return instructions { $$ = new Instruction(@$, OpCode.Return) + (List<Instruction>) $2; }
-|	Jump Identifier instructions { $$ = new Instruction(@$, OpCode.Jump, $1.As<string>()) + (List<Instruction>) $3; }
-|	JumpIfTrue Identifier instructions { $$ = new Instruction(@$, OpCode.JumpIfTrue, $1.As<string>()) + (List<Instruction>) $3; }
-|	JumpIfFalse Identifier instructions { $$ = new Instruction(@$, OpCode.JumpIfFalse, $1.As<string>()) + (List<Instruction>) $3; }
-|	Throw instructions { $$ = new Instruction(@$, OpCode.Catch, $1.As<string>()) + (List<Instruction>) $2; }
+|	ReturnVoid instructions { $$ = new Instruction(@$, OpCode.ReturnVoid) + (List<Instruction>) $2; }
+|	Jump Identifier instructions { $$ = new Instruction(@$, OpCode.Jump, $2.As<string>()) + (List<Instruction>) $3; }
+|	JumpIfTrue Identifier instructions { $$ = new Instruction(@$, OpCode.JumpIfTrue, $2.As<string>()) + (List<Instruction>) $3; }
+|	JumpIfFalse Identifier instructions { $$ = new Instruction(@$, OpCode.JumpIfFalse, $2.As<string>()) + (List<Instruction>) $3; }
+|	Throw instructions { $$ = new Instruction(@$, OpCode.Throw, $1.As<string>()) + (List<Instruction>) $2; }
 |	Try LeftCBrace instructions RightCBrace catch instructions { 
-		$$ = new Instruction(@$, OpCode.Try, $1.As<string>()) + (List<Instruction>) $3 + (Instruction) $5 
+		$$ = new Instruction(@$, OpCode.Try, $1.As<string>()) + (List<Instruction>) $3 + (List<Instruction>) $5 
 			+ new Instruction(new LexLocation(), OpCode.EndTryCatch) + (List<Instruction>) $6;
 	};
 
-catch : Catch LeftParen Identifier RightParen LeftCBrace instructions RightCBrace { 
-		$$ = new Instruction(@$, OpCode.Catch, $3.As<string>()) + (List<Instruction>) $6;
+catch : Catch LeftCBrace instructions RightCBrace { 
+		$$ = new Instruction(@$, OpCode.Catch) + (List<Instruction>) $3;
 	};
 
 visibility :

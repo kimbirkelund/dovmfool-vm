@@ -5,10 +5,12 @@
 	load-local <local> // Loads a local field onto the stack
 	push-literal <literal> // Pushes the specified literal onto the stack
 	pop // Discards the top stack element
+	dup // Duplicates the top element of the stack	
 
 	new-instance // Creates a new instance of the class found at the top of the stack	
 	send-message // Sends the message located on top of the stack to the object found arg-count elements down
-	return
+	return-void // Returns no value
+	return // Returns the value on top of the stack
 	
 	label:
 	jump <label>

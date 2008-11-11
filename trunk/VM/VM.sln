@@ -32,6 +32,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documents", "Documents", "{
 		..\Documents\Object layouts.txt = ..\Documents\Object layouts.txt
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VMILDisassembler", "VMILDisassembler\VMILDisassembler.csproj", "{79CFB0B1-3E21-47BE-9C22-BC97B5A1C02F}"
+EndProject
 Global
 	GlobalSection(TestCaseManagementSettings) = postSolution
 		CategoryFile = VM.vsmdi
@@ -69,6 +71,10 @@ Global
 		{3A3CACF8-FD82-456B-BD98-669FEE60C080}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3A3CACF8-FD82-456B-BD98-669FEE60C080}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3A3CACF8-FD82-456B-BD98-669FEE60C080}.Release|Any CPU.Build.0 = Release|Any CPU
+		{79CFB0B1-3E21-47BE-9C22-BC97B5A1C02F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{79CFB0B1-3E21-47BE-9C22-BC97B5A1C02F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{79CFB0B1-3E21-47BE-9C22-BC97B5A1C02F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{79CFB0B1-3E21-47BE-9C22-BC97B5A1C02F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

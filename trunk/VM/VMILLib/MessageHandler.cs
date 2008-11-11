@@ -7,16 +7,31 @@ namespace VMILLib {
 	public sealed class MessageHandler {
 		public readonly VisibilityModifier Visibility;
 		public readonly CString Name;
-		public readonly NameList Arguments;
-		public readonly NameList Locals;
+		public readonly IList<string> Arguments;
+		public readonly IList<string> Locals;
 		public readonly InstructionList Instructions;
 
-		public MessageHandler( VisibilityModifier visibility, CString name, NameList arguments, NameList locals, InstructionList instructions ) {
+		Class @class;
+		public Class Class {
+			get { return @class; }
+			internal set {
+				if (@class != null)
+					throw new InvalidOperationException( "Class already set." );
+				this.@class = value;
+			}
+		}
+
+		public MessageHandler( VisibilityModifier visibility, CString name, IEnumerable<string> arguments, IEnumerable<string> locals, InstructionList instructions ) {
 			this.Visibility = visibility;
 			this.Name = name;
 			this.Instructions = instructions;
-			this.Arguments = arguments;
-			this.Locals = locals;
+			this.Arguments = arguments.ToList().AsReadOnly();
+			this.Locals = locals.ToList().AsReadOnly();
+			this.Instructions.ForEach( i => i.MessageHandler = this );
+		}
+
+		public override string ToString() {
+			return Name == null ? "Default handler" : Visibility.ToString().ToLower() + " " + Name + "(" + Arguments.Join( ", " ) + ")";
 		}
 	}
 }

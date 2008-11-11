@@ -45,6 +45,51 @@ namespace System {
 		}
 
 		/// <summary>
+		/// Performs the class <c>action</c>(0),...,<c>action</c>(<c>count</c>).
+		/// </summary>
+		/// <param name="count">The number of calls to make.</param>
+		/// <param name="action">The action to perform.</param>
+		public static void ForEach( this int count, Action<int> action ) {
+			for (int i = 0; i < count; i++)
+				action( i );
+		}
+
+		/// <summary>
+		/// Performs the class <c>action</c>(0),...,<c>action</c>(<c>count</c>).
+		/// </summary>
+		/// <param name="count">The number of calls to make.</param>
+		/// <param name="action">The action to perform.</param>
+		public static void ForEach( this int count, Action action ) {
+			for (int i = 0; i < count; i++)
+				action();
+		}
+
+		/// <summary>
+		/// Creates a sequence consisting of elements (<c>sequencer</c>(0),...,<c>sequencer</c>(<c>val</c>)).
+		/// </summary>
+		/// <typeparam name="T">The type of the sequence elements.</typeparam>
+		/// <param name="val">The number of elements. A negative number yields an empty sequence.</param>
+		/// <param name="sequencer">The function creating each element.</param>
+		/// <returns>The sequence (<c>sequencer</c>(0),...,<c>sequencer</c>(<c>val</c>)).</returns>
+		public static IEnumerable<T> ForEach<T>( this int val, Func<int, T> sequencer ) {
+			for (int i = 0; i < val; i++)
+				yield return sequencer( i );
+		}
+
+
+		/// <summary>
+		/// Creates a sequence consisting of elements (<c>sequencer</c>(0),...,<c>sequencer</c>(<c>val</c>)).
+		/// </summary>
+		/// <typeparam name="T">The type of the sequence elements.</typeparam>
+		/// <param name="val">The number of elements. A negative number yields an empty sequence.</param>
+		/// <param name="sequencer">The function creating each element.</param>
+		/// <returns>The sequence (<c>sequencer</c>(0),...,<c>sequencer</c>(<c>val</c>)).</returns>
+		public static IEnumerable<T> ForEach<T>( this int val, Func<T> sequencer ) {
+			for (int i = 0; i < val; i++)
+				yield return sequencer();
+		}
+
+		/// <summary>
 		/// Performs <c>action</c> of each element of <c>sequence</c>.
 		/// </summary>
 		/// <param name="sequence">The sequence of elements.</param>

@@ -25,5 +25,9 @@ namespace VMILLib {
 			return handlers.Values.GetEnumerator();
 		}
 		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() { return GetEnumerator(); }
+
+		public override string ToString() {
+			return "Message handler count: " + Count;
+		}
 	}
 }
