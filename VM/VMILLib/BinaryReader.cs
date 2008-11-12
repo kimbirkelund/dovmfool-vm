@@ -174,12 +174,11 @@ namespace VMILLib {
 			for (int i = 0; i < stringCount; i++) {
 				var pos = this.pos;
 				var strSize = ReadInt();
-				var byteCount = strSize * 2;
 				var words = new List<uint>();
-				for (int j = 0; j < byteCount / 4 + (byteCount % 4 == 0 ? 0 : 1); j++)
+				for (int j = 0; j < strSize / 2 + strSize % 2; j++)
 					words.Add( ReadUInt() );
 
-				strings[i] = new CString( i, Encoding.Unicode.GetString( words.ToByteStream().Take( byteCount ).ToArray() ) );
+				strings[i] = new CString( i, Encoding.Unicode.GetString( words.ToByteStream().Take( strSize * 2 ).ToArray() ) );
 				this.constants.Add( pos, strings[i] );
 			}
 

@@ -21,7 +21,7 @@ namespace VMILLib {
 		}
 
 		void WriteClass( Class cls ) {
-			output.WriteLine( ".class " + cls.Visibility.ToString().ToLower() + " " + cls.Name + (cls.InheritsFrom.Count != 0 ? "extends " + cls.InheritsFrom.Join( ", " ) + " " : "") + " {" );
+			output.WriteLine( ".class " + cls.Visibility.ToString().ToLower() + " " + cls.Name + (cls.InheritsFrom.Count != 0 ? " extends " + cls.InheritsFrom.Join( ", " ) + " " : "") + " {" );
 			output.IndentationLevel++;
 
 			var actions = new List<Action>();

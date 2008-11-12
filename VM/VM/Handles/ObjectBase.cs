@@ -4,42 +4,43 @@ using System.Linq;
 using System.Text;
 
 namespace VM.Handles {
-	public abstract class ObjectBase : HandleBase {
+	public struct ObjectBase {
+		public const uint OBJECT_HEADER_OFFSET = 0;
 		public const uint OBJECT_TYPE_MASK = 0x00000100;
+		public const int OBJECT_SIZE_RSHIFT = 4;
 
-		/// <summary>
-		/// Get the object type stored in the header. Constant time operation.
-		/// </summary>
-		public uint ObjectType {
-			get { return this[0] & OBJECT_TYPE_MASK; }
+		uint start;
+
+		public static implicit operator uint( ObjectBase cls ) {
+			return cls.start;
 		}
 
-		/// <summary>
-		/// Gets a value indicating if <paramref name="h"/> is an application object. Constant time operation.
-		/// </summary>
-		public bool IsAppObject {
-			get { return this.ObjectType == AppObject.TypeId; }
+		public static implicit operator ObjectBase( uint cls ) {
+			return new ObjectBase { start = cls };
+		}
+	}
+
+	public static class ExtObjectBase {
+		public static uint ObjectType( this ObjectBase objectBase ) {
+			return objectBase.Get( ObjectBase.OBJECT_HEADER_OFFSET ) & ObjectBase.OBJECT_TYPE_MASK;
+		}
+
+		public static bool IsAppObject( this ObjectBase objectBase ) {
+			return objectBase.ObjectType() == AppObject.TypeId;
 		}
 
 		/// <summary>
 		/// Gets a value indicating if <paramref name="h"/> is an application object set. Constant time operation.
 		/// </summary>
-		public bool IsAppObjectSet {
-			get { return this.ObjectType == AppObjectSet.TypeId; }
+		public static bool IsAppObjectSet( this ObjectBase objectBase ) {
+			return objectBase.ObjectType() == AppObjectSet.TypeId;
 		}
 
 		/// <summary>
 		/// Gets a value indicating if <paramref name="h"/> is an internal object. Constant time operation.
 		/// </summary>
-		public bool IsInternalObject {
-			get { return this.ObjectType >= InternalObjectBase.TypeId; }
+		public static bool IsInternalObject( this ObjectBase objectBase ) {
+			return objectBase.ObjectType() >= InternalObjectBase.TypeId;
 		}
-
-		/// <summary>
-		/// Gets the total size of <paramref name="h"/> in words. Constant time, but will possibly create new object.
-		/// </summary>
-		public abstract uint Size { get; }
-
-		protected ObjectBase( MemoryManagerBase memoryManager, uint start ) : base( memoryManager, start ) { }
 	}
 }

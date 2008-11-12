@@ -1,4 +1,4 @@
-.class public Foo {
+.class public Foo extends Foo1, Foo2 {
   .fields { console, bar2, initialized }
   
   .default {
@@ -52,7 +52,7 @@
       throw
   }
   
-  .class public InnerClass {
+  .class public InnerClass extends Foo {
     .handler public WriteHelloWorld(console) {
         load-local console
         push-literal "Hello World!"

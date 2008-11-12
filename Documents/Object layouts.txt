@@ -6,29 +6,26 @@ ________________________________________
 ----------------------------------------                        |                                   |||
 |        parent class pointer          |                        ---------------------------------------
 ----------------------------------------                                         |                    \-- 00: private
-|         class instance size          |                                         |                        01: protected
+|    field, handler, extends count     |                                         |                        01: protected
 ----------------------------------------                                         |                        10: public
-|   def-handler & first class offset   |                                         |                       
-----------------------------------------                                         \----------------------- Constant pool index 
-|   constant-pool indices for fields   |
+|  constant-pool indices for extends   |                                         |
+|                .                     |                                         \----------------------- Pointer to name
 |                .                     |
 |                .                     |
 |                .                     |
-|                .                     |
+----------------------------------------
+|  pointer to default message handler  |
 ----------------------------------------
 |        message handler header        | ---------------------> 0000 0000 0000 0000 0000 0000 0000 0000
-|  pointer to default message handler  |                        |                                  || |
-----------------------------------------                        ---------------------------------------
-|        message handler header        |                                         |                   \-- 3. bit: 1 if internal method, 0 if not
-| pointer to handler/internal delegate |                                         |                       x00: private
-|                .                     |                                         |                       x01: protected
-|                .                     |                                         |                       x10: public
+| pointer to handler/internal delegate |                        |                                  || |
+|                .                     |                        ---------------------------------------
 |                .                     |                                         |                       
-|                .                     |                                         \---------------------- Constant pool index 
-----------------------------------------
-|             class header             |
-|     class declaration pointers       |
-|                .                     |
+|                .                     |                                         |                   \-- 3. bit: 1 if internal method, 0 if not
+|                .                     |                                         |                       x01: protected
+----------------------------------------                                         |                       x10: public
+|             class header             |                                         |                       x00: private
+|     class declaration pointers       |                                         |                       
+|                .                     |                                         \---------------------- Pointer to name
 |                .                     |
 |                .                     |
 |                .                     |
@@ -66,7 +63,7 @@ ________________________________________
 |            class pointer             |
 ----------------------------------------
 |            field type                |
-|            field name                |
+|            field value               |
 |                 .                    |
 |                 .                    |
 ----------------------------------------

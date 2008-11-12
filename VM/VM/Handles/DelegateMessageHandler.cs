@@ -4,9 +4,17 @@ using System.Linq;
 using System.Text;
 
 namespace VM.Handles {
-	public class DelegateMessageHandler : MessageHandlerBase {
-		public new const uint TypeId = 5;
+	public struct DelegateMessageHandler  {
+		public const uint TypeId = 5;
 
-		internal DelegateMessageHandler( MemoryManagerBase memoryManager, uint start ) : base( memoryManager, start ) { }
+		uint start;
+
+		public static implicit operator uint( DelegateMessageHandler v ) {
+			return v.start;
+		}
+
+		public static implicit operator DelegateMessageHandler( uint v ) {
+			return new DelegateMessageHandler { start = v };
+		}
 	}
 }

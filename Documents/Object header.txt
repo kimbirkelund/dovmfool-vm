@@ -1,7 +1,9 @@
 ﻿0000 0000 0000 0000 0000 0000 0000 0000
-                                   |  |
-                                   ----
-								 	 |
-								 	 \--  =0: AppObject, meaning rest of word is class index
-								 	      =1: AppObjectSet, meaning rest of word is object count
-								 	     >=4: Internal object type
+|                                | |  |
+---------------------------------- ----
+                  |                  |
+                  |                  \--  =0: AppObject
+                  |                       =1: AppObjectSet
+                  |                      >=4: Internal object type
+                  |
+                  \--------------------- Object size in words
