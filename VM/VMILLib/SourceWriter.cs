@@ -47,8 +47,11 @@ namespace VMILLib {
 		void WriteMessageHandler( MessageHandler handler ) {
 			if (handler.Name == null)
 				output.WriteLine( ".default {" );
-			else
-				output.WriteLine( ".handler " + handler.Visibility.ToString().ToLower() + " " + handler.Name + "(" + handler.Arguments.Join( ", " ) + ") {" );
+			else {
+				var name = handler.Name.Value;
+				name = name.IndexOf( ":" ) != -1 ? name.Substring( 0, name.IndexOf( ":" ) ) : name;
+				output.WriteLine( ".handler " + handler.Visibility.ToString().ToLower() + " " + name + "(" + handler.Arguments.Join( ", " ) + ") {" );
+			}
 
 			output.IndentationLevel += 2;
 

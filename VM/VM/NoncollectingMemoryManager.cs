@@ -4,41 +4,30 @@ using System.Linq;
 using System.Text;
 
 namespace VM {
-	public partial class NoncollectingMemoryManager : MemoryManagerBase {
-		List<MSlice> slices = new List<MSlice>();
+	partial class NoncollectingMemoryManager : MemoryManagerBase {
+		uint[] memory;
+		int position;
 
-		public override uint SizeInWords { get { return int.MaxValue; } }
-		public override uint FreeSizeInWords { get { return uint.MaxValue - (uint) slices.Count; } }
-		public override uint AllocatedSizeInWords { get { return (uint) slices.Count; } }
+		public override int SizeInWords { get { return memory.Length; } }
+		public override int FreeSizeInWords { get { return memory.Length - position; } }
+		public override int AllocatedSizeInWords { get { return position; } }
 
-		internal override uint this[uint index] {
-			get {
-				throw new NotImplementedException();
-			}
-			set {
-				throw new NotImplementedException();
-			}
+		public override Word this[int index] {
+			get { return memory[index]; }
+			set { memory[index] = value; }
 		}
 
-		public NoncollectingMemoryManager() {
+		public NoncollectingMemoryManager( int size ) {
+			if (size < 0)
+				throw new ArgumentOutOfRangeException( "size" );
+
+			memory = new uint[size];
 		}
 
-		public override IEnumerator<Handle> GetEnumerator() {
-			return slices.OfType<Handle>().GetEnumerator();
-		}
-
-		internal override uint Allocate( uint size ) {
-			var start = (uint) slices.Count;
-			var slice = new MSlice( start, size );
-			slices.Add( slice );
-			return 0;
-		}
-
-		internal override uint Retrieve( uint position ) {
-			if (position < 0 || slices.Count <= position)
-				throw new ArgumentOutOfRangeException( "No object at the specified position." );
-
-			return 0;
+		public override int Allocate( int size ) {
+			var pos = position;
+			position += size;
+			return pos;
 		}
 	}
 }

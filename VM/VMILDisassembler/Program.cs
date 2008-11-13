@@ -34,14 +34,12 @@ namespace VMILDisassembler {
 			var logger = new Logger();
 			logger.Handlers.Add( new ConsoleLogHandler() );
 
-			using (var reader = new VMILLib.BinaryReader( inputFile )) {
-				using (var writer = new VMILLib.SourceWriter( outputFile ))
-					writer.Write( reader.Read() );
+			VMILLib.Assembly program;
+			using (var reader = new VMILLib.BinaryReader( inputFile ))
+				program = reader.Read();
 
-				//var ass = reader.Read();
-				//ass.Integers.ForEach( i => Console.WriteLine( i ) );
-				//ass.Strings.ForEach( i => Console.WriteLine( i ) );
-			}
+			using (var writer = new VMILLib.SourceWriter( outputFile ))
+				writer.Write( program);
 
 			return 0;
 		}
