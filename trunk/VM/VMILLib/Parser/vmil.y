@@ -5,7 +5,7 @@
 %YYSTYPE VMILLib.Parser.ASTNode
 %YYLTYPE VMILLib.Parser.LexLocation
 
-%token Class Extends Fields Handler Default Locals StoreField LoadField StoreLocal LoadLocal PushLiteral Pop Dup NewInstance SendMessage Return ReturnVoid Jump JumpIfTrue JumpIfFalse Throw Try Catch Colon LeftParen RightParen LeftCBrace RightCBrace Comma Identifier String Integer Public Private Protected
+%token Class Extends Fields Handler Default Locals StoreField LoadField StoreLocal LoadLocal LoadArgument PushLiteral Pop Dup NewInstance SendMessage Return ReturnVoid Jump JumpIfTrue JumpIfFalse Throw Try Catch Colon LeftParen RightParen LeftCBrace RightCBrace Comma Identifier String Integer Public Private Protected
 
 %start program
 
@@ -58,7 +58,7 @@ defaulthandler :
 	{ $$ = null; }
 |	Default LeftCBrace locals instructions RightCBrace {
 		$$ = new MessageHandler(@$, 
-				VisibilityModifier.Private, 
+				VisibilityModifier.None, 
 				null, 
 				new List<string>(), 
 				(List<string>) $3, 
@@ -84,6 +84,7 @@ instructions :
 |	LoadField Identifier instructions { $$ = new Instruction(@$, OpCode.LoadField, $2.As<string>()) + (List<Instruction>) $3; }
 |	StoreLocal Identifier instructions { $$ = new Instruction(@$, OpCode.StoreLocal, $2.As<string>()) + (List<Instruction>) $3; }
 |	LoadLocal Identifier instructions { $$ = new Instruction(@$, OpCode.LoadLocal, $2.As<string>()) + (List<Instruction>) $3; }
+|	LoadArgument Identifier instructions { $$ = new Instruction(@$, OpCode.LoadArgument, $2.As<string>()) + (List<Instruction>) $3; }
 |	PushLiteral Integer instructions { $$ = new Instruction(@$, OpCode.PushLiteral, $2.As<int>()) + (List<Instruction>) $3; }
 |	PushLiteral String instructions { $$ = new Instruction(@$, OpCode.PushLiteral, $2.As<string>()) + (List<Instruction>) $3; }
 |	Pop instructions { $$ = new Instruction(@$, OpCode.Pop) + (List<Instruction>) $2; }

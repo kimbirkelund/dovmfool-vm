@@ -34,15 +34,19 @@ namespace VMILAssembler {
 			var logger = new Logger();
 			logger.Handlers.Add( new ConsoleLogHandler() );
 
+			VMILLib.Assembly program;
 			using (var reader = new VMILLib.SourceReader( inputFile )) {
 				reader.Logger = logger;
-				if (outputAsSourceArg.Value)
-					using (var writer = new VMILLib.SourceWriter( outputFile ))
-						writer.Write( reader.Read() );
-				else
-					using (var writer = new VMILLib.BinaryWriter( outputFile ))
-						writer.Write( reader.Read() );
+				program = reader.Read();
 			}
+
+			if (outputAsSourceArg.Value)
+				using (var writer = new VMILLib.SourceWriter( outputFile ))
+					writer.Write( program );
+			else
+				using (var writer = new VMILLib.BinaryWriter( outputFile ))
+					writer.Write( program );
+
 
 			return 0;
 		}

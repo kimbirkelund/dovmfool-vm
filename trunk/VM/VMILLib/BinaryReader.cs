@@ -10,7 +10,8 @@ namespace VMILLib {
 		Stream input;
 		int pos;
 
-		Dictionary<int, object> constants;
+		List<CString> strings;
+		List<CInteger> integers;
 		Dictionary<int, MessageHandler> handlers;
 		Dictionary<int, Class> classes;
 
@@ -22,7 +23,8 @@ namespace VMILLib {
 			: this( new FileStream( inputFile, FileMode.Open, FileAccess.Read ) ) { }
 
 		public Assembly Read() {
-			constants = new Dictionary<int, object>();
+			strings = new List<CString>();
+			integers = new List<CInteger>();
 			handlers = new Dictionary<int, MessageHandler>();
 			classes = new Dictionary<int, Class>();
 
@@ -57,9 +59,9 @@ namespace VMILLib {
 			var extendsCount = (int) (0x0000000F & counts);
 			var classCount = (int) (wordSize - 6 - extendsCount - handlerCount * 2) / 2;
 			var visibility = (VisibilityModifier) (0x00000003 & handlerHeader);
-			var name = handlerHeader >> 3 == 0 ? null : (CString) constants[(int) handlerHeader >> 3];
+			var name = (CString) strings[(int) handlerHeader >> 3];
 
-			var extends = new NameList( extendsCount.ForEach( () => (CString) constants[ReadInt()] ) );
+			var extends = new NameList( extendsCount.ForEach( () => (CString) strings[ReadInt()] ) );
 
 			ReadUInt();
 			var defHandlerPointer = ReadInt();
@@ -91,7 +93,7 @@ namespace VMILLib {
 			var argCount = (int) (counts >> 16);
 			var localCount = (int) (0x0000FFFF & counts);
 			var visibility = (VisibilityModifier) (0x00000003 & handlerHeader);
-			var name = handlerHeader >> 3 == 0 ? null : (CString) constants[(int) handlerHeader >> 3];
+			var name = visibility == VisibilityModifier.None ? null : (CString) strings[(int) handlerHeader >> 3];
 			var inss = ReadInstructions( (int) (wordSize - 3), argCount, localCount );
 
 			this.handlers.Add( pos, new MessageHandler( visibility, name, argCount.ForEach( i => "argument_" + i ), (localCount - argCount).ForEach( i => "local_" + i ), inss ) );
@@ -123,8 +125,17 @@ namespace VMILLib {
 					case OpCode.LoadLocal:
 						actOperand = (operand >= argumentCount ? "local_" : "argument_") + operand;
 						break;
-					case OpCode.PushLiteral:
-						actOperand = constants[(int) operand];
+					case OpCode.PushLiteralString:
+						opcode = OpCode.PushLiteral;
+						actOperand = strings[(int) operand];
+						break;
+					case OpCode.PushLiteralInt:
+						opcode = OpCode.PushLiteral;
+						actOperand = integers[(int) operand];
+						break;
+					case OpCode.PushLiteralIntInline:
+						opcode = OpCode.PushLiteral;
+						actOperand = (operand & 0x03FFFFFF) * ((operand & 0x04000000) != 0 ? -1 : 1);
 						break;
 					case OpCode.Pop:
 					case OpCode.Dup:
@@ -161,7 +172,7 @@ namespace VMILLib {
 			for (int i = 0; i < intCount; i++) {
 				var pos = this.pos;
 				ints[i] = new CInteger( i, ReadInt() );
-				this.constants.Add( pos, ints[i] );
+				this.integers.Add( ints[i] );
 			}
 
 			return new CIntegerPool( ints );
@@ -179,7 +190,7 @@ namespace VMILLib {
 					words.Add( ReadUInt() );
 
 				strings[i] = new CString( i, Encoding.Unicode.GetString( words.ToByteStream().Take( strSize * 2 ).ToArray() ) );
-				this.constants.Add( pos, strings[i] );
+				this.strings.Add( strings[i] );
 			}
 
 			return new CStringPool( strings );

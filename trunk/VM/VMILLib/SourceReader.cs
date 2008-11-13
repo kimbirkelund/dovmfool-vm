@@ -58,7 +58,7 @@ namespace VMILLib {
 				return null;
 
 			var visibility = handler.Visibility;
-			var name = handler.Name != null ? ReadString( handler.Name ) : null;
+			var name = handler.Name != null ? ReadString( handler.Name + ":" + handler.Arguments.Count ) : null;
 			var arguments = handler.Arguments;
 			var locals = handler.Locals;
 			var instructions = ReadInstructions( handler.Instructions );

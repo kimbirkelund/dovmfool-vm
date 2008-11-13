@@ -2,15 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using VM.Handles;
+using VM.VMObjects;
 
 namespace VM {
 	class ConstantPool {
-		public Class GetConstantType( uint index ) {
+		public VMObjects.String GetString( int index ) {
 			return 0;
 		}
 
-		public uint GetValue( uint index ) {
+		public Integer GetInteger( int index ) {
 			return 0;
 		}
 	}

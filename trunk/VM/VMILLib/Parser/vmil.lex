@@ -3,7 +3,7 @@
 %using Sekhmet.Logging;
 
 digit [0-9]
-int ([0]|[1-9][0-9]*)
+int ([0]|[-]?[1-9][0-9]*)
 string \"[^\"\n\r]*\"
 identifier [_a-zA-Z][_a-zA-Z0-9]*
 
@@ -29,6 +29,7 @@ identifier [_a-zA-Z][_a-zA-Z0-9]*
 <0> "load-field" return (int) Tokens.LoadField;
 <0> "store-local" return (int) Tokens.StoreLocal;
 <0> "load-local" return (int) Tokens.LoadLocal;
+<0> "load-argument" return (int) Tokens.LoadArgument;
 <0> "push-literal" return (int) Tokens.PushLiteral;
 <0> "pop" return (int) Tokens.Pop;
 <0> "dup" return (int) Tokens.Dup;
@@ -65,6 +66,7 @@ identifier [_a-zA-Z][_a-zA-Z0-9]*
 }
 
 <0> [\ \t\r\n] {}
+<0> //[^\n\r]* {}
 <0> . yyerror("Unexpected character: " + yytext);
 
 %{

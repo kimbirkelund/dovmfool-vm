@@ -3,42 +3,42 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace VM.Handles {
+namespace VM.VMObjects {
 	public static class ExtSize {
-		public static uint Size( this AppObject obj ) {
+		public static int Size( this AppObject obj ) {
 			return obj.Get( ObjectBase.OBJECT_HEADER_OFFSET ) >> ObjectBase.OBJECT_SIZE_RSHIFT;
 		}
 
-		public static uint Size( this AppObjectSet obj ) {
+		public static int Size( this AppObjectSet obj ) {
 			return obj.Get( ObjectBase.OBJECT_HEADER_OFFSET ) >> ObjectBase.OBJECT_SIZE_RSHIFT;
 		}
 
-		public static uint Size( this Class obj ) {
+		public static int Size( this Class obj ) {
 			return obj.Get( ObjectBase.OBJECT_HEADER_OFFSET ) >> ObjectBase.OBJECT_SIZE_RSHIFT;
 		}
 
-		public static uint Size( this ClassManager obj ) {
+		public static int Size( this ClassManager obj ) {
 			return obj.Get( ObjectBase.OBJECT_HEADER_OFFSET ) >> ObjectBase.OBJECT_SIZE_RSHIFT;
 		}
 
-		public static uint Size( this MessageHandlerBase obj ) {
+		public static int Size( this MessageHandlerBase obj ) {
 			return obj.Get( ObjectBase.OBJECT_HEADER_OFFSET ) >> ObjectBase.OBJECT_SIZE_RSHIFT;
 		}
 
-		public static uint Size( this VMILMessageHandler obj ) {
+		public static int Size( this VMILMessageHandler obj ) {
 			return obj.Get( ObjectBase.OBJECT_HEADER_OFFSET ) >> ObjectBase.OBJECT_SIZE_RSHIFT;
 		}
 
-		public static uint Size( this DelegateMessageHandler obj ) {
+		public static int Size( this DelegateMessageHandler obj ) {
 			return obj.Get( ObjectBase.OBJECT_HEADER_OFFSET ) >> ObjectBase.OBJECT_SIZE_RSHIFT;
 		}
 
-		public static uint Size( this String obj ) {
+		public static int Size( this String obj ) {
 			var length = obj.Length();
 			return length / 2 + length % 2;
 		}
 
-		public static uint Size( this Integer obj ) {
+		public static int Size( this Integer obj ) {
 			return 1;
 		}
 	}

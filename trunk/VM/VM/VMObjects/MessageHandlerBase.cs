@@ -4,38 +4,42 @@ using System.Linq;
 using System.Text;
 using VMILLib;
 
-namespace VM.Handles {
-	public struct MessageHandlerBase {
-		public const uint MESSAGEHANDLER_HEADER_OFFSET = 1;
-		public const uint VISIBILITY_MASK = 0x00000003;
-		public const uint IS_INTERNAL_MASK = 0x00000004;
+namespace VM.VMObjects {
+	public struct MessageHandlerBase : IVMObject {
+		public const int MESSAGEHANDLER_HEADER_OFFSET = 1;
+		public static readonly Word VISIBILITY_MASK = 0x00000003;
+		public static readonly Word IS_INTERNAL_MASK = 0x00000004;
 		public const int IS_INTERNAL_RSHIFT = 3;
 		public const int NAME_RSHIFT = 4;
 
-		uint start;
+		int start;
+		public int Start {
+			get { return start; }
+			set { start = value; }
+		}
 
-		public static implicit operator uint( MessageHandlerBase v ) {
+		public static implicit operator int( MessageHandlerBase v ) {
 			return v.start;
 		}
 
-		public static implicit operator MessageHandlerBase( uint v ) {
+		public static implicit operator MessageHandlerBase( int v ) {
 			return new MessageHandlerBase { start = v };
 		}
 
 		public static explicit operator VMILMessageHandler( MessageHandlerBase v ) {
-			return (uint) v;
+			return (int) v;
 		}
 
 		public static explicit operator DelegateMessageHandler( MessageHandlerBase v ) {
-			return (uint) v;
+			return (int) v;
 		}
 
 		public static implicit operator MessageHandlerBase( VMILMessageHandler v ) {
-			return (uint) v;
+			return (int) v;
 		}
 
 		public static implicit operator MessageHandlerBase( DelegateMessageHandler v ) {
-			return (uint) v;
+			return (int) v;
 		}
 	}
 

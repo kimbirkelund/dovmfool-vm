@@ -4,36 +4,23 @@ using System.Linq;
 using System.Text;
 
 namespace VM {
-	public abstract class Handle : IEnumerable<uint> {
-		protected uint[] memory;
-		/// <summary>
-		/// For a given VM configuration the start position must uniquely identify the
-		/// position in the heap regardless of the number of memory managers.
-		/// </summary>
-		protected uint start;
-		public uint Start { get { return start; } }
-		protected uint size;
-		public uint Size { get { return size; } }
+	public class HandleBase {
+		public bool IsValid { get; private set; }
+		public int Start { get; internal set; }
 
-		public uint this[uint index] {
-			get {
-				if (index < size)
-					return memory[start + size];
-				else
-					throw new ArgumentOutOfRangeException( "Index must satisfy start <= index < start + size." );
-			}
-			set {
-				if (index < size)
-					memory[start + index] = value;
-				else
-					throw new ArgumentOutOfRangeException( "Index must satisfy start <= index < start + size." );
-			}
+		public void Unregister() {
+			IsValid = false;
+			VirtualMachine.MemoryManager.Unregister( this );
 		}
 
-		public IEnumerator<uint> GetEnumerator() {
-			for (uint i = 0; i < size; i++)
-				yield return this[i];
+		protected HandleBase( int start ) {
+			this.Start = start;
 		}
-		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() { return GetEnumerator(); }
+	}
+
+	public class Handle<T> : HandleBase where T : struct, IVMObject {
+		public T Value { get { return new T { Start = Start }; } }
+
+		public Handle( T value ) : base( value.Start ) { }
 	}
 }

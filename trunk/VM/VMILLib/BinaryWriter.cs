@@ -9,7 +9,6 @@ namespace VMILLib {
 		bool isDisposed;
 		Stream output;
 		int pos;
-		List<int> integerMap, stringMap;
 		Dictionary<MessageHandler, int> handlers;
 		Dictionary<Class, int> classes;
 
@@ -20,8 +19,6 @@ namespace VMILLib {
 		public BinaryWriter( string output ) : this( new FileStream( output, FileMode.Create, FileAccess.Write ) ) { }
 
 		public void Write( Assembly assembly ) {
-			integerMap = new List<int>();
-			stringMap = new List<int>();
 			handlers = new Dictionary<MessageHandler, int>();
 			classes = new Dictionary<Class, int>();
 
@@ -51,11 +48,11 @@ namespace VMILLib {
 			uint size = (uint) (6 + cls.InheritsFrom.Count + cls.Handlers.Count * 2 + cls.Classes.Count * 2);
 
 			Write( (size << 4) | (uint) InternalObjectType.Class );
-			Write( (stringMap[cls.Name.Index] << 3) | (int) cls.Visibility );
+			Write( (cls.Name.Index << 3) | (int) cls.Visibility );
 			Write( 0 );
 			Write( (cls.Fields.Count << 18) | ((0x00003FFF & cls.Handlers.Count) << 4) | (cls.InheritsFrom.Count & 0x0000000F) );
 
-			cls.InheritsFrom.ForEach( s => Write( stringMap[s.Index] ) );
+			cls.InheritsFrom.ForEach( s => Write( s.Index ) );
 
 			if (cls.DefaultHandler == null)
 				Write( 0, 0 );
@@ -63,10 +60,10 @@ namespace VMILLib {
 				Write( (int) VisibilityModifier.Private, handlers[cls.DefaultHandler] );
 
 			foreach (var handler in cls.Handlers)
-				Write( (stringMap[handler.Name.Index] << 3) | (int) handler.Visibility, handlers[handler] );
+				Write( (handler.Name.Index << 3) | (int) handler.Visibility, handlers[handler] );
 
 			foreach (var innerCls in cls.Classes)
-				Write( (stringMap[innerCls.Name.Index] << 3) | (int) innerCls.Visibility, classes[innerCls] );
+				Write( (innerCls.Name.Index << 3) | (int) innerCls.Visibility, classes[innerCls] );
 
 			return true;
 		}
@@ -90,7 +87,7 @@ namespace VMILLib {
 			uint size = (uint) handler.Instructions.Where( i => !(i is Label) ).Count() + 3;
 
 			Write( (size << 4) | (uint) InternalObjectType.VMILMessageHandler );
-			Write( ((handler.Name == null ? 0 : stringMap[handler.Name.Index]) << 3) | (int) handler.Visibility );
+			Write( ((handler.Name == null ? 0 : handler.Name.Index) << 3) | (int) handler.Visibility );
 			Write( (handler.Arguments.Count << 16) | ((handler.Arguments.Count + handler.Locals.Count)) );
 			WriteInstructions( handler.Instructions );
 		}
@@ -116,7 +113,15 @@ namespace VMILLib {
 						eins |= (uint) (ins.MessageHandler.Arguments.Contains( (string) ins.Operand ) ? ins.MessageHandler.Arguments.IndexOf( (string) ins.Operand ) : ins.MessageHandler.Arguments.Count + ins.MessageHandler.Locals.IndexOf( (string) ins.Operand ));
 						break;
 					case OpCode.PushLiteral:
-						eins |= (uint) (ins.Operand is CString ? stringMap[((CString) ins.Operand).Index] : integerMap[((CInteger) ins.Operand).Index]);
+						if (ins.Operand is CString)
+							eins = ((uint) OpCode.PushLiteralString << 27) | (uint) ((CString) ins.Operand).Index;
+						else {
+							var i = ((CInteger) ins.Operand).Value;
+							if (Math.Abs( i ) > 0x03FFFFFF)
+								eins = ((uint) OpCode.PushLiteralInt << 27) | (uint) ((CInteger) ins.Operand).Index;
+							else
+								eins = ((uint) OpCode.PushLiteralIntInline << 27) | (uint) (i < 0 ? 1 << 26 : 0) | (uint) Math.Abs( i );
+						}
 						break;
 					case OpCode.Pop:
 					case OpCode.Dup:
@@ -194,7 +199,6 @@ namespace VMILLib {
 			Write( (uint) pool.Count );
 
 			foreach (var s in pool.Select( s => s.Value )) {
-				stringMap.Add( pos );
 				Write( s.Length );
 				var bytes = Encoding.Unicode.GetBytes( s );
 
@@ -212,10 +216,8 @@ namespace VMILLib {
 		void WriteIntegers( CIntegerPool pool ) {
 			Write( (uint) pool.Count );
 
-			foreach (var i in pool.Select( i => i.Value )) {
-				integerMap.Add( pos );
+			foreach (var i in pool.Select( i => i.Value ))
 				Write( i );
-			}
 		}
 
 		void Write( IEnumerable<uint> arr ) {

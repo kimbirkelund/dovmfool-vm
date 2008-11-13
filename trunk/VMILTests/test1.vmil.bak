@@ -6,7 +6,9 @@
       
       load-field initialized
       jump-if-true alreadyInitialized
+
       store-local args
+
       load-local args
       push-literal "argument-count:0"
       send-message
@@ -14,19 +16,29 @@
       push-literal "are-equal:1"
       send-message
       jump-if-false invalidArgCount
+
       load-local args
       push-literal 0
       push-literal "get-argument:1"
       send-message
       store-field console
+
       load-local args
       push-literal 1
       push-literal "get-argument:1"
       send-message
       store-field bar2
+
       push-literal 1
       store-field initialized
       return-void
+
+      push-literal 10
+      push-literal "Bob er sej"
+      push-literal -10
+      push-literal 1073741824
+      push-literal -1073741824
+
     invalidArgCount: 
       .try {
         push-literal "System.ArgumentOutOfRange"
@@ -39,7 +51,7 @@
       } catch {
         load-field console
         push-literal "jsdlkfjl"
-        push-literal "write-line:0"
+        push-literal "write-line:1"
 	send-message
       }
     alreadyInitialized: 
