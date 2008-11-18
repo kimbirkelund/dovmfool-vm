@@ -24,6 +24,7 @@ identifier [_a-zA-Z][_a-zA-Z0-9]*
 <0> ".default" return (int) Tokens.Default;
 <0> ".locals" return (int) Tokens.Locals;
 <0> ".fields" return (int) Tokens.Fields;
+<0> ".entrypoint" return (int) Tokens.Entrypoint;
 
 <0> "store-field" return (int) Tokens.StoreField;
 <0> "load-field" return (int) Tokens.LoadField;

@@ -29,7 +29,7 @@ namespace VMILDisassembler {
 			var inputFile = inputFileArg.Value;
 			var outputFile = outputFileArg.Value;
 			if (!outputFileArg.IsPresent)
-				outputFile = Path.ChangeExtension( inputFileArg.Value, ".vmil" );
+				outputFile = null;
 
 			var logger = new Logger();
 			logger.Handlers.Add( new ConsoleLogHandler() );
@@ -38,8 +38,13 @@ namespace VMILDisassembler {
 			using (var reader = new VMILLib.BinaryReader( inputFile ))
 				program = reader.Read();
 
-			using (var writer = new VMILLib.SourceWriter( outputFile ))
-				writer.Write( program);
+			if (outputFile == null) {
+				var writer = new VMILLib.SourceWriter( Console.Out );
+				writer.Write( program );
+				Console.Out.Flush();
+			} else
+				using (var writer = new VMILLib.SourceWriter( outputFile ))
+					writer.Write( program );
 
 			return 0;
 		}

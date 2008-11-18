@@ -60,6 +60,32 @@ namespace VM {
 	}
 
 	[global::System.Serializable]
+	public class ArgumentException : VMAppException {
+		public readonly string Argument;
+
+		public ArgumentException() { }
+		public ArgumentException( string message ) { }
+		public ArgumentException( string message, string argument ) : base( message ) { this.Argument = argument; }
+		public ArgumentException( string message, Exception inner ) : base( message, inner ) { }
+		protected ArgumentException(
+		  System.Runtime.Serialization.SerializationInfo info,
+		  System.Runtime.Serialization.StreamingContext context )
+			: base( info, context ) { }
+	}
+
+	[global::System.Serializable]
+	public class ArgumentOutOfBoundsException : ArgumentException {
+		public ArgumentOutOfBoundsException() { }
+		public ArgumentOutOfBoundsException( string message, string argument ) : base( message, argument ) { }
+		public ArgumentOutOfBoundsException( string argument ) : this( "The argument was out of bounds for the specified operation.", argument ) { }
+		public ArgumentOutOfBoundsException( string message, Exception inner ) : base( message, inner ) { }
+		protected ArgumentOutOfBoundsException(
+		  System.Runtime.Serialization.SerializationInfo info,
+		  System.Runtime.Serialization.StreamingContext context )
+			: base( info, context ) { }
+	}
+
+	[global::System.Serializable]
 	public class MessageNotUnderstoodException : VMAppException {
 		/// <summary>
 		/// Gets the message that was not understood.
@@ -83,5 +109,19 @@ namespace VM {
 			this.InvalidMessage = invalidMessage;
 			this.Object = obj;
 		}
+	}
+
+	[global::System.Serializable]
+	public class ClassNotFoundException : VMAppException {
+		public readonly Handle<VMObjects.String> ClassName;
+		public ClassNotFoundException() { }
+		public ClassNotFoundException( Handle<VMObjects.String> className ) : base( "Class not found" ) { ClassName = className; }
+		public ClassNotFoundException( string message, Handle<VMObjects.String> className ) : base( message ) { ClassName = className; }
+		public ClassNotFoundException( string message ) : base( message ) { }
+		public ClassNotFoundException( string message, Exception inner ) : base( message, inner ) { }
+		protected ClassNotFoundException(
+		  System.Runtime.Serialization.SerializationInfo info,
+		  System.Runtime.Serialization.StreamingContext context )
+			: base( info, context ) { }
 	}
 }

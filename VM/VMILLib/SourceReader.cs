@@ -14,7 +14,6 @@ namespace VMILLib {
 
 		Assembly assembly;
 		Dictionary<string, CString> strings = new Dictionary<string, CString>();
-		Dictionary<int, CInteger> integers = new Dictionary<int, CInteger>();
 
 		public SourceReader( Stream input ) {
 			this.input = input;
@@ -36,9 +35,8 @@ namespace VMILLib {
 
 			var classes = new ClassList( parser.Classes.Select( c => ReadClass( c ) ) );
 			var stringPool = new CStringPool( strings.Values );
-			var integerPool = new CIntegerPool( integers.Values );
 
-			return new Assembly( stringPool, integerPool, classes );
+			return new Assembly( stringPool, classes );
 		}
 
 		Class ReadClass( Parser.Class cls ) {
@@ -63,7 +61,7 @@ namespace VMILLib {
 			var locals = handler.Locals;
 			var instructions = ReadInstructions( handler.Instructions );
 
-			return new MessageHandler( visibility, name, arguments, locals, instructions );
+			return new MessageHandler( visibility, name, arguments, locals, instructions, handler.IsEntrypoint );
 		}
 
 		int VerifyTryCatches( Parser.List<Parser.Instruction> inss, int index ) {
@@ -111,7 +109,7 @@ namespace VMILLib {
 				case OpCode.LoadLocal:
 					return new Instruction( ins.OpCode, (string) ins.Operand );
 				case OpCode.PushLiteral:
-					return new Instruction( OpCode.PushLiteral, ins.Operand is string ? (object) ReadString( (string) ins.Operand ) : ReadInteger( (int) ins.Operand ) );
+					return new Instruction( OpCode.PushLiteral, ins.Operand is string ? (object) ReadString( (string) ins.Operand ) : (int) ins.Operand );
 				case OpCode.Jump:
 				case OpCode.JumpIfTrue:
 				case OpCode.JumpIfFalse:
@@ -144,12 +142,6 @@ namespace VMILLib {
 			if (!strings.ContainsKey( str ))
 				strings.Add( str, new CString( strings.Count, str ) );
 			return strings[str];
-		}
-
-		CInteger ReadInteger( int i ) {
-			if (!integers.ContainsKey( i ))
-				integers.Add( i, new CInteger( integers.Count, i ) );
-			return integers[i];
 		}
 
 		#region IDisposable Members

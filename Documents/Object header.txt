@@ -4,6 +4,8 @@
                   |                  |
                   |                  \--  =0: AppObject
                   |                       =1: AppObjectSet
+                  |                       =2: String
+                  |                       =3: Integer
                   |                      >=4: Internal object type
                   |
                   \--------------------- Object size in words

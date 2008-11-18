@@ -10,6 +10,7 @@ namespace VMILLib {
 		public readonly IList<string> Arguments;
 		public readonly IList<string> Locals;
 		public readonly InstructionList Instructions;
+		public readonly bool IsEntrypoint;
 
 		Class @class;
 		public Class Class {
@@ -21,13 +22,14 @@ namespace VMILLib {
 			}
 		}
 
-		public MessageHandler( VisibilityModifier visibility, CString name, IEnumerable<string> arguments, IEnumerable<string> locals, InstructionList instructions ) {
+		public MessageHandler( VisibilityModifier visibility, CString name, IEnumerable<string> arguments, IEnumerable<string> locals, InstructionList instructions, bool isEntrypoint ) {
 			this.Visibility = visibility;
 			this.Name = name;
 			this.Instructions = instructions;
 			this.Arguments = arguments.ToList().AsReadOnly();
 			this.Locals = locals.ToList().AsReadOnly();
 			this.Instructions.ForEach( i => i.MessageHandler = this );
+			this.IsEntrypoint = isEntrypoint;
 		}
 
 		public override string ToString() {

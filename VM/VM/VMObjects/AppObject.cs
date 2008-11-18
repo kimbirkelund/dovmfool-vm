@@ -2,13 +2,23 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using VMILLib;
 
 namespace VM.VMObjects {
 	public struct AppObject : IVMObject {
+		#region Constants
 		public const int CLASS_OFFSET = 1;
 		public const int FIELDS_OFFSET = 2;
+		#endregion
 
-		public const int TypeId = 0;
+		#region Properties
+		public TypeId TypeId { get { return VMILLib.TypeId.AppObject; } }
+		public int Size { get { return this[ObjectBase.OBJECT_HEADER_OFFSET] >> ObjectBase.OBJECT_SIZE_RSHIFT; } }
+
+		public Word this[int index] {
+			get { return VirtualMachine.MemoryManager[Start + index]; }
+			set { VirtualMachine.MemoryManager[Start + index] = value; }
+		}
 
 		int start;
 		public int Start {
@@ -16,61 +26,50 @@ namespace VM.VMObjects {
 			set { start = value; }
 		}
 
+		public Class Class { get { return (Class) this[AppObject.CLASS_OFFSET]; } }
+		#endregion
+
+		#region Casts
 		public static implicit operator int( AppObject cls ) {
 			return cls.start;
 		}
 
-		public static implicit operator AppObject( int cls ) {
+		public static explicit operator AppObject( int cls ) {
 			return new AppObject { start = cls };
 		}
-	}
+		#endregion
 
+		#region Instance methods
 
-	public static class ExtAppObject {
-		public static Class Class( this AppObject obj ) {
-			return (Class) obj.Get( AppObject.CLASS_OFFSET );
+		public bool Extends( Class cls ) {
+			return this.Class.Extends( cls );
 		}
 
-		public static bool Extends( this AppObject appObject, Class cls ) {
-			return appObject.Class().Extends( cls );
-		}
-
-		public static Class GetFieldType( this AppObject obj, int index ) {
-			if (index < 0 || obj.Class().FieldCount() <= index)
+		public Class GetFieldType( int index ) {
+			if (index < 0 || this.Class.FieldCount <= index)
 				throw new ArgumentOutOfRangeException( "Index must be less than the number of fields." );
 
-			return (Class) obj.Get( AppObject.FIELDS_OFFSET + index * 2 );
+			return (Class) this[AppObject.FIELDS_OFFSET + index * 2];
 		}
 
-		public static Word GetFieldValue( this AppObject obj, int index ) {
-			if (index < 0 || obj.Class().FieldCount() <= index)
+		public Word GetFieldValue( int index ) {
+			if (index < 0 || this.Class.FieldCount <= index)
 				throw new ArgumentOutOfRangeException( "Index must be less than the number of fields." );
 
-			return obj.Get( AppObject.FIELDS_OFFSET + index * 2 + 1 );
+			return this[AppObject.FIELDS_OFFSET + index * 2 + 1];
 		}
 
-		public static void SetField( this AppObject obj, int index, Class cls, Word value ) {
-			if (index < 0 || obj.Class().FieldCount() <= index)
+		public void SetField( int index, Class cls, Word value ) {
+			if (index < 0 || this.Class.FieldCount <= index)
 				throw new ArgumentOutOfRangeException( "Index must be less than the number of fields." );
 
-			obj.Set( AppObject.FIELDS_OFFSET + index * 2, cls );
-			obj.Set( AppObject.FIELDS_OFFSET + index * 2 + 1, value );
+			this[AppObject.FIELDS_OFFSET + index * 2] = cls;
+			this[AppObject.FIELDS_OFFSET + index * 2 + 1] = value;
 		}
 
-		public static void SetField( this AppObject obj, int index, Class cls, Integer value ) {
-			obj.SetField( cls, index, value );
+		public void SetField( int index, Class cls, AppObject value ) {
+			this.SetField( index, cls, value );
 		}
-
-		public static void SetField( this AppObject obj, int index, Class cls, String value ) {
-			obj.SetField( cls, index, value );
-		}
-
-		public static void SetField( this AppObject obj, int index, Class cls, AppObject value ) {
-			obj.SetField( cls, index, value );
-		}
-
-		public static void SetField( this AppObject obj, int index, Class cls, AppObjectSet value ) {
-			obj.SetField( cls, index, value );
-		}
+		#endregion
 	}
 }

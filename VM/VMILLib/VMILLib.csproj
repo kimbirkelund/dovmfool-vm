@@ -48,12 +48,9 @@
     <Compile Include="Assembly.cs" />
     <Compile Include="BinaryReader.cs" />
     <Compile Include="BinaryWriter.cs" />
-    <Compile Include="CIntegerPool.cs" />
     <Compile Include="Class.cs" />
     <Compile Include="ClassList.cs" />
-    <Compile Include="CInteger.cs" />
     <Compile Include="CString.cs" />
-    <Compile Include="Extensions.cs" />
     <Compile Include="Instruction.cs" />
     <Compile Include="InstructionList.cs" />
     <Compile Include="Label.cs" />

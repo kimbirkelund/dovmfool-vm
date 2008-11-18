@@ -13,8 +13,8 @@ namespace VMILLib {
 		LoadArgument = 4,
 		PushLiteral = -2,
 		PushLiteralString = 5,
-		PushLiteralIntInline = 6,
-		PushLiteralInt = 7,
+		PushLiteralInt = 6,
+		PushLiteralIntExtend = 7,
 		Pop = 8,
 		Dup = 9,
 		NewInstance = 10,
@@ -37,9 +37,17 @@ namespace VMILLib {
 		None = 3
 	}
 
-	enum InternalObjectType : uint {
-		Class = 4,
-		DelegateMessageHandler = 5,
-		VMILMessageHandler = 6
+	public enum TypeId : int {
+		AppObject = 0,
+		AppObjectSet = 1,
+		String = 2,
+		Integer = 3,
+		Char = 4,
+		Class = 5,
+		DelegateMessageHandler = 6,
+		VMILMessageHandler = 7,
+		ClassManager = 8,
+		List = 9,
+		Array = 10
 	}
 }

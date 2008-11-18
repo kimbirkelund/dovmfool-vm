@@ -9,7 +9,7 @@ ________________________________________
 |    field, handler, extends count     |                                         |                        01: protected
 ----------------------------------------                                         |                        10: public
 |  constant-pool indices for extends   |                                         |
-|                .                     |                                         \----------------------- Pointer to name
+|                .                     |                                         \----------------------- Index of name
 |                .                     |
 |                .                     |
 |                .                     |
@@ -17,17 +17,17 @@ ________________________________________
 |  pointer to default message handler  |
 ----------------------------------------
 |        message handler header        | ---------------------> 0000 0000 0000 0000 0000 0000 0000 0000
-| pointer to handler/internal delegate |                        |                                  || |
-|                .                     |                        ---------------------------------------
+| pointer to handler/internal delegate |                        |                                | |  |
+|                .                     |                        ---------------------------------- ----
 |                .                     |                                         |                       
-|                .                     |                                         |                   \-- 3. bit: 1 if internal method, 0 if not
-|                .                     |                                         |                       x01: protected
-----------------------------------------                                         |                       x10: public
-|             class header             |                                         |                       x00: private
-|     class declaration pointers       |                                         |                       
-|                .                     |                                         \---------------------- Pointer to name
-|                .                     |
-|                .                     |
+|                .                     |                                         |                   \-- x is 1 if internal method, 0 if not
+|                .                     |                                         |                       y is 1 if entry point, 0 if nots
+----------------------------------------                                         |                       yx11: None
+|             class header             |                                         |                       yx01: protected
+|     class declaration pointers       |                                         |                       yx10: public
+|                .                     |                                         |                       yx00: private
+|                .                     |                                         |
+|                .                     |                                         \---------------------- Index of name
 |                .                     |
 ----------------------------------------                                         
 
@@ -35,8 +35,8 @@ ________________________________________
 The 4. word, def-handler & first class offset, is the offsets to the default handler
 and the first class declaration encoded in one word such that:
 
-defHand = obj + (obj[3] & 0x0000FFFF)
-firstClassDec = obj + ((obj[3] & 0xFFFF0000) >> 16)
+defHand = obj + ((obj[3] & 0x0003FFF0) >> 4)
+firstClassDec = obj + 6 + ((obj[3] & 0x0003FFF0) >> 4) + (obj[3] & 0x0000000F)
 
 
 Message handler:

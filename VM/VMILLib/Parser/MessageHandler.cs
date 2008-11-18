@@ -10,14 +10,16 @@ namespace VMILLib.Parser {
 		public readonly List<string> Arguments;
 		public readonly List<string> Locals;
 		public readonly List<Instruction> Instructions;
+		public readonly bool IsEntrypoint;
 
-		public MessageHandler( LexLocation location, VisibilityModifier visibility, string name, List<string> arguments, List<string> locals, List<Instruction> instructions )
+		public MessageHandler( LexLocation location, VisibilityModifier visibility, string name, List<string> arguments, List<string> locals, List<Instruction> instructions, bool isEntrypoint )
 			: base( location ) {
 			this.Visibility = visibility;
 			this.Name = name;
 			this.Instructions = instructions;
 			this.Arguments = arguments;
 			this.Locals = locals;
+			this.IsEntrypoint = isEntrypoint;
 		}
 	}
 }
