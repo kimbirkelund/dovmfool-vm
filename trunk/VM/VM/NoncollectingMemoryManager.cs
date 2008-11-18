@@ -5,14 +5,14 @@ using System.Text;
 
 namespace VM {
 	partial class NoncollectingMemoryManager : MemoryManagerBase {
-		uint[] memory;
+		Word[] memory;
 		int position;
 
 		public override int SizeInWords { get { return memory.Length; } }
 		public override int FreeSizeInWords { get { return memory.Length - position; } }
 		public override int AllocatedSizeInWords { get { return position; } }
 
-		public override Word this[int index] {
+		internal override Word this[int index] {
 			get { return memory[index]; }
 			set { memory[index] = value; }
 		}
@@ -21,13 +21,17 @@ namespace VM {
 			if (size < 0)
 				throw new ArgumentOutOfRangeException( "size" );
 
-			memory = new uint[size];
+			memory = new Word[size];
 		}
 
-		public override int Allocate( int size ) {
+		internal override T Allocate<T>( int size ) {
 			var pos = position;
+			size += 1;
 			position += size;
-			return pos;
+
+			var obj = new T() { Start = pos };
+			memory[pos] = (size << 4) | (((int) obj.TypeId) & 0x0000000F);
+			return obj;
 		}
 	}
 }

@@ -60,27 +60,31 @@ namespace VM {
 		public static explicit operator VMILLib.OpCode( Word w ) { return (VMILLib.OpCode) w.v; }
 		public static explicit operator VMILLib.VisibilityModifier( Word w ) { return (VMILLib.VisibilityModifier) w.v; }
 
-		public static explicit operator ObjectBase( Word w ) { return (int) w.v; }
-		public static explicit operator AppObject( Word w ) { return (int) w.v; }
-		public static explicit operator AppObjectSet( Word w ) { return (int) w.v; }
-		public static explicit operator Class( Word w ) { return (int) w.v; }
-		public static explicit operator ClassManager( Word w ) { return (int) w.v; }
-		public static explicit operator MessageHandlerBase( Word w ) { return (int) w.v; }
-		public static explicit operator VMILMessageHandler( Word w ) { return (int) w.v; }
-		public static explicit operator DelegateMessageHandler( Word w ) { return (int) w.v; }
-		public static explicit operator VMObjects.String( Word w ) { return (int) w.v; }
-		public static explicit operator Integer( Word w ) { return (int) w.v; }
+		public static explicit operator ObjectBase( Word w ) { return new ObjectBase { Start = (int) w.v }; }
+		public static explicit operator AppObject( Word w ) { return new AppObject { Start = (int) w.v }; }
+		public static explicit operator AppObjectSet( Word w ) { return new AppObjectSet { Start = (int) w.v }; }
+		public static explicit operator Class( Word w ) { return new Class { Start = (int) w.v }; }
+		public static explicit operator ClassManager( Word w ) { return new ClassManager { Start = (int) w.v }; }
+		public static explicit operator MessageHandlerBase( Word w ) { return new MessageHandlerBase { Start = (int) w.v }; }
+		public static explicit operator VMILMessageHandler( Word w ) { return new VMILMessageHandler { Start = (int) w.v }; }
+		public static explicit operator DelegateMessageHandler( Word w ) { return new DelegateMessageHandler { Start = (int) w.v }; }
+		public static explicit operator VMObjects.String( Word w ) { return new VMObjects.String { Start = (int) w.v }; }
+		public static explicit operator Integer( Word w ) { return new Integer { Start = (int) w.v }; }
+		public static explicit operator List( Word w ) { return new List { Start = (int) w.v }; }
+		public static explicit operator VMObjects.Array( Word w ) { return new VMObjects.Array { Start = (int) w.v }; }
 
-		public static implicit operator Word( ObjectBase w ) { return (int) w; }
-		public static implicit operator Word( AppObject w ) { return (int) w; }
-		public static implicit operator Word( AppObjectSet w ) { return (int) w; }
-		public static implicit operator Word( Class w ) { return (int) w; }
-		public static implicit operator Word( ClassManager w ) { return (int) w; }
-		public static implicit operator Word( MessageHandlerBase w ) { return (int) w; }
-		public static implicit operator Word( VMILMessageHandler w ) { return (int) w; }
-		public static implicit operator Word( DelegateMessageHandler w ) { return (int) w; }
-		public static implicit operator Word( VMObjects.String w ) { return (int) w; }
-		public static implicit operator Word( Integer w ) { return (int) w; }
+		public static implicit operator Word( ObjectBase w ) { return w.Start; }
+		public static implicit operator Word( AppObject w ) { return w.Start; }
+		public static implicit operator Word( AppObjectSet w ) { return w.Start; }
+		public static implicit operator Word( Class w ) { return w.Start; }
+		public static implicit operator Word( ClassManager w ) { return w.Start; }
+		public static implicit operator Word( MessageHandlerBase w ) { return w.Start; }
+		public static implicit operator Word( VMILMessageHandler w ) { return w.Start; }
+		public static implicit operator Word( DelegateMessageHandler w ) { return w.Start; }
+		public static implicit operator Word( VMObjects.String w ) { return w.Start; }
+		public static implicit operator Word( Integer w ) { return w.Start; }
+		public static implicit operator Word( List w ) { return w.Start; }
+		public static implicit operator Word( VM.VMObjects.Array w ) { return w.Start; }
 		#endregion
 	}
 }

@@ -5,7 +5,7 @@
 %YYSTYPE VMILLib.Parser.ASTNode
 %YYLTYPE VMILLib.Parser.LexLocation
 
-%token Class Extends Fields Handler Default Locals StoreField LoadField StoreLocal LoadLocal LoadArgument PushLiteral Pop Dup NewInstance SendMessage Return ReturnVoid Jump JumpIfTrue JumpIfFalse Throw Try Catch Colon LeftParen RightParen LeftCBrace RightCBrace Comma Identifier String Integer Public Private Protected
+%token Class Extends Fields Entrypoint Handler Default Locals StoreField LoadField StoreLocal LoadLocal LoadArgument PushLiteral Pop Dup NewInstance SendMessage Return ReturnVoid Jump JumpIfTrue JumpIfFalse Throw Try Catch Colon LeftParen RightParen LeftCBrace RightCBrace Comma Identifier String Integer Public Private Protected
 
 %start program
 
@@ -45,14 +45,19 @@ handlers :
 |	Handler handler handlers { $$ = (MessageHandler) $2 + (List<MessageHandler>) $3; };
 
 handler : 
-	visibility Identifier LeftParen names RightParen LeftCBrace locals instructions RightCBrace {
+	visibility Identifier LeftParen names RightParen LeftCBrace entrypoint locals instructions RightCBrace {
 		$$ = new MessageHandler(@$, 
 				$1.As<VisibilityModifier>(), 
 				$2.As<string>(), 
 				(List<string>) $4, 
-				(List<string>) $7, 
-				(List<Instruction>) $8);
+				(List<string>) $8, 
+				(List<Instruction>) $9,
+				$7.As<bool>());
 	};
+	
+entrypoint :
+	{ $$ = false.ToNode(); }
+| EntryPoint { $$ = true.ToNode(); };
 	
 defaulthandler :
 	{ $$ = null; }
@@ -62,7 +67,8 @@ defaulthandler :
 				null, 
 				new List<string>(), 
 				(List<string>) $3, 
-				(List<Instruction>) $4);
+				(List<Instruction>) $4,
+				false);
 	};
 	
 locals : 

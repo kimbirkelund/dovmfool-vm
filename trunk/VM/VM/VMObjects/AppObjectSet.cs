@@ -2,37 +2,47 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using VMILLib;
 
 namespace VM.VMObjects {
 	public struct AppObjectSet : IVMObject {
+		#region Constants
 		public const uint OBJ_HEADER_APPOBJECTSET_OBJECT_COUNT = 0xFFFFFFF0;
 		public const int OBJ_HEADER_APPOBJECTSET_OBJECT_COUNT_RSHIFT = 4;
+		#endregion
 
-		public const int TypeId = 1;
+		#region Properties
+		public TypeId TypeId { get { return VMILLib.TypeId.AppObjectSet; } }
+		public int Size { get { return this[ObjectBase.OBJECT_HEADER_OFFSET] >> ObjectBase.OBJECT_SIZE_RSHIFT; } }
+
+		public Word this[int index] {
+			get { return VirtualMachine.MemoryManager[Start + index]; }
+			set { VirtualMachine.MemoryManager[Start + index] = value; }
+		}
 
 		int start;
 		public int Start {
 			get { return start; }
 			set { start = value; }
 		}
+		#endregion
 
+		#region Casts
 		public static implicit operator int( AppObjectSet cls ) {
 			return cls.start;
 		}
 
-		public static implicit operator AppObjectSet( int cls ) {
+		public static explicit operator AppObjectSet( int cls ) {
 			return new AppObjectSet { start = cls };
 		}
 
 		public static implicit operator AppObject( AppObjectSet s ) {
-			return (int) s;
+			return new AppObject { Start = s.start };
 		}
 
 		public static explicit operator AppObjectSet( AppObject obj ) {
-			return (int) obj;
+			return new AppObjectSet { start = obj.Start };
 		}
-	}
-
-	class ExtAppObjectSet {
+		#endregion
 	}
 }

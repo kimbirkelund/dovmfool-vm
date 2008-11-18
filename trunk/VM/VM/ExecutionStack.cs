@@ -62,14 +62,14 @@ namespace VM {
 		}
 
 		public void PushFrame( ReturnAddress returnAddress, VMILMessageHandler callee ) {
-			Push( TYPE_RETURN_HANDLER, returnAddress.Handler );
-			Push( TYPE_RETURN_INSTRUCTION_OFFSET, returnAddress.InstructionOffset );
-			Push( TYPE_BASE_POINTER, basePointer );
-			Push( TYPE_FRAME_BOUNDARY, frameBoundary );
-			frameBoundary = stackPointer - ARGUMENT_OFFSET - 1 - callee.ArgumentCount();
+			Push((Class) TYPE_RETURN_HANDLER, returnAddress.Handler );
+			Push( (Class) TYPE_RETURN_INSTRUCTION_OFFSET, returnAddress.InstructionOffset );
+			Push( (Class) TYPE_BASE_POINTER, basePointer );
+			Push( (Class) TYPE_FRAME_BOUNDARY, frameBoundary );
+			frameBoundary = stackPointer - ARGUMENT_OFFSET - 1 - callee.ArgumentCount;
 			basePointer = stackPointer;
 
-			for (var i = 0; i < callee.LocalCount(); i++)
+			for (var i = 0; i < callee.LocalCount; i++)
 				Push( new StackValue() );
 		}
 
@@ -116,13 +116,13 @@ namespace VM {
 
 		void Shrink() {
 			var temp = new StackValue[stack.Length / 2];
-			Array.Copy( stack, temp, stackPointer );
+			System.Array.Copy( stack, temp, stackPointer );
 			stack = temp;
 		}
 
 		void Expand() {
 			var temp = new StackValue[stack.Length * 2];
-			Array.Copy( stack, temp, stackPointer );
+			System.Array.Copy( stack, temp, stackPointer );
 			stack = temp;
 		}
 

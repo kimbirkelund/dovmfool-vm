@@ -2,7 +2,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.30729</ProductVersion>
+    <ProductVersion>9.0.21022</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{3A3CACF8-FD82-456B-BD98-669FEE60C080}</ProjectGuid>
     <OutputType>Library</OutputType>
@@ -46,8 +46,16 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AlgTest.cs" />
+    <Compile Include="AsmDasmTest.cs" />
     <Compile Include="ExtensionsTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="VMObjectsArrayTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\GPPG\GPPG.csproj">
@@ -62,6 +70,17 @@
       <Project>{464D1D09-B6CE-46D1-AC36-F06189FBD142}</Project>
       <Name>VMILLib</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="AsmDasmTestFile.vmil">
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

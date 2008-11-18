@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using Sekhmet;
 
 namespace VMILLib {
 	public sealed class BinaryReader : IDisposable {
@@ -11,7 +12,6 @@ namespace VMILLib {
 		int pos;
 
 		List<CString> strings;
-		List<CInteger> integers;
 		Dictionary<int, MessageHandler> handlers;
 		Dictionary<int, Class> classes;
 
@@ -24,15 +24,13 @@ namespace VMILLib {
 
 		public Assembly Read() {
 			strings = new List<CString>();
-			integers = new List<CInteger>();
 			handlers = new Dictionary<int, MessageHandler>();
 			classes = new Dictionary<int, Class>();
 
-			var intergerPool = ReadIntegers();
 			var stringPool = ReadStrings();
 			ReadMessageHandlers();
 			var classList = ReadClasses();
-			return new Assembly( stringPool, intergerPool, classList );
+			return new Assembly( stringPool, classList );
 		}
 
 		ClassList ReadClasses() {
@@ -44,34 +42,24 @@ namespace VMILLib {
 		}
 
 		void ReadClass() {
-			var pos = this.pos;
-
-			var objHeader = ReadUInt();
-			if ((objHeader & (uint) InternalObjectType.Class) == 0)
-				throw new ArgumentException( "The specified input does constitute a valid VMB file." );
-
-			var wordSize = objHeader >> 4;
-			var handlerHeader = ReadUInt();
-			ReadUInt(); // parent pointer
-			var counts = ReadUInt();
-			var fieldCount = (int) (counts >> 18);
-			var handlerCount = (int) (0x00003FFF & (counts >> 4));
-			var extendsCount = (int) (0x0000000F & counts);
-			var classCount = (int) (wordSize - 6 - extendsCount - handlerCount * 2) / 2;
-			var visibility = (VisibilityModifier) (0x00000003 & handlerHeader);
-			var name = (CString) strings[(int) handlerHeader >> 3];
+			var extendsCount = ReadInt();
+			var fieldCount = ReadInt();
+			var handlerCount = ReadInt();
+			var classCount = ReadInt();
+			var clsHeader = ReadUInt();
+			var visibility = (VisibilityModifier) (0x00000003 & clsHeader);
+			var name = (CString) strings[(int) clsHeader >> 3];
 
 			var extends = new NameList( extendsCount.ForEach( () => (CString) strings[ReadInt()] ) );
 
-			ReadUInt();
 			var defHandlerPointer = ReadInt();
 			var defHandler = defHandlerPointer != 0 ? this.handlers[defHandlerPointer] : null;
 
 			var fields = fieldCount.ForEach( i => "field_" + i );
-			var handlers = new MessageHandlerList( handlerCount.ForEach( () => { ReadUInt(); return this.handlers[ReadInt()]; } ) );
-			var classes = new ClassList( classCount.ForEach( () => { ReadUInt(); return this.classes[ReadInt()]; } ) );
+			var handlers = new MessageHandlerList( handlerCount.ForEach( () => this.handlers[ReadInt()] ) );
+			var classes = new ClassList( classCount.ForEach( () => this.classes[ReadInt()] ) );
 
-			this.classes.Add( pos, new Class( visibility, name, extends, fields, defHandler, handlers, classes ) );
+			this.classes.Add( this.classes.Count + 1, new Class( visibility, name, extends, fields, defHandler, handlers, classes ) );
 		}
 
 		void ReadMessageHandlers() {
@@ -81,22 +69,17 @@ namespace VMILLib {
 		}
 
 		void ReadMessageHandler() {
-			var pos = this.pos;
-
-			var objHeader = ReadUInt();
-			if ((objHeader & (uint) InternalObjectType.VMILMessageHandler) == 0)
-				throw new ArgumentException( "The specified input does constitute a valid VMB file." );
-
-			var wordSize = objHeader >> 4;
+			var argCount = ReadInt();
+			var localCount = ReadInt();
+			var instructionCount = ReadInt();
 			var handlerHeader = ReadUInt();
-			var counts = ReadUInt();
-			var argCount = (int) (counts >> 16);
-			var localCount = (int) (0x0000FFFF & counts);
-			var visibility = (VisibilityModifier) (0x00000003 & handlerHeader);
-			var name = visibility == VisibilityModifier.None ? null : (CString) strings[(int) handlerHeader >> 3];
-			var inss = ReadInstructions( (int) (wordSize - 3), argCount, localCount );
 
-			this.handlers.Add( pos, new MessageHandler( visibility, name, argCount.ForEach( i => "argument_" + i ), (localCount - argCount).ForEach( i => "local_" + i ), inss ) );
+			var visibility = (VisibilityModifier) (0x00000003 & handlerHeader);
+			var isEntryPoint = (0x00000008 & handlerHeader) != 0;
+			var name = visibility == VisibilityModifier.None ? null : (CString) strings[(int) handlerHeader >> 4];
+			var inss = ReadInstructions( instructionCount, argCount, localCount );
+
+			this.handlers.Add( this.handlers.Count + 1, new MessageHandler( visibility, name, argCount.ForEach( i => "argument_" + i ), (localCount - argCount).ForEach( i => "local_" + i ), inss, isEntryPoint ) );
 		}
 
 		InstructionList ReadInstructions( int count, int argumentCount, int localCount ) {
@@ -131,12 +114,17 @@ namespace VMILLib {
 						break;
 					case OpCode.PushLiteralInt:
 						opcode = OpCode.PushLiteral;
-						actOperand = integers[(int) operand];
+						actOperand = (int) (operand & 0x03FFFFFF) * ((operand & 0x04000000) != 0 ? -1 : 1);
 						break;
-					case OpCode.PushLiteralIntInline:
+					case OpCode.PushLiteralIntExtend:
 						opcode = OpCode.PushLiteral;
-						actOperand = (operand & 0x03FFFFFF) * ((operand & 0x04000000) != 0 ? -1 : 1);
-						break;
+						var j1 = (int) inss[--i].Operand;
+						var j2 = (operand & 0x03FFFFFF) * ((operand & 0x04000000) != 0 ? -1 : 1);
+#pragma warning disable 0675
+						var j = (j1 << 16) | j2;
+#pragma warning restore 0675
+						inss[i] = new Instruction( OpCode.PushLiteral, j );
+						continue;
 					case OpCode.Pop:
 					case OpCode.Dup:
 					case OpCode.NewInstance:
@@ -163,19 +151,6 @@ namespace VMILLib {
 			labels.Keys.OrderByDescending( i => i ).ForEach( i => inss.Insert( (int) i, labels[i] ) );
 
 			return new InstructionList( inss );
-		}
-
-		CIntegerPool ReadIntegers() {
-			int intCount = ReadInt();
-			CInteger[] ints = new CInteger[intCount];
-
-			for (int i = 0; i < intCount; i++) {
-				var pos = this.pos;
-				ints[i] = new CInteger( i, ReadInt() );
-				this.integers.Add( ints[i] );
-			}
-
-			return new CIntegerPool( ints );
 		}
 
 		CStringPool ReadStrings() {

@@ -14,6 +14,10 @@ namespace VMILLib {
 			this.output = new StructuredWriter( new StreamWriter( output ), "  " );
 		}
 
+		public SourceWriter( TextWriter output ) {
+			this.output = new StructuredWriter( output );
+		}
+
 		public SourceWriter( string output ) : this( new FileStream( output, FileMode.Create, FileAccess.Write ) ) { }
 
 		public void Write( Assembly assembly ) {
@@ -21,7 +25,7 @@ namespace VMILLib {
 		}
 
 		void WriteClass( Class cls ) {
-			output.WriteLine( ".class " + cls.Visibility.ToString().ToLower() + " " + cls.Name + (cls.InheritsFrom.Count != 0 ? " extends " + cls.InheritsFrom.Join( ", " ) + " " : "") + " {" );
+			output.WriteLine( ".class " + cls.Visibility.ToString().ToLower() + " " + cls.Name + (cls.InheritsFrom.Count != 0 ? " extends " + cls.InheritsFrom.Join( ", " ) + " " : "") + "{" );
 			output.IndentationLevel++;
 
 			var actions = new List<Action>();
@@ -56,6 +60,8 @@ namespace VMILLib {
 			output.IndentationLevel += 2;
 
 			var actions = new List<Action>();
+			if (handler.IsEntrypoint)
+				actions.Add( () => output.WriteLine( ".entrypoint" ) );
 
 			if (handler.Locals.Count != 0)
 				actions.Add( () => output.WriteLine( ".locals { " + handler.Locals.Join( ", " ) + " }" ) );

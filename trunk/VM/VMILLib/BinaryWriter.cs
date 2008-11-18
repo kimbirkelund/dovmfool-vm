@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using Sekhmet;
 
 namespace VMILLib {
 	public sealed class BinaryWriter : IDisposable {
@@ -22,57 +23,45 @@ namespace VMILLib {
 			handlers = new Dictionary<MessageHandler, int>();
 			classes = new Dictionary<Class, int>();
 
-			WriteIntegers( assembly.Integers );
 			WriteStrings( assembly.Strings );
 			WriteHandlers( assembly.Classes );
 			WriteClasses( assembly.Classes );
 		}
 
 		void WriteClasses( ClassList classList ) {
-			MapClasses( classList );
-			Write( this.classes.Count );
+			Write( CountClasses( classList ) );
 
-			var classes = new Queue<Class>();
-			this.classes.Keys.ToArray().Where( c => !WriteClass( c ) ).ForEach( c => classes.Enqueue( c ) );
-
-			while (classes.Count > 0)
-				if (WriteClass( classes.Peek() ))
-					classes.Dequeue();
+			classList.ForEach( WriteClass );
 		}
 
-		bool WriteClass( Class cls ) {
-			if (cls.Classes.Any( c => classes[c] == 0 ))
-				return false;
+		int CountClasses( ClassList classList ) {
+			return classList.Aggregate( classList.Count, ( count, cls ) => count += CountClasses( cls.Classes ), count => count );
+		}
 
-			classes[cls] = pos;
-			uint size = (uint) (6 + cls.InheritsFrom.Count + cls.Handlers.Count * 2 + cls.Classes.Count * 2);
+		void WriteClass( Class cls ) {
+			foreach (var ccls in cls.Classes)
+				WriteClass( ccls );
 
-			Write( (size << 4) | (uint) InternalObjectType.Class );
+			classes.Add( cls, classes.Count + 1 );
+
+			Write( cls.InheritsFrom.Count );
+			Write( cls.Fields.Count );
+			Write( cls.Handlers.Count );
+			Write( cls.Classes.Count );
 			Write( (cls.Name.Index << 3) | (int) cls.Visibility );
-			Write( 0 );
-			Write( (cls.Fields.Count << 18) | ((0x00003FFF & cls.Handlers.Count) << 4) | (cls.InheritsFrom.Count & 0x0000000F) );
 
 			cls.InheritsFrom.ForEach( s => Write( s.Index ) );
 
 			if (cls.DefaultHandler == null)
-				Write( 0, 0 );
+				Write( 0 );
 			else
-				Write( (int) VisibilityModifier.Private, handlers[cls.DefaultHandler] );
+				Write( handlers[cls.DefaultHandler] );
 
 			foreach (var handler in cls.Handlers)
-				Write( (handler.Name.Index << 3) | (int) handler.Visibility, handlers[handler] );
+				Write( handlers[handler] );
 
 			foreach (var innerCls in cls.Classes)
-				Write( (innerCls.Name.Index << 3) | (int) innerCls.Visibility, classes[innerCls] );
-
-			return true;
-		}
-
-		void MapClasses( ClassList classes ) {
-			foreach (var cls in classes) {
-				this.classes.Add( cls, 0 );
-				MapClasses( cls.Classes );
-			}
+				Write( classes[innerCls] );
 		}
 
 		void WriteHandlers( ClassList classes ) {
@@ -83,12 +72,14 @@ namespace VMILLib {
 		}
 
 		void WriteHandler( MessageHandler handler ) {
-			handlers[handler] = pos;
-			uint size = (uint) handler.Instructions.Where( i => !(i is Label) ).Count() + 3;
+			var argCount = handler.Arguments.Count;
+			var localCount = handler.Locals.Count;
+			var instructionCount = handler.Instructions.Where( i => !(i is Label) ).Count();
 
-			Write( (size << 4) | (uint) InternalObjectType.VMILMessageHandler );
-			Write( ((handler.Name == null ? 0 : handler.Name.Index) << 3) | (int) handler.Visibility );
-			Write( (handler.Arguments.Count << 16) | ((handler.Arguments.Count + handler.Locals.Count)) );
+			Write( argCount );
+			Write( localCount );
+			Write( instructionCount );
+			Write( handler.Name == null ? (int) VisibilityModifier.None : (handler.Name.Index << 4) | (handler.IsEntrypoint ? 8 : 0) | (int) handler.Visibility );
 			WriteInstructions( handler.Instructions );
 		}
 
@@ -116,11 +107,16 @@ namespace VMILLib {
 						if (ins.Operand is CString)
 							eins = ((uint) OpCode.PushLiteralString << 27) | (uint) ((CString) ins.Operand).Index;
 						else {
-							var i = ((CInteger) ins.Operand).Value;
-							if (Math.Abs( i ) > 0x03FFFFFF)
-								eins = ((uint) OpCode.PushLiteralInt << 27) | (uint) ((CInteger) ins.Operand).Index;
-							else
-								eins = ((uint) OpCode.PushLiteralIntInline << 27) | (uint) (i < 0 ? 1 << 26 : 0) | (uint) Math.Abs( i );
+							int i = (int) ins.Operand;
+							uint ai = i == int.MinValue ? (uint) i : (uint) Math.Abs( i );
+							if (ai > 0x03FFFFFF) {
+								uint i1 = (ai >> 16) & 0x0000FFFF;
+								uint i2 = ai & 0x0000FFFF;
+								eins = ((uint) OpCode.PushLiteralInt << 27) | (uint) (i < 0 ? 1 << 26 : 0) | i1;
+								Write( eins );
+								eins = ((uint) OpCode.PushLiteralIntExtend << 27) | (uint) (i < 0 ? 1 << 26 : 0) | i2;
+							} else
+								eins = ((uint) OpCode.PushLiteralInt << 27) | (uint) (i < 0 ? 1 << 26 : 0) | (uint) Math.Abs( i );
 						}
 						break;
 					case OpCode.Pop:
@@ -189,8 +185,8 @@ namespace VMILLib {
 		void MapHandlers( ClassList classes ) {
 			foreach (var cls in classes) {
 				if (cls.DefaultHandler != null)
-					handlers.Add( cls.DefaultHandler, 0 );
-				cls.Handlers.ForEach( h => handlers.Add( h, 0 ) );
+					handlers.Add( cls.DefaultHandler, handlers.Count + 1 );
+				cls.Handlers.ForEach( h => handlers.Add( h, handlers.Count + 1 ) );
 				MapHandlers( cls.Classes );
 			}
 		}
@@ -211,13 +207,6 @@ namespace VMILLib {
 
 				Write( bytes );
 			}
-		}
-
-		void WriteIntegers( CIntegerPool pool ) {
-			Write( (uint) pool.Count );
-
-			foreach (var i in pool.Select( i => i.Value ))
-				Write( i );
 		}
 
 		void Write( IEnumerable<uint> arr ) {
