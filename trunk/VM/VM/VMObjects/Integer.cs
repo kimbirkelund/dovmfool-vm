@@ -5,11 +5,11 @@ using System.Text;
 using VMILLib;
 
 namespace VM.VMObjects {
-	public struct Integer : IVMObject {
+	public struct Integer : IVMObject<Integer> {
 		#region Properties
 		public TypeId TypeId { get { return VMILLib.TypeId.Integer; } }
 		public int Size { get { return this[ObjectBase.OBJECT_HEADER_OFFSET] >> ObjectBase.OBJECT_SIZE_RSHIFT; } }
-		
+
 		public Word this[int index] {
 			get { throw new NotSupportedException(); }
 			set { throw new NotSupportedException(); }
@@ -18,7 +18,16 @@ namespace VM.VMObjects {
 		int start;
 		public int Start {
 			get { return start; }
-			set { start = value; }
+		}
+		#endregion
+
+		#region Cons
+		public Integer( int start ) {
+			this.start = start;
+		}
+
+		public Integer New( int startPosition ) {
+			return new Integer( startPosition );
 		}
 		#endregion
 

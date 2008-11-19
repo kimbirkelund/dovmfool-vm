@@ -31,7 +31,6 @@ namespace VM {
 		public static Word operator |( Word w, byte o ) { return (w.v | (uint) o); }
 		public static Word operator ^( Word w, byte o ) { return (w.v ^ (uint) o); }
 
-
 		#region Equals
 		public bool Equals( Word value ) {
 			return v == value.v;
@@ -60,18 +59,18 @@ namespace VM {
 		public static explicit operator VMILLib.OpCode( Word w ) { return (VMILLib.OpCode) w.v; }
 		public static explicit operator VMILLib.VisibilityModifier( Word w ) { return (VMILLib.VisibilityModifier) w.v; }
 
-		public static explicit operator ObjectBase( Word w ) { return new ObjectBase { Start = (int) w.v }; }
-		public static explicit operator AppObject( Word w ) { return new AppObject { Start = (int) w.v }; }
-		public static explicit operator AppObjectSet( Word w ) { return new AppObjectSet { Start = (int) w.v }; }
-		public static explicit operator Class( Word w ) { return new Class { Start = (int) w.v }; }
-		public static explicit operator ClassManager( Word w ) { return new ClassManager { Start = (int) w.v }; }
-		public static explicit operator MessageHandlerBase( Word w ) { return new MessageHandlerBase { Start = (int) w.v }; }
-		public static explicit operator VMILMessageHandler( Word w ) { return new VMILMessageHandler { Start = (int) w.v }; }
-		public static explicit operator DelegateMessageHandler( Word w ) { return new DelegateMessageHandler { Start = (int) w.v }; }
-		public static explicit operator VMObjects.String( Word w ) { return new VMObjects.String { Start = (int) w.v }; }
-		public static explicit operator Integer( Word w ) { return new Integer { Start = (int) w.v }; }
-		public static explicit operator List( Word w ) { return new List { Start = (int) w.v }; }
-		public static explicit operator VMObjects.Array( Word w ) { return new VMObjects.Array { Start = (int) w.v }; }
+		public static explicit operator ObjectBase( Word w ) { return new ObjectBase( (int) w.v ); }
+		public static explicit operator AppObject( Word w ) { return new AppObject( (int) w.v ); }
+		public static explicit operator AppObjectSet( Word w ) { return new AppObjectSet( (int) w.v ); }
+		public static explicit operator Class( Word w ) { return new Class( (int) w.v ); }
+		public static explicit operator ClassManager( Word w ) { return new ClassManager( (int) w.v ); }
+		public static explicit operator MessageHandlerBase( Word w ) { return new MessageHandlerBase( (int) w.v ); }
+		public static explicit operator VMILMessageHandler( Word w ) { return new VMILMessageHandler( (int) w.v ); }
+		public static explicit operator DelegateMessageHandler( Word w ) { return new DelegateMessageHandler( (int) w.v ); }
+		public static explicit operator VMObjects.String( Word w ) { return new VMObjects.String( (int) w.v ); }
+		public static explicit operator Integer( Word w ) { return new Integer( (int) w.v ); }
+		public static explicit operator List( Word w ) { return new List( (int) w.v ); }
+		public static explicit operator VMObjects.Array( Word w ) { return new VMObjects.Array( (int) w.v ); }
 
 		public static implicit operator Word( ObjectBase w ) { return w.Start; }
 		public static implicit operator Word( AppObject w ) { return w.Start; }
@@ -86,5 +85,9 @@ namespace VM {
 		public static implicit operator Word( List w ) { return w.Start; }
 		public static implicit operator Word( VM.VMObjects.Array w ) { return w.Start; }
 		#endregion
+
+		public override string ToString() {
+			return v.ToString();
+		}
 	}
 }

@@ -5,7 +5,7 @@ using System.Text;
 using VMILLib;
 
 namespace VM.VMObjects {
-	public struct AppObject : IVMObject {
+	public struct AppObject : IVMObject<AppObject> {
 		#region Constants
 		public const int CLASS_OFFSET = 1;
 		public const int FIELDS_OFFSET = 2;
@@ -29,6 +29,16 @@ namespace VM.VMObjects {
 		public Class Class { get { return (Class) this[AppObject.CLASS_OFFSET]; } }
 		#endregion
 
+		#region Cons
+		public AppObject( int start ) {
+			this.start = start;
+		}
+
+		public AppObject New( int startPosition ) {
+			return new AppObject( startPosition );
+		}
+		#endregion
+
 		#region Casts
 		public static implicit operator int( AppObject cls ) {
 			return cls.start;
@@ -40,7 +50,6 @@ namespace VM.VMObjects {
 		#endregion
 
 		#region Instance methods
-
 		public bool Extends( Class cls ) {
 			return this.Class.Extends( cls );
 		}
@@ -69,6 +78,14 @@ namespace VM.VMObjects {
 
 		public void SetField( int index, Class cls, AppObject value ) {
 			this.SetField( index, cls, value );
+		}
+		#endregion
+
+		#region Static methods
+		public static AppObject CreateInstance( Class cls ) {
+			var obj = VirtualMachine.MemoryManager.Allocate<AppObject>( cls.InstanceSize );
+			obj[AppObject.CLASS_OFFSET] = cls;
+			return obj;
 		}
 		#endregion
 	}

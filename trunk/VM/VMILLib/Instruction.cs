@@ -8,8 +8,8 @@ namespace VMILLib {
 		public readonly OpCode OpCode;
 		public readonly object Operand;
 
-		MessageHandler messageHandler;
-		public MessageHandler MessageHandler {
+		VMILMessageHandler messageHandler;
+		public VMILMessageHandler MessageHandler {
 			get { return messageHandler; }
 			internal set {
 				if (messageHandler != null)

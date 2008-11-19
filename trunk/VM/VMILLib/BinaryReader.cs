@@ -12,7 +12,7 @@ namespace VMILLib {
 		int pos;
 
 		List<CString> strings;
-		Dictionary<int, MessageHandler> handlers;
+		Dictionary<int, MessageHandlerBase> handlers;
 		Dictionary<int, Class> classes;
 
 		public BinaryReader( Stream input ) {
@@ -24,7 +24,7 @@ namespace VMILLib {
 
 		public Assembly Read() {
 			strings = new List<CString>();
-			handlers = new Dictionary<int, MessageHandler>();
+			handlers = new Dictionary<int, MessageHandlerBase>();
 			classes = new Dictionary<int, Class>();
 
 			var stringPool = ReadStrings();
@@ -69,17 +69,26 @@ namespace VMILLib {
 		}
 
 		void ReadMessageHandler() {
-			var argCount = ReadInt();
-			var localCount = ReadInt();
-			var instructionCount = ReadInt();
 			var handlerHeader = ReadUInt();
-
 			var visibility = (VisibilityModifier) (0x00000003 & handlerHeader);
-			var isEntryPoint = (0x00000008 & handlerHeader) != 0;
-			var name = visibility == VisibilityModifier.None ? null : (CString) strings[(int) handlerHeader >> 4];
-			var inss = ReadInstructions( instructionCount, argCount, localCount );
+			var name = visibility == VisibilityModifier.None ? null : strings[(int) handlerHeader >> 4];
+			var isExternal = (4 & handlerHeader) != 0;
+			var isEntryPoint = (8 & handlerHeader) != 0;
 
-			this.handlers.Add( this.handlers.Count + 1, new MessageHandler( visibility, name, argCount.ForEach( i => "argument_" + i ), (localCount - argCount).ForEach( i => "local_" + i ), inss, isEntryPoint ) );
+			var argCount = ReadInt();
+			var args = argCount.ForEach( i => "argument_" + i );
+
+			if (isExternal) {
+				var externalName = strings[ReadInt()];
+				this.handlers.Add( this.handlers.Count + 1, new ExternalMessageHandler( visibility, name, externalName, args ) );
+			} else {
+				var localCount = ReadInt();
+				var instructionCount = ReadInt();
+
+				var inss = ReadInstructions( instructionCount, argCount, localCount );
+
+				this.handlers.Add( this.handlers.Count + 1, new VMILMessageHandler( visibility, name, args, (localCount - argCount).ForEach( i => "local_" + i ), inss, isEntryPoint ) );
+			}
 		}
 
 		InstructionList ReadInstructions( int count, int argumentCount, int localCount ) {
@@ -107,6 +116,12 @@ namespace VMILLib {
 					case OpCode.StoreLocal:
 					case OpCode.LoadLocal:
 						actOperand = (operand >= argumentCount ? "local_" : "argument_") + operand;
+						break;
+					case OpCode.LoadArgument:
+						if (operand == 0)
+							opcode = OpCode.LoadThis;
+						else
+							actOperand = operand - 1;
 						break;
 					case OpCode.PushLiteralString:
 						opcode = OpCode.PushLiteral;

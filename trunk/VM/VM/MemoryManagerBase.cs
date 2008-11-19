@@ -11,8 +11,8 @@ namespace VM {
 		public abstract int FreeSizeInWords { get; }
 		public abstract int AllocatedSizeInWords { get; }
 
-		internal abstract T Allocate<T>( int size ) where T : struct, IVMObject;
-		internal virtual T Allocate<T>( int size, bool writeZeroes ) where T : struct, IVMObject {
+		internal abstract T Allocate<T>( int size ) where T : struct, IVMObject<T>;
+		internal virtual T Allocate<T>( int size, bool writeZeroes ) where T : struct, IVMObject<T> {
 			var obj = Allocate<T>( size );
 			for (var i = 1; i < size + 1; i++)
 				obj[i] = 0;
@@ -22,7 +22,7 @@ namespace VM {
 
 		internal abstract Word this[int index] { get; set; }
 
-		internal Handle<T> CreateHandle<T>( T obj ) where T : struct, IVMObject {
+		internal Handle<T> CreateHandle<T>( T obj ) where T : struct, IVMObject<T> {
 			var handle = new Handle<T>( obj );
 
 			if (handles.ContainsKey( handle.Start ))

@@ -4,11 +4,11 @@ using System.Linq;
 using System.Text;
 
 namespace VM.VMObjects {
-	public struct Char : IVMObject {
+	public struct Char : IVMObject<Char> {
 		#region Properties
 		byte b1, b2;
-		public byte Byte1 { get { return b1; } set { b1 = value; } }
-		public byte Byte2 { get { return b2; } set { b2 = value; } }
+		public byte Byte1 { get { return b1; } }
+		public byte Byte2 { get { return b2; } }
 
 		public int Start {
 			get { return (((int) b1) << 8) | b2; }
@@ -29,6 +29,28 @@ namespace VM.VMObjects {
 
 		public VMILLib.TypeId TypeId {
 			get { return VMILLib.TypeId.Char; }
+		}
+		#endregion
+
+		#region Cons
+		public Char( int start ) {
+			b1 = (byte) (start >> 8);
+			b2 = (byte) start;
+		}
+
+		public Char( byte b1, byte b2 ) {
+			this.b1 = b1;
+			this.b2 = b2;
+		}
+
+		public Char New( int startPosition ) {
+			return new Char( startPosition );
+		}
+		#endregion
+
+		#region Instance methods
+		public override string ToString() {
+			return Encoding.Unicode.GetString( new byte[] { Byte1, Byte2 } );
 		}
 		#endregion
 

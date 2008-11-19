@@ -5,7 +5,7 @@ using System.Text;
 using VMILLib;
 
 namespace VM.VMObjects {
-	public struct MessageHandlerBase : IVMObject {
+	public struct MessageHandlerBase : IVMObject<MessageHandlerBase> {
 		#region Constants
 		public const int HEADER_OFFSET = 1;
 		public const int CLASS_POINTER_OFFSET = 2;
@@ -29,14 +29,23 @@ namespace VM.VMObjects {
 		int start;
 		public int Start {
 			get { return start; }
-			set { start = value; }
 		}
 
 		public VisibilityModifier Visibility { get { return (VisibilityModifier) (this[MessageHandlerBase.HEADER_OFFSET] & MessageHandlerBase.VISIBILITY_MASK); } }
 		public bool IsInternal { get { return ((this[MessageHandlerBase.HEADER_OFFSET] & MessageHandlerBase.IS_INTERNAL_MASK) >> MessageHandlerBase.IS_INTERNAL_RSHIFT) != 0; } }
-		public String Name { get { return (String) (this[MessageHandlerBase.HEADER_OFFSET] >> MessageHandlerBase.NAME_RSHIFT); } }
+		public String Name { get { return VirtualMachine.ConstantPool.GetString( this[MessageHandlerBase.HEADER_OFFSET] >> MessageHandlerBase.NAME_RSHIFT ); } }
 		public Class Class { get { return (Class) this[CLASS_POINTER_OFFSET]; } }
 		public bool IsEntrypoint { get { return (this[HEADER_OFFSET] & IS_ENTRYPOINT_MASK) != 0; } }
+		#endregion
+
+		#region Cons
+		public MessageHandlerBase( int start ) {
+			this.start = start;
+		}
+
+		public MessageHandlerBase New( int startPosition ) {
+			return new MessageHandlerBase( startPosition );
+		}
 		#endregion
 
 		#region Casts
@@ -45,23 +54,23 @@ namespace VM.VMObjects {
 		}
 
 		public static explicit operator MessageHandlerBase( int v ) {
-			return new MessageHandlerBase { start = v };
+			return new MessageHandlerBase( v );
 		}
 
 		public static explicit operator VMILMessageHandler( MessageHandlerBase v ) {
-			return new VMILMessageHandler { Start = v.start };
+			return new VMILMessageHandler( v.start );
 		}
 
 		public static explicit operator DelegateMessageHandler( MessageHandlerBase v ) {
-			return new DelegateMessageHandler { Start = v.start };
+			return new DelegateMessageHandler( v.start );
 		}
 
 		public static implicit operator MessageHandlerBase( VMILMessageHandler v ) {
-			return new MessageHandlerBase { start = v.Start };
+			return new MessageHandlerBase( v.Start );
 		}
 
 		public static implicit operator MessageHandlerBase( DelegateMessageHandler v ) {
-			return new MessageHandlerBase { start = v.Start };
+			return new MessageHandlerBase( v.Start );
 		}
 		#endregion
 	}

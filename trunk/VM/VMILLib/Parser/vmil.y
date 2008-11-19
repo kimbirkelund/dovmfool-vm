@@ -5,7 +5,7 @@
 %YYSTYPE VMILLib.Parser.ASTNode
 %YYLTYPE VMILLib.Parser.LexLocation
 
-%token Class Extends Fields Entrypoint Handler Default Locals StoreField LoadField StoreLocal LoadLocal LoadArgument PushLiteral Pop Dup NewInstance SendMessage Return ReturnVoid Jump JumpIfTrue JumpIfFalse Throw Try Catch Colon LeftParen RightParen LeftCBrace RightCBrace Comma Identifier String Integer Public Private Protected
+%token Class Extends Fields Entrypoint External Handler Default Locals StoreField LoadField StoreLocal LoadLocal LoadArgument LoadThis PushLiteral Pop Dup NewInstance SendMessage Return ReturnVoid Jump JumpIfTrue JumpIfFalse Throw Try Catch Colon Dot LeftParen RightParen LeftCBrace RightCBrace Comma Identifier String Integer Public Private Protected
 
 %start program
 
@@ -29,7 +29,7 @@ class :
 	
 classbody :
 	fields defaulthandler handlers classlist {
-		$$ = new ClassBody((List<string>) $1, (MessageHandler) $2, (List<MessageHandler>) $3, (List<Class>) $4);
+		$$ = new ClassBody((List<string>) $1, (VMILMessageHandler) $2, (List<MessageHandlerBase>) $3, (List<Class>) $4);
 	};
 
 fields : 
@@ -41,28 +41,39 @@ extendspart :
 |	Extends names { $$ = $2; };
 
 handlers : 
-	{ $$ = new List<MessageHandler>(); }
-|	Handler handler handlers { $$ = (MessageHandler) $2 + (List<MessageHandler>) $3; };
+	{ $$ = new List<MessageHandlerBase>(); }
+|	Handler handler handlers { $$ = (MessageHandlerBase) $2 + (List<MessageHandlerBase>) $3; };
 
 handler : 
 	visibility Identifier LeftParen names RightParen LeftCBrace entrypoint locals instructions RightCBrace {
-		$$ = new MessageHandler(@$, 
+		$$ = new VMILMessageHandler(@$, 
 				$1.As<VisibilityModifier>(), 
 				$2.As<string>(), 
 				(List<string>) $4, 
 				(List<string>) $8, 
 				(List<Instruction>) $9,
 				$7.As<bool>());
+	}
+|	visibility Identifier External longidentifier LeftParen names RightParen {
+		$$ = new ExternalMessageHandler(@$,
+				$1.As<VisibilityModifier>(),
+				$2.As<string>(),
+				$4.As<string>(),
+				(List<string>) $6);
 	};
+	
+longidentifier :
+	Identifier { $$ = $1; }
+|	Identifier Dot longidentifier { $$ = ($1.As<string>() + "." + $3.As<string>()).ToNode(); };
 	
 entrypoint :
 	{ $$ = false.ToNode(); }
-| EntryPoint { $$ = true.ToNode(); };
+| Entrypoint { $$ = true.ToNode(); };
 	
 defaulthandler :
 	{ $$ = null; }
 |	Default LeftCBrace locals instructions RightCBrace {
-		$$ = new MessageHandler(@$, 
+		$$ = new VMILMessageHandler(@$, 
 				VisibilityModifier.None, 
 				null, 
 				new List<string>(), 
@@ -91,6 +102,7 @@ instructions :
 |	StoreLocal Identifier instructions { $$ = new Instruction(@$, OpCode.StoreLocal, $2.As<string>()) + (List<Instruction>) $3; }
 |	LoadLocal Identifier instructions { $$ = new Instruction(@$, OpCode.LoadLocal, $2.As<string>()) + (List<Instruction>) $3; }
 |	LoadArgument Identifier instructions { $$ = new Instruction(@$, OpCode.LoadArgument, $2.As<string>()) + (List<Instruction>) $3; }
+|	LoadThis instructions { $$ = new Instruction(@$, OpCode.LoadThis) + (List<Instruction>) $2; }
 |	PushLiteral Integer instructions { $$ = new Instruction(@$, OpCode.PushLiteral, $2.As<int>()) + (List<Instruction>) $3; }
 |	PushLiteral String instructions { $$ = new Instruction(@$, OpCode.PushLiteral, $2.As<string>()) + (List<Instruction>) $3; }
 |	Pop instructions { $$ = new Instruction(@$, OpCode.Pop) + (List<Instruction>) $2; }

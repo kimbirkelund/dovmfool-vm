@@ -22,18 +22,22 @@ namespace VM {
 		EventWaitHandle waitToPause = new EventWaitHandle( false, EventResetMode.AutoReset ),
 			waitToResume = new EventWaitHandle( false, EventResetMode.AutoReset );
 
-		BasicInterpretor( AppObject entryObject, MessageHandlerBase entryPoint, params AppObject[] args ) {
-			stack.Push( entryObject.Class, entryObject );
+		BasicInterpretor( Handle<AppObject> entrypointObject, Handle<VMILMessageHandler> entrypoint, params Handle<AppObject>[] args ) {
+			stack.Push( entrypointObject.Value.Class, entrypointObject.Value );
 			foreach (var arg in args)
-				stack.Push( arg.Class, arg );
-			handler = (VMILMessageHandler) entryPoint;
+				stack.Push( arg.Value.Class, arg.Value );
+			stack.PushFrame( new ExecutionStack.ReturnAddress(), entrypoint );
+			handler = entrypoint.Value;
 		}
 
-		void Invoke() {
+		Handle<AppObject> Invoke() {
+			var doActualReturnAt = stack.StackPointer;
+
 		entry:
+			var receiver = (AppObject) stack.GetArgument( 0 ).Value;
 			for (; pc < handler.InstructionCount; pc++) {
 				if (state == InterpretorState.Stopped)
-					return;
+					return null;
 				if (state == InterpretorState.Paused) {
 					waitToPause.Set();
 					while (state == InterpretorState.Paused)
@@ -44,7 +48,6 @@ namespace VM {
 				var ins = handler.GetInstruction( pc );
 				var opcode = (VMILLib.OpCode) (ins >> 27);
 				int operand = (int) (0x07FFFFFF & ins);
-				var receiver = (AppObject) stack.GetArgument( 0 ).Value;
 
 				switch (opcode) {
 					case VMILLib.OpCode.StoreField: {
@@ -59,10 +62,10 @@ namespace VM {
 						stack.SetLocal( operand, stack.Pop() );
 						break;
 					case VMILLib.OpCode.LoadLocal:
-						stack.Push( stack.GetLocal( operand + 1 ) );
+						stack.Push( stack.GetLocal( operand ) );
 						break;
 					case VMILLib.OpCode.LoadArgument:
-						stack.Push( stack.GetArgument( operand + 1 ) );
+						stack.Push( stack.GetArgument( operand ) );
 						break;
 					case VMILLib.OpCode.PushLiteralInt:
 						stack.Push( VirtualMachine.IntegerClass, (operand & 0x03FFFFFF) * ((operand & 0x04000000) != 0 ? -1 : 1) );
@@ -92,11 +95,23 @@ namespace VM {
 							if (messageVal.Type != VirtualMachine.StringClass)
 								throw new InvalidOperationException( "Value on top of stack is not a message." );
 							var message = (h.String) messageVal.Value;
-							var newReceiver = stack.Peek();
+							var argCount = ParseArgumentCount( message );
+							var newReceiver = stack[argCount];
 							var newHandlerBase = newReceiver.Type.ResolveMessageHandler( receiver, message );
-							if (newHandlerBase.IsInternal)
-								throw new NotImplementedException( "Calling DelegateMessageHandler" );
-							else {
+							if (newHandlerBase.IsInternal) {
+								var newHandler = (DelegateMessageHandler) newHandlerBase;
+								var method = SystemCalls.FindMethod( newHandler.ExternalName.ToHandle() );
+								if (method == null)
+									throw new MessageNotUnderstoodException( message.ToHandle(), ((AppObject) newReceiver.Value).ToHandle() );
+
+								var args = new Handle<AppObject>[argCount];
+								argCount.ForEachDescending( k => args[k] = ((AppObject) stack.Pop().Value).ToHandle() );
+								stack.Pop();
+								var ret = method( this, ((AppObject) newReceiver.Value).ToHandle(), args );
+								if (ret != null)
+									stack.Push( ret.Value.Class, ret.Value );
+								break;
+							} else {
 								var newHandler = (VMILMessageHandler) newHandlerBase;
 								if (newHandler == 0)
 									throw new MessageNotUnderstoodException( message.ToHandle(), ((AppObject) newReceiver.Value).ToHandle() );
@@ -112,6 +127,11 @@ namespace VM {
 							var ret = stack.PopFrame( opcode == VMILLib.OpCode.Return );
 							handler = ret.Handler;
 							pc = ret.InstructionOffset;
+							if (stack.StackPointer < doActualReturnAt) {
+								if (opcode == VMILLib.OpCode.ReturnVoid)
+									return null;
+								return ((AppObject) stack.Pop().Value).ToHandle();
+							}
 							goto entry;
 						}
 					case VMILLib.OpCode.Jump:
@@ -146,6 +166,48 @@ namespace VM {
 			throw new InvalidVMProgramException( "Reach end of message handler without returning." );
 		}
 
+		int ParseArgumentCount( VM.VMObjects.String message ) {
+			var count = 0;
+			var pos = 1;
+			for (var i = message.Length - 1; i >= 0; i--) {
+				var c = message.CharAt( i );
+				if (Chars.Colon == c)
+					return count;
+				if (c < Chars.N0 || Chars.N9 < c)
+					throw new MessageNotUnderstoodException( message.ToHandle() );
+
+				var v = c.Byte1 - Chars.N0.Byte1;
+				count += v * pos;
+				pos *= 10;
+			}
+
+			throw new MessageNotUnderstoodException( message.ToHandle() );
+		}
+
+		public Handle<AppObject> Send( Handle<VM.VMObjects.String> message, Handle<AppObject> to, params Handle<AppObject>[] arguments ) {
+			var newHandlerBase = to.Value.Class.ResolveMessageHandler( to, message );
+			if (newHandlerBase.IsInternal) {
+				var newHandler = (DelegateMessageHandler) newHandlerBase;
+				var method = SystemCalls.FindMethod( newHandler.ExternalName.ToHandle() );
+				if (method == null)
+					throw new MessageNotUnderstoodException( message, to );
+
+				return method( this, to, arguments );
+			} else {
+				var newHandler = (VMILMessageHandler) newHandlerBase;
+				if (newHandler == 0)
+					throw new MessageNotUnderstoodException( message, to );
+
+				stack.Push( to.Value.Class, to.Value );
+				arguments.ForEach( a => stack.Push( a.Value.Class, a.Value ) );
+
+				stack.PushFrame( new ExecutionStack.ReturnAddress( handler, pc ), newHandler );
+				pc = 0;
+				handler = newHandler;
+				return Invoke();
+			}
+		}
+
 		public void Start() {
 			if (state == InterpretorState.Stopped)
 				throw new InterpretorException( "Interpretor has been stopped." );
@@ -153,7 +215,7 @@ namespace VM {
 				if (state != InterpretorState.NotStarted)
 					throw new InterpretorException( "Interpretor already started." );
 
-				thread = new Thread( Invoke );
+				thread = new Thread( () => Invoke() );
 				state = InterpretorState.Running;
 				thread.Start();
 			}
@@ -196,8 +258,8 @@ namespace VM {
 		}
 
 		public class Factory : IInterpretorFactory {
-			public IInterpretor CreateInstance( AppObject entryObject, MessageHandlerBase entryPoint, params AppObject[] args ) {
-				return new BasicInterpretor( entryObject, entryPoint, args );
+			public IInterpretor CreateInstance( Handle<AppObject> entrypointObject, Handle<VMILMessageHandler> entrypoint, params Handle<AppObject>[] args ) {
+				return new BasicInterpretor( entrypointObject, entrypoint, args );
 			}
 		}
 	}

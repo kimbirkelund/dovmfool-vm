@@ -25,7 +25,7 @@ namespace VMILLib {
 		}
 
 		void WriteClass( Class cls ) {
-			output.WriteLine( ".class " + cls.Visibility.ToString().ToLower() + " " + cls.Name + (cls.InheritsFrom.Count != 0 ? " extends " + cls.InheritsFrom.Join( ", " ) + " " : "") + "{" );
+			output.WriteLine( ".class " + cls.Visibility.ToString().ToLower() + " " + cls.Name + (cls.InheritsFrom.Count != 0 ? " extends " + cls.InheritsFrom.Join( ", " ) + " " : " ") + "{" );
 			output.IndentationLevel++;
 
 			var actions = new List<Action>();
@@ -48,31 +48,41 @@ namespace VMILLib {
 			output.WriteLine( "}" );
 		}
 
-		void WriteMessageHandler( MessageHandler handler ) {
-			if (handler.Name == null)
-				output.WriteLine( ".default {" );
-			else {
+		void WriteMessageHandler( MessageHandlerBase handlerBase ) {
+			if (handlerBase is ExternalMessageHandler) {
+				var handler = (ExternalMessageHandler) handlerBase;
 				var name = handler.Name.Value;
 				name = name.IndexOf( ":" ) != -1 ? name.Substring( 0, name.IndexOf( ":" ) ) : name;
-				output.WriteLine( ".handler " + handler.Visibility.ToString().ToLower() + " " + name + "(" + handler.Arguments.Join( ", " ) + ") {" );
+				var externalName = handler.ExternalName.Value;
+				externalName = externalName.IndexOf( ":" ) != -1 ? externalName.Substring( 0, externalName.IndexOf( ":" ) ) : externalName;
+				output.WriteLine( ".handler " + handler.Visibility.ToString().ToLower() + " " + name + " .external " + externalName + "(" + handler.Arguments.Join( ", " ) + ")" );
+			} else {
+				var handler = (VMILMessageHandler) handlerBase;
+				if (handler.Name == null)
+					output.WriteLine( ".default {" );
+				else {
+					var name = handler.Name.Value;
+					name = name.IndexOf( ":" ) != -1 ? name.Substring( 0, name.IndexOf( ":" ) ) : name;
+					output.WriteLine( ".handler " + handler.Visibility.ToString().ToLower() + " " + name + "(" + handler.Arguments.Join( ", " ) + ") {" );
+				}
+
+				output.IndentationLevel += 2;
+
+				var actions = new List<Action>();
+				if (handler.IsEntrypoint)
+					actions.Add( () => output.WriteLine( ".entrypoint" ) );
+
+				if (handler.Locals.Count != 0)
+					actions.Add( () => output.WriteLine( ".locals { " + handler.Locals.Join( ", " ) + " }" ) );
+
+				if (handler.Instructions.Count != 0)
+					actions.Add( () => handler.Instructions.ForEach( i => WriteInstruction( i ) ) );
+
+				actions.Join( a => a(), () => output.WriteLine() );
+
+				output.IndentationLevel -= 2;
+				output.WriteLine( "}" );
 			}
-
-			output.IndentationLevel += 2;
-
-			var actions = new List<Action>();
-			if (handler.IsEntrypoint)
-				actions.Add( () => output.WriteLine( ".entrypoint" ) );
-
-			if (handler.Locals.Count != 0)
-				actions.Add( () => output.WriteLine( ".locals { " + handler.Locals.Join( ", " ) + " }" ) );
-
-			if (handler.Instructions.Count != 0)
-				actions.Add( () => handler.Instructions.ForEach( i => WriteInstruction( i ) ) );
-
-			actions.Join( a => a(), () => output.WriteLine() );
-
-			output.IndentationLevel -= 2;
-			output.WriteLine( "}" );
 		}
 
 		void WriteInstruction( Instruction i ) {
@@ -96,6 +106,12 @@ namespace VMILLib {
 					break;
 				case OpCode.LoadLocal:
 					output.WriteLine( "load-local " + i.Operand );
+					break;
+				case OpCode.LoadArgument:
+					output.WriteLine( "load-argument " + i.Operand );
+					break;
+				case OpCode.LoadThis:
+					output.WriteLine( "load-this" );
 					break;
 				case OpCode.PushLiteral:
 					output.WriteLine( "push-literal " + (i.Operand is CString ? "\"" + i.Operand + "\"" : i.Operand) );

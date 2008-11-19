@@ -5,7 +5,7 @@ using System.Text;
 using VMILLib;
 
 namespace VM.VMObjects {
-	public struct Array : IVMObject {
+	public struct Array : IVMObject<Array> {
 		#region Constants
 		public const int FIRST_ELEMENT_OFFSET_OFFSET = 1;
 		#endregion
@@ -28,6 +28,16 @@ namespace VM.VMObjects {
 		public int Length { get { return (Size - 1) / 2; } }
 		#endregion
 
+		#region Cons
+		public Array( int start ) {
+			this.start = start;
+		}
+
+		public Array New( int startPosition ) {
+			return new Array( startPosition );
+		}
+		#endregion
+
 		#region Casts
 		public static implicit operator int( Array arr ) {
 			return arr.start;
@@ -39,14 +49,14 @@ namespace VM.VMObjects {
 		#endregion
 
 		#region Instance methods
-		public T Get<T>( int arrayIndex ) where T : struct, IVMObject {
+		public T Get<T>( int arrayIndex ) where T : struct, IVMObject<T> {
 			if (arrayIndex < 0 || Length <= arrayIndex)
 				throw new ArgumentOutOfBoundsException( "arrayIndex" );
 
-			return new T() { Start = this[this[FIRST_ELEMENT_OFFSET_OFFSET] + arrayIndex] };
+			return new T().New( Start = this[this[FIRST_ELEMENT_OFFSET_OFFSET] + arrayIndex] );
 		}
 
-		public void Set<T>( int arrayIndex, T obj ) where T : struct, IVMObject {
+		public void Set<T>( int arrayIndex, T obj ) where T : struct, IVMObject<T> {
 			if (arrayIndex < 0 || Length <= arrayIndex)
 				throw new ArgumentOutOfBoundsException( "arrayIndex" );
 
@@ -72,7 +82,7 @@ namespace VM.VMObjects {
 		#endregion
 
 		#region Static methods
-		public static Array New( int elementCount ) {
+		public static Array CreateInstance( int elementCount ) {
 			var wordCount = (elementCount + 31) / 32;
 			var arr = VirtualMachine.MemoryManager.Allocate<Array>( wordCount + elementCount + 1 );
 			arr[FIRST_ELEMENT_OFFSET_OFFSET] = wordCount;

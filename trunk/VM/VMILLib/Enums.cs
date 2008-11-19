@@ -11,6 +11,7 @@ namespace VMILLib {
 		StoreLocal = 2,
 		LoadLocal = 3,
 		LoadArgument = 4,
+		LoadThis = -3,
 		PushLiteral = -2,
 		PushLiteralString = 5,
 		PushLiteralInt = 6,

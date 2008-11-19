@@ -6,13 +6,14 @@ using VMILLib;
 using Sekhmet;
 
 namespace VM.VMObjects {
-	public struct String : IVMObject, IComparable<String> {
+	public struct String : IVMObject<String>, IComparable<String> {
 		#region Constants
-		static readonly Word[] byteMasks = new Word[] { 0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF };
-		static readonly int[] byteRShifts = new int[] { 6, 4, 2, 0 };
+		static readonly Word byteMask = 0x000000FF;
+		static readonly int[] byteRShifts = new int[] { 24, 16, 8, 0 };
 
 		public const int LENGTH_OFFSET = 1;
-		public const int FIRST_CHAR_OFFSET = 2;
+		public const int HASH_CODE_OFFSET = 2;
+		public const int FIRST_CHAR_OFFSET = 3;
 		#endregion
 
 		#region Properties
@@ -27,10 +28,37 @@ namespace VM.VMObjects {
 		int start;
 		public int Start {
 			get { return start; }
-			set { start = value; }
 		}
 
 		public int Length { get { return this[String.LENGTH_OFFSET]; } }
+
+		static Handle<String> empty;
+		public static Handle<String> Empty {
+			get {
+				if (empty == null)
+					empty = VirtualMachine.ConstantPool.RegisterString( "" );
+				return empty;
+			}
+		}
+
+		static Handle<String> dot;
+		public static Handle<String> Dot {
+			get {
+				if (dot == null)
+					dot = VirtualMachine.ConstantPool.RegisterString( "." );
+				return dot;
+			}
+		}
+		#endregion
+
+		#region Cons
+		public String( int start ) {
+			this.start = start;
+		}
+
+		public String New( int startPosition ) {
+			return new String( startPosition );
+		}
 		#endregion
 
 		#region Casts
@@ -53,18 +81,18 @@ namespace VM.VMObjects {
 
 		#region Instance methods
 		public Char CharAt( int pos ) {
-			int word = pos / 2;
+			int word = pos / 2 + FIRST_CHAR_OFFSET;
 			int firstByte = (pos % 2) * 2;
 
-			return new Char {
-				Byte1 = (byte) ((this[word] & byteMasks[firstByte]) >> byteRShifts[firstByte]),
-				Byte2 = (byte) ((this[word] & byteMasks[firstByte + 1]) >> byteRShifts[firstByte + 1])
-			};
+			var b1 = (byte) ((this[word] >> byteRShifts[firstByte]) & byteMask);
+			var b2 = (byte) ((this[word] >> byteRShifts[firstByte + 1]) & byteMask);
+
+			return new Char( b1, b2 );
 		}
 
 		#region Equals
 		public bool Equals( String value ) {
-			if (this == value)
+			if (this.start == value.start)
 				return true;
 			var s1Len = this.Length;
 			if (s1Len != value.Length)
@@ -86,14 +114,17 @@ namespace VM.VMObjects {
 		}
 
 		public override int GetHashCode() {
-			return base.GetHashCode();
+			if (this[HASH_CODE_OFFSET] == 0) {
+				long val = 0;
+				for (int i = 0; i < Length; i++)
+					val += CharAt( i );
+				this[HASH_CODE_OFFSET] = val.GetHashCode();
+			}
+
+			return this[HASH_CODE_OFFSET];
 		}
 
 		public static bool operator ==( String value1, String value2 ) {
-			if (object.ReferenceEquals( value1, null ) && object.ReferenceEquals( value2, null ))
-				return true;
-			if (object.ReferenceEquals( value1, null ) || object.ReferenceEquals( value2, null ))
-				return false;
 			return value1.Equals( value2 );
 		}
 
@@ -103,10 +134,10 @@ namespace VM.VMObjects {
 		#endregion
 
 		public Array Split( String splitAt ) {
-			var list = List.New();
+			var list = List.CreateInstance();
 
 			if (splitAt.Length > Length)
-				return Array.New( 0 );
+				return Array.CreateInstance( 0 );
 
 			var lastMatch = 0;
 			for (int i = 0; i < Length; ) {
@@ -125,14 +156,32 @@ namespace VM.VMObjects {
 			return list.ToArray();
 		}
 
+		public int IndexOf( String str, int startIndex ) {
+			int i = 0;
+		top:
+			if (i >= Length)
+				return -1;
+			for (int j = 0; j < str.Length; j++)
+				if (CharAt( i ) != str.CharAt( j )) {
+					i += j + 1;
+					goto top;
+				}
+
+			return i;
+		}
+
+		public int IndexOf( String str ) {
+			return IndexOf( str, 0 );
+		}
+
 		public String Substring( int start, int count ) {
 			if (start < 0)
 				throw new ArgumentOutOfBoundsException( "start" );
-			if (count < 0 || start + count >= Length)
+			if (count < 0 || start + count > Length)
 				throw new ArgumentOutOfBoundsException( "count" );
 
-			var wordCount = (count + 3) / 4;
-			var newStr = VirtualMachine.MemoryManager.Allocate<String>( LENGTH_OFFSET + wordCount );
+			var wordCount = (count + 1) / 2;
+			var newStr = CreateInstance( count );
 			newStr[LENGTH_OFFSET] = count;
 
 			for (int cur = start, w = FIRST_CHAR_OFFSET; cur < count + start; cur += 2, w++) {
@@ -188,5 +237,9 @@ namespace VM.VMObjects {
 				yield return this[i];
 		}
 		#endregion
+
+		public static String CreateInstance( int length ) {
+			return VirtualMachine.MemoryManager.Allocate<String>( FIRST_CHAR_OFFSET - 1 + (length + 1) / 2 );
+		}
 	}
 }

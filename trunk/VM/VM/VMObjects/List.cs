@@ -5,7 +5,7 @@ using System.Text;
 using VMILLib;
 
 namespace VM.VMObjects {
-	public struct List : IVMObject {
+	public struct List : IVMObject<List> {
 		#region Constants
 		public const int ARRAY_SIZE_OFFSET = 1;
 		public const int LIST_COUNT_OFFSET = 2;
@@ -24,7 +24,6 @@ namespace VM.VMObjects {
 		int start;
 		public int Start {
 			get { return start; }
-			set { start = value; }
 		}
 
 		public int Count {
@@ -35,6 +34,16 @@ namespace VM.VMObjects {
 		public int Capacity {
 			get { return this[ARRAY_SIZE_OFFSET]; }
 			private set { this[ARRAY_SIZE_OFFSET] = value; }
+		}
+		#endregion
+		
+		#region Cons
+		public List( int start ) {
+			this.start = start;
+		}
+
+		public List New( int startPosition ) {
+			return new List( startPosition );
 		}
 		#endregion
 
@@ -49,7 +58,7 @@ namespace VM.VMObjects {
 		#endregion
 
 		#region Instance methods
-		public int Add<T>( T obj ) where T : struct, IVMObject {
+		public int Add<T>( T obj ) where T : struct, IVMObject<T> {
 			if (Count >= Capacity)
 				Expand();
 
@@ -57,21 +66,21 @@ namespace VM.VMObjects {
 			return Count - 1;
 		}
 
-		public void Set<T>( int index, T obj ) where T : struct, IVMObject {
+		public void Set<T>( int index, T obj ) where T : struct, IVMObject<T> {
 			if (index >= Count)
 				throw new ArgumentOutOfBoundsException( "index" );
 
 			((Array) this[ARRAY_OFFSET]).Set( index, obj );
 		}
 
-		public T Get<T>( int index ) where T : struct, IVMObject {
+		public T Get<T>( int index ) where T : struct, IVMObject<T> {
 			if (index >= Count)
 				throw new ArgumentOutOfBoundsException( "index" );
 
 			return ((Array) this[ARRAY_OFFSET]).Get<T>( index );
 		}
 
-		public void Remove<T>( T obj ) where T : struct, IVMObject {
+		public void Remove<T>( T obj ) where T : struct, IVMObject<T> {
 			var index = IndexOf( obj );
 			if (index != -1)
 				RemoveAt( index );
@@ -84,7 +93,7 @@ namespace VM.VMObjects {
 			Array.CopyTo( (Array) this[ARRAY_OFFSET], index + 1, (Array) this[ARRAY_OFFSET], index, Count - index - 1 );
 		}
 
-		public void InsertAt<T>( int index, T obj ) where T : struct, IVMObject {
+		public void InsertAt<T>( int index, T obj ) where T : struct, IVMObject<T> {
 			if (index < 0 || Count < index)
 				throw new ArgumentOutOfBoundsException( "index" );
 
@@ -95,7 +104,7 @@ namespace VM.VMObjects {
 			Set( index, obj );
 		}
 
-		public int IndexOf<T>( T obj ) where T : struct, IVMObject {
+		public int IndexOf<T>( T obj ) where T : struct, IVMObject<T> {
 			for (var i = 0; i < Count; i++)
 				if (Get<ObjectBase>( i ).Start == obj.Start)
 					return i;
@@ -112,7 +121,7 @@ namespace VM.VMObjects {
 			if (Capacity == Count)
 				return;
 			var oldArr = (Array) this[ARRAY_OFFSET];
-			var newArr = Array.New( Count );
+			var newArr = Array.CreateInstance( Count );
 			this[ARRAY_OFFSET] = newArr;
 			Capacity = Count;
 
@@ -121,7 +130,7 @@ namespace VM.VMObjects {
 
 		void Expand() {
 			var oldArr = (Array) this[ARRAY_OFFSET];
-			var newArr = Array.New( Capacity * 2 );
+			var newArr = Array.CreateInstance( Capacity * 2 );
 			this[ARRAY_OFFSET] = newArr;
 			Capacity *= 2;
 
@@ -130,18 +139,18 @@ namespace VM.VMObjects {
 		#endregion
 
 		#region Static method
-		public static List New( int initialSize ) {
+		public static List CreateInstance( int initialSize ) {
 			var list = VirtualMachine.MemoryManager.Allocate<List>( 3 );
 
 			list[ARRAY_SIZE_OFFSET] = initialSize;
 			list[LIST_COUNT_OFFSET] = 0;
-			list[ARRAY_OFFSET] = Array.New( initialSize );
+			list[ARRAY_OFFSET] = Array.CreateInstance( initialSize );
 
 			return list;
 		}
 
-		public static List New() {
-			return New( 8 );
+		public static List CreateInstance() {
+			return CreateInstance( 8 );
 		}
 		#endregion
 	}

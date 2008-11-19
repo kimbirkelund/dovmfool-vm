@@ -27,6 +27,17 @@ namespace VM {
 	}
 
 	[global::System.Serializable]
+	public class OutOfMemoryException : VMException {
+		public OutOfMemoryException() : base( "Heap memory has been exhausted." ) { }
+		public OutOfMemoryException( string message ) : base( message ) { }
+		public OutOfMemoryException( string message, Exception inner ) : base( message, inner ) { }
+		protected OutOfMemoryException(
+		  System.Runtime.Serialization.SerializationInfo info,
+		  System.Runtime.Serialization.StreamingContext context )
+			: base( info, context ) { }
+	}
+
+	[global::System.Serializable]
 	public class InterpretorException : VMException {
 		public InterpretorException() { }
 		public InterpretorException( string message ) : base( message ) { }
@@ -109,6 +120,10 @@ namespace VM {
 			this.InvalidMessage = invalidMessage;
 			this.Object = obj;
 		}
+
+		public MessageNotUnderstoodException( Handle<VMObjects.String> invalidMessage )
+			: this( invalidMessage, null ) {
+		}
 	}
 
 	[global::System.Serializable]
@@ -120,6 +135,20 @@ namespace VM {
 		public ClassNotFoundException( string message ) : base( message ) { }
 		public ClassNotFoundException( string message, Exception inner ) : base( message, inner ) { }
 		protected ClassNotFoundException(
+		  System.Runtime.Serialization.SerializationInfo info,
+		  System.Runtime.Serialization.StreamingContext context )
+			: base( info, context ) { }
+	}
+
+	[global::System.Serializable]
+	public class UnknownSystemCallException : VMAppException {
+		public Handle<VMObjects.String> SystemCallName { get; private set; }
+
+		public UnknownSystemCallException() : base( "Unknown system call." ) { }
+		public UnknownSystemCallException( Handle<VMObjects.String> systemCall ) : this( systemCall, "Unknown system call." ) { }
+		public UnknownSystemCallException( Handle<VMObjects.String> systemCall, string message ) : base( message ) { SystemCallName = systemCall; }
+		public UnknownSystemCallException( string message, Exception inner ) : base( message, inner ) { }
+		protected UnknownSystemCallException(
 		  System.Runtime.Serialization.SerializationInfo info,
 		  System.Runtime.Serialization.StreamingContext context )
 			: base( info, context ) { }

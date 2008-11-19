@@ -5,15 +5,16 @@ using System.Text;
 using VMILLib;
 
 namespace VM {
-	public interface IVMObject {
-		int Start { get; set; }
+	public interface IVMObject<T> where T : struct, IVMObject<T> {
+		int Start { get; }
 		Word this[int index] { get; set; }
 		int Size { get; }
 		TypeId TypeId { get; }
+		T New( int startPosition );
 	}
 
 	public static class ExtIVMObject {
-		public static Handle<T> ToHandle<T>( this T value ) where T : struct, IVMObject {
+		public static Handle<T> ToHandle<T>( this T value ) where T : struct, IVMObject<T> {
 			if (value.Start == 0)
 				return null;
 			return (Handle<T>) value;

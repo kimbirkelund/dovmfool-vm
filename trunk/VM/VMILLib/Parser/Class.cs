@@ -9,12 +9,12 @@ namespace VMILLib.Parser {
 		public readonly string Name;
 		public readonly List<string> InheritsFrom;
 		public readonly List<string> Fields;
-		public readonly MessageHandler DefaultHandler;
-		public readonly List<MessageHandler> Handlers;
+		public readonly VMILMessageHandler DefaultHandler;
+		public readonly List<MessageHandlerBase> Handlers;
 		public readonly List<Class> Classes;
 
 		public Class( LexLocation location, VisibilityModifier visibility, string name, List<string> inheritsFrom, List<string> fields,
-			MessageHandler defaultHandler, List<MessageHandler> handlers, List<Class> classes )
+			VMILMessageHandler defaultHandler, List<MessageHandlerBase> handlers, List<Class> classes )
 			: base( location ) {
 			this.Visibility = visibility;
 			this.Name = name;
