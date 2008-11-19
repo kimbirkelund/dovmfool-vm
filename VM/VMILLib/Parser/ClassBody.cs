@@ -6,11 +6,11 @@ using System.Text;
 namespace VMILLib.Parser {
 	class ClassBody : ASTNode {
 		public readonly List<string> Fields;
-		public readonly MessageHandler DefaultHandler;
-		public readonly List<MessageHandler> Handlers;
+		public readonly VMILMessageHandler DefaultHandler;
+		public readonly List<MessageHandlerBase> Handlers;
 		public readonly List<Class> Classes;
 
-		public ClassBody( List<string> fields, MessageHandler defaultHandler, List<MessageHandler> handlers, List<Class> classes )
+		public ClassBody( List<string> fields, VMILMessageHandler defaultHandler, List<MessageHandlerBase> handlers, List<Class> classes )
 			: base( new LexLocation() ) {
 			this.Fields = fields;
 			this.DefaultHandler = defaultHandler;

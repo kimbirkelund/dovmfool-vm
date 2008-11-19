@@ -67,7 +67,7 @@
   .class public InnerClass extends Foo {
     .handler public WriteHelloWorld(console) {
     	.entrypoint
-        load-local console
+        load-argument console
         push-literal "Hello World!"
         push-literal "write-line:1"
         send-message

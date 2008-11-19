@@ -11,6 +11,8 @@ namespace VM {
 		void Pause();
 		void Resume();
 		void Kill();
+
+		Handle<VMObjects.AppObject> Send( Handle<VMObjects.String> message, Handle<VMObjects.AppObject> to, params Handle<AppObject>[] arguments );
 	}
 
 	public enum InterpretorState {

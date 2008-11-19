@@ -65,6 +65,16 @@ namespace System {
 		}
 
 		/// <summary>
+		/// Performs the class <c>action</c>(0),...,<c>action</c>(<c>count</c>).
+		/// </summary>
+		/// <param name="count">The number of calls to make.</param>
+		/// <param name="action">The action to perform.</param>
+		public static void ForEachDescending( this int count, Action<int> action ) {
+			for (int i = count - 1; i >= 0; i--)
+				action( i );
+		}
+
+		/// <summary>
 		/// Creates a sequence consisting of elements (<c>sequencer</c>(0),...,<c>sequencer</c>(<c>val</c>)).
 		/// </summary>
 		/// <typeparam name="T">The type of the sequence elements.</typeparam>

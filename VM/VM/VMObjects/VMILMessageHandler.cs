@@ -5,7 +5,7 @@ using System.Text;
 using VMILLib;
 
 namespace VM.VMObjects {
-	public struct VMILMessageHandler : IVMObject {
+	public struct VMILMessageHandler : IVMObject<VMILMessageHandler> {
 		#region Constants
 		public const int COUNTS_OFFSET = 3;
 		public const int INSTRUCTIONS_OFFSET = 4;
@@ -27,21 +27,30 @@ namespace VM.VMObjects {
 		int start;
 		public int Start {
 			get { return start; }
-			set { start = value; }
 		}
 
 		public VisibilityModifier Visibility { get { return (VisibilityModifier) (this[MessageHandlerBase.HEADER_OFFSET] & MessageHandlerBase.VISIBILITY_MASK); } }
 		public static bool IsInternal { get { return false; } }
-		public String Name { get { return (String) (this[MessageHandlerBase.HEADER_OFFSET] >> MessageHandlerBase.NAME_RSHIFT); } }
+		public String Name { get { return VirtualMachine.ConstantPool.GetString( this[MessageHandlerBase.HEADER_OFFSET] >> MessageHandlerBase.NAME_RSHIFT ); } }
 		public int ArgumentCount { get { return (this[VMILMessageHandler.COUNTS_OFFSET] & VMILMessageHandler.ARGUMENT_COUNT_MASK) >> VMILMessageHandler.ARGUMENT_COUNT_RSHIFT; } }
 		public int LocalCount { get { return this[VMILMessageHandler.COUNTS_OFFSET] & VMILMessageHandler.LOCAL_COUNT_MASK; } }
 		public int InstructionCount { get { return this.Size - VMILMessageHandler.INSTRUCTIONS_OFFSET; } }
 		public Class Class { get { return (Class) this[MessageHandlerBase.CLASS_POINTER_OFFSET]; } }
-		public bool IsEntrypoint { get { return (this[MessageHandlerBase.HEADER_OFFSET] & MessageHandlerBase.IS_ENTRYPOINT_MASK )!= 0; } }
+		public bool IsEntrypoint { get { return (this[MessageHandlerBase.HEADER_OFFSET] & MessageHandlerBase.IS_ENTRYPOINT_MASK) != 0; } }
+		#endregion
+
+		#region Cons
+		public VMILMessageHandler( int start ) {
+			this.start = start;
+		}
+
+		public VMILMessageHandler New( int startPosition ) {
+			return new VMILMessageHandler( startPosition );
+		}
 		#endregion
 
 		#region Static methods
-		public static VMILMessageHandler New( int instructionCount ) {
+		public static VMILMessageHandler CreateInstance( int instructionCount ) {
 			return VirtualMachine.MemoryManager.Allocate<VMILMessageHandler>( INSTRUCTIONS_OFFSET + instructionCount );
 		}
 		#endregion
@@ -58,7 +67,7 @@ namespace VM.VMObjects {
 
 		#region Instance methods
 		public Word GetInstruction( int instruction ) {
-			return this[VMILMessageHandler.INSTRUCTIONS_OFFSET - 1 + instruction];
+			return this[VMILMessageHandler.INSTRUCTIONS_OFFSET + instruction];
 		}
 		#endregion
 	}

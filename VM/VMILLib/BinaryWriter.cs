@@ -10,7 +10,7 @@ namespace VMILLib {
 		bool isDisposed;
 		Stream output;
 		int pos;
-		Dictionary<MessageHandler, int> handlers;
+		Dictionary<MessageHandlerBase, int> handlers;
 		Dictionary<Class, int> classes;
 
 		public BinaryWriter( Stream output ) {
@@ -20,7 +20,7 @@ namespace VMILLib {
 		public BinaryWriter( string output ) : this( new FileStream( output, FileMode.Create, FileAccess.Write ) ) { }
 
 		public void Write( Assembly assembly ) {
-			handlers = new Dictionary<MessageHandler, int>();
+			handlers = new Dictionary<MessageHandlerBase, int>();
 			classes = new Dictionary<Class, int>();
 
 			WriteStrings( assembly.Strings );
@@ -71,16 +71,21 @@ namespace VMILLib {
 			handlers.Keys.ToArray().ForEach( h => WriteHandler( h ) );
 		}
 
-		void WriteHandler( MessageHandler handler ) {
-			var argCount = handler.Arguments.Count;
-			var localCount = handler.Locals.Count;
-			var instructionCount = handler.Instructions.Where( i => !(i is Label) ).Count();
+		void WriteHandler( MessageHandlerBase handlerBase ) {
+			Write( handlerBase.Name == null ? (int) VisibilityModifier.None : (handlerBase.Name.Index << 4) | (handlerBase.IsExternal ? 4 : 0) | (handlerBase.IsEntrypoint ? 8 : 0) | (int) handlerBase.Visibility );
+			Write( handlerBase.Arguments.Count );
 
-			Write( argCount );
-			Write( localCount );
-			Write( instructionCount );
-			Write( handler.Name == null ? (int) VisibilityModifier.None : (handler.Name.Index << 4) | (handler.IsEntrypoint ? 8 : 0) | (int) handler.Visibility );
-			WriteInstructions( handler.Instructions );
+			if (handlerBase is ExternalMessageHandler) {
+				var handler = (ExternalMessageHandler) handlerBase;
+
+				Write( handler.ExternalName.Index );
+			} else {
+				var handler = (VMILMessageHandler) handlerBase;
+
+				Write( handler.Locals.Count );
+				Write( handler.Instructions.Where( i => !(i is Label) ).Count() );
+				WriteInstructions( handler.Instructions );
+			}
 		}
 
 		void WriteInstructions( InstructionList inssList ) {
@@ -101,7 +106,13 @@ namespace VMILLib {
 						break;
 					case OpCode.StoreLocal:
 					case OpCode.LoadLocal:
-						eins |= (uint) (ins.MessageHandler.Arguments.Contains( (string) ins.Operand ) ? ins.MessageHandler.Arguments.IndexOf( (string) ins.Operand ) : ins.MessageHandler.Arguments.Count + ins.MessageHandler.Locals.IndexOf( (string) ins.Operand ));
+						eins |= (uint) ins.MessageHandler.Locals.IndexOf( (string) ins.Operand );
+						break;
+					case OpCode.LoadArgument:
+						eins |= (uint) ins.MessageHandler.Arguments.IndexOf( (string) ins.Operand ) + 1;
+						break;
+					case OpCode.LoadThis:
+						eins = (uint) OpCode.LoadArgument << 27;
 						break;
 					case OpCode.PushLiteral:
 						if (ins.Operand is CString)

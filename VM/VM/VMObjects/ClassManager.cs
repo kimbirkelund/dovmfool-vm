@@ -5,7 +5,7 @@ using System.Text;
 using VMILLib;
 
 namespace VM.VMObjects {
-	public struct ClassManager : IVMObject {
+	public struct ClassManager : IVMObject<ClassManager> {
 		#region Properties
 		public TypeId TypeId { get { return VMILLib.TypeId.ClassManager; } }
 		public int Size { get { return this[ObjectBase.OBJECT_HEADER_OFFSET] >> ObjectBase.OBJECT_SIZE_RSHIFT; } }
@@ -18,7 +18,16 @@ namespace VM.VMObjects {
 		int start;
 		public int Start {
 			get { return start; }
-			set { start = value; }
+		}
+		#endregion
+
+		#region Cons
+		public ClassManager( int start ) {
+			this.start = start;
+		}
+
+		public ClassManager New( int startPosition ) {
+			return new ClassManager( startPosition );
 		}
 		#endregion
 

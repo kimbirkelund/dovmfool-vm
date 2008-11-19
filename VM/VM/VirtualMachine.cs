@@ -10,12 +10,13 @@ namespace VM {
 		internal static ConstantPool ConstantPool { get; private set; }
 		internal static Class StringClass { get; private set; }
 		internal static Class IntegerClass { get; private set; }
+		internal static IInterpretorFactory InterpretorFactory { get; private set; }
 
 		static VirtualMachine() {
-			dot = ConstantPool.RegisterString( "." );
+			MemoryManager = new NoncollectingMemoryManager( 5000 );
+			ConstantPool = new ConstantPool();
+			InterpretorFactory = new BasicInterpretor.Factory();
 		}
-
-		static Handle<VMObjects.String> dot;
 
 		static Dictionary<Handle<VMObjects.String>, Handle<VMObjects.Class>> classes = new Dictionary<Handle<VM.VMObjects.String>, Handle<Class>>();
 
@@ -23,7 +24,7 @@ namespace VM {
 			var name = className.ToString();
 			if (name.IsNullOrEmpty())
 				return null;
-			var names = className.Value.Split( dot );
+			var names = className.Value.Split( VMObjects.String.Dot );
 
 			if (!classes.ContainsKey( names.Get<VMObjects.String>( 0 ).ToHandle() ))
 				throw new ClassNotFoundException( names.Get<VMObjects.String>( 0 ).ToHandle() );
@@ -41,6 +42,18 @@ namespace VM {
 
 		internal static void RegisterClass( Handle<VMObjects.Class> cls ) {
 			classes.Add( cls.Value.Name.ToHandle(), cls );
+		}
+
+		public static void Execute( string inputFile ) {
+			var loader = new ClassLoader( inputFile );
+			var entrypoint = loader.Read();
+			if (entrypoint == null)
+				throw new VMException( "No entry point specified." );
+
+			var obj = AppObject.CreateInstance( entrypoint.Value.Class ).ToHandle();
+
+			var intp = InterpretorFactory.CreateInstance( obj, entrypoint );
+			intp.Start();
 		}
 	}
 }

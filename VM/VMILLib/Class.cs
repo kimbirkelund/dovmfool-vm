@@ -9,12 +9,12 @@ namespace VMILLib {
 		public readonly CString Name;
 		public readonly NameList InheritsFrom;
 		public readonly IList<string> Fields;
-		public readonly MessageHandler DefaultHandler;
+		public readonly MessageHandlerBase DefaultHandler;
 		public readonly MessageHandlerList Handlers;
 		public readonly ClassList Classes;
 		public Class ParentClass { get; private set; }
 
-		public Class( VisibilityModifier visibility, CString name, NameList inheritsFrom, IEnumerable<string> fields, MessageHandler defaultHandler, MessageHandlerList handlers, ClassList classes ) {
+		public Class( VisibilityModifier visibility, CString name, NameList inheritsFrom, IEnumerable<string> fields, MessageHandlerBase defaultHandler, MessageHandlerList handlers, ClassList classes ) {
 			this.Visibility = visibility;
 			this.Name = name;
 			this.InheritsFrom = inheritsFrom;

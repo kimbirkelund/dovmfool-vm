@@ -4,11 +4,11 @@ using System.Linq;
 using System.Text;
 
 namespace VMILLib {
-	public sealed class MessageHandlerList : IEnumerable<MessageHandler> {
+	public sealed class MessageHandlerList : IEnumerable<MessageHandlerBase> {
 		public readonly int Count;
-		Dictionary<CString, MessageHandler> handlers;
+		Dictionary<CString, MessageHandlerBase> handlers;
 
-		public MessageHandler this[CString name] {
+		public MessageHandlerBase this[CString name] {
 			get {
 				if (handlers.ContainsKey( name ))
 					return handlers[name];
@@ -16,12 +16,12 @@ namespace VMILLib {
 			}
 		}
 
-		public MessageHandlerList( IEnumerable<MessageHandler> handlers ) {
+		public MessageHandlerList( IEnumerable<MessageHandlerBase> handlers ) {
 			this.handlers = handlers.ToDictionary( c => c.Name );
 			this.Count = this.handlers.Count;
 		}
 
-		public IEnumerator<MessageHandler> GetEnumerator() {
+		public IEnumerator<MessageHandlerBase> GetEnumerator() {
 			return handlers.Values.GetEnumerator();
 		}
 		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() { return GetEnumerator(); }

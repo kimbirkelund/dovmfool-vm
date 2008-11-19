@@ -5,7 +5,7 @@ using System.Text;
 using VMILLib;
 
 namespace VM.VMObjects {
-	public struct AppObjectSet : IVMObject {
+	public struct AppObjectSet : IVMObject<AppObjectSet> {
 		#region Constants
 		public const uint OBJ_HEADER_APPOBJECTSET_OBJECT_COUNT = 0xFFFFFFF0;
 		public const int OBJ_HEADER_APPOBJECTSET_OBJECT_COUNT_RSHIFT = 4;
@@ -24,6 +24,16 @@ namespace VM.VMObjects {
 		public int Start {
 			get { return start; }
 			set { start = value; }
+		}
+		#endregion
+
+		#region Cons
+		public AppObjectSet( int start ) {
+			this.start = start;
+		}
+
+		public AppObjectSet New( int startPosition ) {
+			return new AppObjectSet( startPosition );
 		}
 		#endregion
 

@@ -51,17 +51,27 @@ namespace VMILLib {
 			return new Class( visibility, name, inheritsFrom, fields, defaultHandler, handlers, classes );
 		}
 
-		MessageHandler ReadMessageHandler( Parser.MessageHandler handler ) {
-			if (handler == null)
+		MessageHandlerBase ReadMessageHandler( Parser.MessageHandlerBase handlerBase ) {
+			if (handlerBase == null)
 				return null;
 
-			var visibility = handler.Visibility;
-			var name = handler.Name != null ? ReadString( handler.Name + ":" + handler.Arguments.Count ) : null;
-			var arguments = handler.Arguments;
-			var locals = handler.Locals;
-			var instructions = ReadInstructions( handler.Instructions );
+			var visibility = handlerBase.Visibility;
+			var name = handlerBase.Name != null ? ReadString( handlerBase.Name + ":" + handlerBase.Arguments.Count ) : null;
+			var arguments = handlerBase.Arguments;
 
-			return new MessageHandler( visibility, name, arguments, locals, instructions, handler.IsEntrypoint );
+			if (handlerBase is Parser.ExternalMessageHandler) {
+				var handler = (Parser.ExternalMessageHandler) handlerBase;
+
+				var externalName = ReadString( handler.ExternalName + ":" + handlerBase.Arguments.Count );
+
+				return new ExternalMessageHandler( visibility, name, externalName, arguments );
+			} else {
+				var handler = (Parser.VMILMessageHandler) handlerBase;
+				var locals = handler.Locals;
+				var instructions = ReadInstructions( handler.Instructions );
+
+				return new VMILMessageHandler( visibility, name, arguments, locals, instructions, handler.IsEntrypoint );
+			}
 		}
 
 		int VerifyTryCatches( Parser.List<Parser.Instruction> inss, int index ) {
@@ -107,6 +117,7 @@ namespace VMILLib {
 				case OpCode.LoadField:
 				case OpCode.StoreLocal:
 				case OpCode.LoadLocal:
+				case OpCode.LoadArgument:
 					return new Instruction( ins.OpCode, (string) ins.Operand );
 				case OpCode.PushLiteral:
 					return new Instruction( OpCode.PushLiteral, ins.Operand is string ? (object) ReadString( (string) ins.Operand ) : (int) ins.Operand );
@@ -114,6 +125,7 @@ namespace VMILLib {
 				case OpCode.JumpIfTrue:
 				case OpCode.JumpIfFalse:
 					return new Instruction( ins.OpCode, (string) ins.Operand );
+				case OpCode.LoadThis:
 				case OpCode.Pop:
 				case OpCode.Dup:
 				case OpCode.NewInstance:

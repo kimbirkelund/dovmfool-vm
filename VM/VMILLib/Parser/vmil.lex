@@ -5,7 +5,7 @@
 digit [0-9]
 int ([0]|[-]?[1-9][0-9]*)
 string \"[^\"\n\r]*\"
-identifier [_a-zA-Z][_a-zA-Z0-9]*
+identifier [_a-zA-Z][\-_a-zA-Z0-9]*
 
 %{
 	public string SourceFile {get; set;}
@@ -25,12 +25,14 @@ identifier [_a-zA-Z][_a-zA-Z0-9]*
 <0> ".locals" return (int) Tokens.Locals;
 <0> ".fields" return (int) Tokens.Fields;
 <0> ".entrypoint" return (int) Tokens.Entrypoint;
+<0> ".external" return (int) Tokens.External;
 
 <0> "store-field" return (int) Tokens.StoreField;
 <0> "load-field" return (int) Tokens.LoadField;
 <0> "store-local" return (int) Tokens.StoreLocal;
 <0> "load-local" return (int) Tokens.LoadLocal;
 <0> "load-argument" return (int) Tokens.LoadArgument;
+<0> "load-this" return (int) Tokens.LoadThis;
 <0> "push-literal" return (int) Tokens.PushLiteral;
 <0> "pop" return (int) Tokens.Pop;
 <0> "dup" return (int) Tokens.Dup;
@@ -50,6 +52,7 @@ identifier [_a-zA-Z][_a-zA-Z0-9]*
 <0> ")" return (int) Tokens.RightParen;
 <0> "," return (int) Tokens.Comma;
 <0> ":" return (int) Tokens.Colon;
+<0> "." return (int) Tokens.Dot;
 
 <0> {identifier} {
 	yylval = yytext.ToNode();

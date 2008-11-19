@@ -24,6 +24,19 @@ namespace VM {
 		public int StackPointer { get { return stackPointer; } }
 		public int FrameBoundary { get { return frameBoundary; } }
 
+		public StackValue this[int index] {
+			get {
+				if (stackPointer - index - 1 < 0)
+					throw new ArgumentOutOfRangeException();
+				return stack[stackPointer - index - 1];
+			}
+			set {
+				if (stackPointer - index - 1 < 0)
+					throw new ArgumentOutOfRangeException();
+				stack[stackPointer - index - 1] = value;
+			}
+		}
+
 		public ExecutionStack( int initialSize ) {
 			this.initialSize = initialSize;
 			if (initialSize < 0)
@@ -62,11 +75,11 @@ namespace VM {
 		}
 
 		public void PushFrame( ReturnAddress returnAddress, VMILMessageHandler callee ) {
-			Push((Class) TYPE_RETURN_HANDLER, returnAddress.Handler );
+			Push( (Class) TYPE_RETURN_HANDLER, returnAddress.Handler );
 			Push( (Class) TYPE_RETURN_INSTRUCTION_OFFSET, returnAddress.InstructionOffset );
 			Push( (Class) TYPE_BASE_POINTER, basePointer );
 			Push( (Class) TYPE_FRAME_BOUNDARY, frameBoundary );
-			frameBoundary = stackPointer - ARGUMENT_OFFSET - 1 - callee.ArgumentCount;
+			frameBoundary = stackPointer - ARGUMENT_OFFSET - callee.ArgumentCount;
 			basePointer = stackPointer;
 
 			for (var i = 0; i < callee.LocalCount; i++)

@@ -1,0 +1,19 @@
+.class public Program {
+       .handler private write-line .external Console.write-line(str)
+
+       .handler public main() {
+       		.entrypoint
+
+       		load-this
+       		push-literal "Hello World!"
+		push-literal "write-line:1"
+		send-message
+
+		load-this
+		push-literal "Og Christer tror ikke på mig!!!!"
+		push-literal "write-line:1"
+		send-message
+
+		return-void
+       }
+}

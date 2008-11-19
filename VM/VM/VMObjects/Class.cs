@@ -5,7 +5,7 @@ using System.Text;
 using VMILLib;
 
 namespace VM.VMObjects {
-	public struct Class : IVMObject {
+	public struct Class : IVMObject<Class> {
 		#region Constants
 		public const int HEADER_OFFSET = 1;
 		public const int PARENT_CLASS_OFFSET = 2;
@@ -34,16 +34,15 @@ namespace VM.VMObjects {
 		int start;
 		public int Start {
 			get { return start; }
-			set { start = value; }
 		}
 
 		public VisibilityModifier Visibility { get { return (VisibilityModifier) (this[Class.HEADER_OFFSET] & Class.VISIBILITY_MASK); } }
 		public int FieldCount { get { return this[Class.COUNTS_OFFSET] >> Class.COUNTS_FIELDS_RSHIFT; } }
 		public int HandlerCount { get { return (this[Class.COUNTS_OFFSET] & Class.COUNTS_HANDLERS_MASK) >> Class.COUNTS_HANDLERS_RSHIFT; } }
 		public int SuperClassCount { get { return this[Class.COUNTS_OFFSET] & Class.COUNTS_SUPERCLASSES_MASK; } }
-		public int InnerClassCount { get { return this.Size - Class.SUPERCLASSES_OFFSET - this.SuperClassCount - 1 - this.HandlerCount; } }
+		public int InnerClassCount { get { return this.Size - Class.SUPERCLASSES_OFFSET - this.SuperClassCount - 1 - this.HandlerCount * 2; } }
 		public int InstanceSize { get { return this.FieldCount + AppObject.FIELDS_OFFSET; } }
-		public String Name { get { return (String) (this[Class.HEADER_OFFSET] >> Class.NAME_RSHIFT); } }
+		public String Name { get { return VirtualMachine.ConstantPool.GetString( this[Class.HEADER_OFFSET] >> Class.NAME_RSHIFT ); } }
 		public MessageHandlerBase DefaultHandler { get { return (MessageHandlerBase) this[Class.SUPERCLASSES_OFFSET + this.SuperClassCount]; } }
 
 		public IEnumerable<String> SuperClasses {
@@ -63,9 +62,19 @@ namespace VM.VMObjects {
 		}
 		#endregion
 
+		#region Cons
+		public Class( int start ) {
+			this.start = start;
+		}
+
+		public Class New( int startPosition ) {
+			return new Class( startPosition );
+		}
+		#endregion
+
 		#region Static methods
-		public static int CalculateSize( int superClassCount, int handlerCount, int innerClassCount ) {
-			return SUPERCLASSES_OFFSET + superClassCount + 2 + 2 * handlerCount + 2 * innerClassCount;
+		public static Class CreateInstance( int superClassCount, int handlerCount, int innerClassCount ) {
+			return VirtualMachine.MemoryManager.Allocate<Class>( SUPERCLASSES_OFFSET - 1 + superClassCount + 1 + 2 * handlerCount + 2 * innerClassCount );
 		}
 		#endregion
 
@@ -87,11 +96,11 @@ namespace VM.VMObjects {
 			for (var i = 0; i < handlers; i += 2) {
 				var header = this[firstHandler + i];
 				var visibility = (VisibilityModifier) (header & MessageHandlerBase.VISIBILITY_MASK);
-				var name = (String) (header >> MessageHandlerBase.NAME_RSHIFT);
+				var name = VirtualMachine.ConstantPool.GetString( header >> MessageHandlerBase.NAME_RSHIFT ).Value;
 
-				if (visibility == VisibilityModifier.Private)
+				if (visibility == VisibilityModifier.Private && caller.Class != this)
 					continue;
-				if (messageName.Equals( name ))
+				if (!messageName.Equals( name ))
 					continue;
 				if (visibility == VisibilityModifier.Protected && !caller.Extends( this ))
 					continue;
