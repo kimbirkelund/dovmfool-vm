@@ -23,6 +23,7 @@ namespace VM.VMObjects {
 		#endregion
 
 		#region Properties
+		public bool IsNull { get { return start == 0; } }
 		public TypeId TypeId { get { return VMILLib.TypeId.Class; } }
 		public int Size { get { return this[ObjectBase.OBJECT_HEADER_OFFSET] >> ObjectBase.OBJECT_SIZE_RSHIFT; } }
 
@@ -40,15 +41,16 @@ namespace VM.VMObjects {
 		public int FieldCount { get { return this[Class.COUNTS_OFFSET] >> Class.COUNTS_FIELDS_RSHIFT; } }
 		public int HandlerCount { get { return (this[Class.COUNTS_OFFSET] & Class.COUNTS_HANDLERS_MASK) >> Class.COUNTS_HANDLERS_RSHIFT; } }
 		public int SuperClassCount { get { return this[Class.COUNTS_OFFSET] & Class.COUNTS_SUPERCLASSES_MASK; } }
-		public int InnerClassCount { get { return this.Size - Class.SUPERCLASSES_OFFSET - this.SuperClassCount - 1 - this.HandlerCount * 2; } }
+		public int InnerClassCount { get { return (this.Size - Class.SUPERCLASSES_OFFSET - this.SuperClassCount - 1 - this.HandlerCount * 2) / 2; } }
 		public int InstanceSize { get { return this.FieldCount + AppObject.FIELDS_OFFSET; } }
 		public String Name { get { return VirtualMachine.ConstantPool.GetString( this[Class.HEADER_OFFSET] >> Class.NAME_RSHIFT ); } }
 		public MessageHandlerBase DefaultHandler { get { return (MessageHandlerBase) this[Class.SUPERCLASSES_OFFSET + this.SuperClassCount]; } }
+		public Class ParentClass { get { return (Class) this[Class.PARENT_CLASS_OFFSET]; } }
 
 		public IEnumerable<String> SuperClasses {
 			get {
 				for (var i = Class.SUPERCLASSES_OFFSET; i < Class.SUPERCLASSES_OFFSET + this.SuperClassCount; i++)
-					yield return (String) this[i];
+					yield return VirtualMachine.ConstantPool.GetString( this[i] );
 			}
 		}
 
@@ -112,19 +114,19 @@ namespace VM.VMObjects {
 		}
 
 		public Class ResolveClass( Class referencer, String className ) {
-			var firstClass = Class.SUPERCLASSES_OFFSET + this.SuperClassCount + this.HandlerCount + 1;
+			var firstClass = Class.SUPERCLASSES_OFFSET + this.SuperClassCount + this.HandlerCount * 2 + 1;
 			var classes = this.InnerClassCount * 2;
 
 			for (var i = 0; i < classes; i += 2) {
 				var header = this[firstClass + i];
 				var visibility = (VisibilityModifier) (header & Class.VISIBILITY_MASK);
-				var name = (String) (header >> Class.NAME_RSHIFT);
+				var name = VirtualMachine.ConstantPool.GetString( header >> Class.NAME_RSHIFT );
 
-				if (visibility == VisibilityModifier.Private)
+				if (!referencer.IsNull && visibility == VisibilityModifier.Private && referencer != this)
 					continue;
-				if (className.Equals( name ))
+				if (!className.Equals( name ))
 					continue;
-				if (visibility == VisibilityModifier.Protected && !referencer.Extends( this ))
+				if (!referencer.IsNull && visibility == VisibilityModifier.Protected && !referencer.Extends( this ))
 					continue;
 
 				return (Class) this[firstClass + i + 1];
@@ -144,6 +146,12 @@ namespace VM.VMObjects {
 			}
 
 			return false;
+		}
+
+		public override string ToString() {
+			if (IsNull)
+				return "{NULL}";
+			return ".class " + Visibility.ToString().ToLower() + " " + Name + (SuperClassCount > 0 ? " extends " + SuperClasses.Join( ", " ) : "");
 		}
 		#endregion
 	}

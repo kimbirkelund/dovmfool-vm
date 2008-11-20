@@ -1,15 +1,17 @@
 .class public Program {
-       .handler private write-line .external Console.write-line(str)
-
-       .handler public main() {
+       .handler public main(sys) {
        		.entrypoint
 
-       		load-this
+		load-argument sys
+		push-literal "get-console:0"
+		send-message
        		push-literal "Hello World!"
 		push-literal "write-line:1"
 		send-message
 
-		load-this
+		load-argument sys
+		push-literal "get-console:0"
+		send-message
 		push-literal "Og Christer tror ikke på mig!!!!"
 		push-literal "write-line:1"
 		send-message

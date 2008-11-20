@@ -48,7 +48,7 @@ namespace VMILLib {
 			var classCount = ReadInt();
 			var clsHeader = ReadUInt();
 			var visibility = (VisibilityModifier) (0x00000003 & clsHeader);
-			var name = (CString) strings[(int) clsHeader >> 3];
+			var name = (CString) strings[(int) clsHeader >> 2];
 
 			var extends = new NameList( extendsCount.ForEach( () => (CString) strings[ReadInt()] ) );
 
@@ -59,7 +59,7 @@ namespace VMILLib {
 			var handlers = new MessageHandlerList( handlerCount.ForEach( () => this.handlers[ReadInt()] ) );
 			var classes = new ClassList( classCount.ForEach( () => this.classes[ReadInt()] ) );
 
-			this.classes.Add( this.classes.Count + 1, new Class( visibility, name, extends, fields, defHandler, handlers, classes ) );
+			this.classes.Add( this.classes.Count, new Class( visibility, name, extends, fields, defHandler, handlers, classes ) );
 		}
 
 		void ReadMessageHandlers() {

@@ -6,6 +6,8 @@ using System.Text;
 namespace VM.VMObjects {
 	public struct Char : IVMObject<Char> {
 		#region Properties
+		public bool IsNull { get { return false; } }
+		
 		byte b1, b2;
 		public byte Byte1 { get { return b1; } }
 		public byte Byte2 { get { return b2; } }

@@ -48,6 +48,8 @@ namespace VM {
 		}
 
 		public static implicit operator T( Handle<T> handle ) {
+			if (handle == null)
+				return new T();
 			return handle.Value;
 		}
 

@@ -10,12 +10,12 @@ namespace VM.VMObjects {
 		public const int COUNTS_OFFSET = 3;
 		public const int INSTRUCTIONS_OFFSET = 4;
 
-		public static readonly Word ARGUMENT_COUNT_MASK = 0xFFFF0000;
 		public const int ARGUMENT_COUNT_RSHIFT = 16;
 		public static readonly Word LOCAL_COUNT_MASK = 0x0000FFFF;
 		#endregion
 
 		#region Properties
+		public bool IsNull { get { return start == 0; } }
 		public TypeId TypeId { get { return VMILLib.TypeId.VMILMessageHandler; } }
 		public int Size { get { return this[ObjectBase.OBJECT_HEADER_OFFSET] >> ObjectBase.OBJECT_SIZE_RSHIFT; } }
 
@@ -32,7 +32,7 @@ namespace VM.VMObjects {
 		public VisibilityModifier Visibility { get { return (VisibilityModifier) (this[MessageHandlerBase.HEADER_OFFSET] & MessageHandlerBase.VISIBILITY_MASK); } }
 		public static bool IsInternal { get { return false; } }
 		public String Name { get { return VirtualMachine.ConstantPool.GetString( this[MessageHandlerBase.HEADER_OFFSET] >> MessageHandlerBase.NAME_RSHIFT ); } }
-		public int ArgumentCount { get { return (this[VMILMessageHandler.COUNTS_OFFSET] & VMILMessageHandler.ARGUMENT_COUNT_MASK) >> VMILMessageHandler.ARGUMENT_COUNT_RSHIFT; } }
+		public int ArgumentCount { get { return this[VMILMessageHandler.COUNTS_OFFSET] >> VMILMessageHandler.ARGUMENT_COUNT_RSHIFT; } }
 		public int LocalCount { get { return this[VMILMessageHandler.COUNTS_OFFSET] & VMILMessageHandler.LOCAL_COUNT_MASK; } }
 		public int InstructionCount { get { return this.Size - VMILMessageHandler.INSTRUCTIONS_OFFSET; } }
 		public Class Class { get { return (Class) this[MessageHandlerBase.CLASS_POINTER_OFFSET]; } }
@@ -68,6 +68,12 @@ namespace VM.VMObjects {
 		#region Instance methods
 		public Word GetInstruction( int instruction ) {
 			return this[VMILMessageHandler.INSTRUCTIONS_OFFSET + instruction];
+		}
+
+		public override string ToString() {
+			if (IsNull)
+				return "{NULL}";
+			return ".handler " + Visibility.ToString().ToLower() + " " + Name + "(" + ArgumentCount + ")";
 		}
 		#endregion
 	}

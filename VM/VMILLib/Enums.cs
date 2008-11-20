@@ -39,16 +39,17 @@ namespace VMILLib {
 	}
 
 	public enum TypeId : int {
-		AppObject = 0,
-		AppObjectSet = 1,
-		String = 2,
-		Integer = 3,
-		Char = 4,
-		Class = 5,
-		DelegateMessageHandler = 6,
-		VMILMessageHandler = 7,
-		ClassManager = 8,
-		List = 9,
-		Array = 10
+		Null = 0,
+		AppObject = 1,
+		AppObjectSet = 2,
+		String = 3,
+		Integer = 4,
+		Char = 5,
+		Class = 6,
+		DelegateMessageHandler = 7,
+		VMILMessageHandler = 8,
+		ClassManager = 9,
+		List = 10,
+		Array = 11
 	}
 }

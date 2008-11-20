@@ -11,6 +11,7 @@ namespace VM {
 		int Size { get; }
 		TypeId TypeId { get; }
 		T New( int startPosition );
+		bool IsNull { get; }
 	}
 
 	public static class ExtIVMObject {
