@@ -8,7 +8,8 @@ using VMILLib;
 using vmo = VM.VMObjects;
 
 namespace VM {
-	class ClassLoader {
+	class ClassLoader : IDisposable {
+		bool disposed;
 		Stream input;
 		Dictionary<int, int> constantIndexMap = new Dictionary<int, int>();
 		Dictionary<int, Handle<VMObjects.MessageHandlerBase>> messageHandlerIndexMap = new Dictionary<int, Handle<VMObjects.MessageHandlerBase>>();
@@ -29,6 +30,7 @@ namespace VM {
 			ReadStrings();
 			ReadMessageHandlers();
 			ReadClasses();
+			classIndexMap.Values.Where( c => c.Value.ParentClass == 0 ).ForEach( c => VirtualMachine.RegisterClass( c ) );
 
 			return entrypoint;
 		}
@@ -83,6 +85,7 @@ namespace VM {
 				handler[vmo.MessageHandlerBase.HEADER_OFFSET] = handlerHeader != (int) VisibilityModifier.None ? ((constantIndexMap[handlerHeader >> 4]) << 4) | (handlerHeader & 15) : handlerHeader;
 				if ((handlerHeader & vmo.MessageHandlerBase.IS_ENTRYPOINT_MASK) != 0)
 					entrypoint = handler.ToHandle();
+				handler[vmo.VMILMessageHandler.COUNTS_OFFSET] = (argCount << vmo.VMILMessageHandler.ARGUMENT_COUNT_RSHIFT) | (localCount & vmo.VMILMessageHandler.LOCAL_COUNT_MASK);
 
 				for (int i = 0; i < instructionCount; i++) {
 					var ins = ReadW();
@@ -115,7 +118,7 @@ namespace VM {
 
 			cls[vmo.Class.COUNTS_OFFSET] = (fieldCount << vmo.Class.COUNTS_FIELDS_RSHIFT) | ((handlerCount << vmo.Class.COUNTS_HANDLERS_RSHIFT) & vmo.Class.COUNTS_HANDLERS_MASK) | (vmo.Class.COUNTS_SUPERCLASSES_MASK & superClassCount);
 
-			superClassCount.ForEach( i => cls[vmo.Class.SUPERCLASSES_OFFSET + i] = constantIndexMap[ReadW()] );
+			superClassCount.ForEach( i => { cls[vmo.Class.SUPERCLASSES_OFFSET + i] = constantIndexMap[ReadW()]; } );
 
 			var offset = vmo.Class.SUPERCLASSES_OFFSET + superClassCount;
 			int defaultHandlerIndex = ReadW();
@@ -141,7 +144,7 @@ namespace VM {
 				innerCls[vmo.Class.PARENT_CLASS_OFFSET] = cls;
 			} );
 
-			VirtualMachine.RegisterClass( cls.ToHandle() );
+			classIndexMap.Add( index, cls.ToHandle() );
 		}
 
 		byte[] byteArr4 = new byte[4];
@@ -155,6 +158,19 @@ namespace VM {
 			//#endif
 
 			return w;
+		}
+
+		public void Dispose() {
+			lock (this) {
+				if (disposed)
+					return;
+			}
+			disposed = true;
+
+			if (input != null) {
+				input.Dispose();
+				input = null;
+			}
 		}
 	}
 }

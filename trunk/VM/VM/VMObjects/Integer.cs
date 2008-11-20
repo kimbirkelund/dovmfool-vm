@@ -7,6 +7,7 @@ using VMILLib;
 namespace VM.VMObjects {
 	public struct Integer : IVMObject<Integer> {
 		#region Properties
+		public bool IsNull { get { return false; } }
 		public TypeId TypeId { get { return VMILLib.TypeId.Integer; } }
 		public int Size { get { return this[ObjectBase.OBJECT_HEADER_OFFSET] >> ObjectBase.OBJECT_SIZE_RSHIFT; } }
 
@@ -28,6 +29,12 @@ namespace VM.VMObjects {
 
 		public Integer New( int startPosition ) {
 			return new Integer( startPosition );
+		}
+		#endregion
+
+		#region Instance methods
+		public override string ToString() {
+			return start.ToString();
 		}
 		#endregion
 

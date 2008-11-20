@@ -13,6 +13,7 @@ namespace VM.VMObjects {
 		#endregion
 
 		#region Properties
+		public bool IsNull { get { return start == 0; } }
 		public TypeId TypeId { get { return (TypeId) (int) (this[0] & OBJECT_TYPE_MASK); } }
 		public int Size { get { return this[ObjectBase.OBJECT_HEADER_OFFSET] >> ObjectBase.OBJECT_SIZE_RSHIFT; } }
 
@@ -35,6 +36,14 @@ namespace VM.VMObjects {
 
 		public ObjectBase New( int startPosition ) {
 			return new ObjectBase( startPosition );
+		}
+		#endregion
+
+		#region Instance methods
+		public override string ToString() {
+			if (IsNull)
+				return "{NULL}";
+			return "{" + TypeId.ToString() + "}";
 		}
 		#endregion
 

@@ -18,6 +18,7 @@ namespace VM.VMObjects {
 		#endregion
 
 		#region Properties
+		public bool IsNull { get { return start == 0; } }
 		public TypeId TypeId { get { return (TypeId) (int) (this[0] & 0x0000000F); } }
 		public int Size { get { return this[ObjectBase.OBJECT_HEADER_OFFSET] >> ObjectBase.OBJECT_SIZE_RSHIFT; } }
 
@@ -45,6 +46,14 @@ namespace VM.VMObjects {
 
 		public MessageHandlerBase New( int startPosition ) {
 			return new MessageHandlerBase( startPosition );
+		}
+		#endregion
+
+		#region Instance methods
+		public override string ToString() {
+			if (IsNull)
+				return "{NULL}";
+			return ".handler " + Visibility.ToString().ToLower() + " " + Name;
 		}
 		#endregion
 

@@ -1,0 +1,128 @@
+.class public System {
+	.fields { console }
+	
+	.handler public initialize() {
+		push-literal "System.Console"
+		new-instance
+		store-field console
+		return-void
+	}
+	
+	.handler public get-console() {
+		load-field console
+		return
+	}
+
+	.class public Object {
+		.handler public get-type .external System.Object.get-type()
+		.handler public to-string .external System.Object.to-string()
+		.handler public equals .external System.Object.equals(other)
+		
+		.handler public is-true() {
+			push-literal 1
+			return
+		}
+
+		.handler public is-false() {
+			push-literal 0			
+			return
+		}
+	}
+	
+	.class private Array {
+		.handler public get .external System.Array.get(index)
+		.handler public set .external System.Array.set(index)
+		.handler public length .external System.Array.length()
+	}
+	
+	.class public Exception {
+		.fields { message }
+		
+		.handler public initialize(message) {
+			load-argument message
+			store-field message
+		}
+		
+		.handler public to-string() {
+			load-field message
+			return
+		}
+	}
+	
+	.class public NotImplementedException extends Exception {
+		.handler public initialize() {
+			push-literal "The message handler has not been implemented."
+			push-literal "initialize:1"
+			send-message
+		}
+	}
+	
+	.class public Hashable extends Object {
+		.handler public get-hashcode() {
+			push-literal "System.NotImplementedException"
+			new-instance
+			throw
+		}
+	}
+	
+	.class public Comparable extends Object {
+		.handler public compare-to(other) {
+			push-literal "System.NotImplementedException"
+			new-instance
+			throw			
+		}
+	}
+	
+	.class public String extends Hashable, Comparable {
+		.handler public to-string() {
+			load-this
+			return
+		}
+		
+		.handler public get-hashcode .external System.String.get-hashcode()
+		.handler public equals .external System.String.equals(other)
+		.handler public compare-to .external System.String.compare-to(other)
+		.handler public substring .external System.String.substring(start, count)
+		.handler public split .external System.String.split(splitter)
+		.handler public index-of .external System.String.index-of(substring)
+		.handler public last-index-of .external System.String.index-of(substring)
+	}
+	
+	.class public Integer extends Hashable, Comparable {
+		.handler public to-string .external System.Integer.to-string()
+		.handler public subtract .external System.Integer.minus(other)		
+		.handler public add .external System.Integer.minus(other)
+		.handler public multiply .external System.Integer.minus(other)
+		.handler public divide .external System.Integer.minus(other)
+		
+		.handler public compare-to(other) {
+			load-this
+			load-argument other
+			push-literal "subtract:1"
+			send-message 
+			return
+		}
+		
+		.handler public negate() {
+			push-literal 0
+			load-this
+			push-literal "compare-to:1"
+			send-message
+			return
+		}
+		
+		.handler public is-true() {
+			load-this
+			return
+		}			
+
+		.handler public get-hashcode() {
+			load-this
+			return
+		}
+	}
+	
+	.class private Console {
+		.handler public write-line .external System.Console.write-line(str)
+	}
+}

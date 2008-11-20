@@ -49,7 +49,12 @@
     <Compile Include="ConstantPool.cs" />
     <Compile Include="ExecutionStack.cs" />
     <Compile Include="IInterpretorFactory.cs" />
-    <Compile Include="SystemCalls.Console.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="SystemCalls.System.Console.cs" />
     <Compile Include="SystemCalls.cs" />
     <Compile Include="VMException.cs" />
     <Compile Include="VMObjects\AppObject.cs" />
@@ -87,6 +92,17 @@
       <Name>VMILLib</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="BaseTypes.vmb" />
+    <None Include="BaseTypes.vmil" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
@@ -95,4 +111,7 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <PropertyGroup>
+    <PostBuildEvent>"$(SolutionDir)VMILAssembler\bin\debug\vmilasm.exe" "$(ProjectDir)BaseTypes.vmil"</PostBuildEvent>
+  </PropertyGroup>
 </Project>

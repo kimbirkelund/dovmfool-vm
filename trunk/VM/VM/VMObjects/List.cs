@@ -13,6 +13,7 @@ namespace VM.VMObjects {
 		#endregion
 
 		#region Properties
+		public bool IsNull { get { return start == 0; } }
 		public TypeId TypeId { get { return VMILLib.TypeId.List; } }
 		public int Size { get { return this[ObjectBase.OBJECT_HEADER_OFFSET] >> ObjectBase.OBJECT_SIZE_RSHIFT; } }
 
@@ -36,7 +37,7 @@ namespace VM.VMObjects {
 			private set { this[ARRAY_SIZE_OFFSET] = value; }
 		}
 		#endregion
-		
+
 		#region Cons
 		public List( int start ) {
 			this.start = start;
@@ -122,10 +123,10 @@ namespace VM.VMObjects {
 				return;
 			var oldArr = (Array) this[ARRAY_OFFSET];
 			var newArr = Array.CreateInstance( Count );
+			Array.CopyTo( oldArr, 0, newArr, 0, Count );
+
 			this[ARRAY_OFFSET] = newArr;
 			Capacity = Count;
-
-			Array.CopyTo( oldArr, 0, newArr, 0, Count );
 		}
 
 		void Expand() {
@@ -135,6 +136,12 @@ namespace VM.VMObjects {
 			Capacity *= 2;
 
 			Array.CopyTo( oldArr, 0, newArr, 0, Count );
+		}
+
+		public override string ToString() {
+			if (IsNull)
+				return "{NULL}";
+			return "List{Count: " + Count + "}";
 		}
 		#endregion
 

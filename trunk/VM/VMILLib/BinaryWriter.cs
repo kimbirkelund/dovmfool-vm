@@ -35,22 +35,22 @@ namespace VMILLib {
 		}
 
 		int CountClasses( ClassList classList ) {
-			return classList.Aggregate( classList.Count, ( count, cls ) => count += CountClasses( cls.Classes ), count => count );
+			return classList.Aggregate( classList.Count, ( count, cls ) => count += CountClasses( cls.InnerClasses ), count => count );
 		}
 
 		void WriteClass( Class cls ) {
-			foreach (var ccls in cls.Classes)
+			foreach (var ccls in cls.InnerClasses)
 				WriteClass( ccls );
 
-			classes.Add( cls, classes.Count + 1 );
+			classes.Add( cls, classes.Count  );
 
-			Write( cls.InheritsFrom.Count );
+			Write( cls.SuperClasses.Count );
 			Write( cls.Fields.Count );
 			Write( cls.Handlers.Count );
-			Write( cls.Classes.Count );
-			Write( (cls.Name.Index << 3) | (int) cls.Visibility );
+			Write( cls.InnerClasses.Count );
+			Write( (cls.Name.Index << 2) | (int) cls.Visibility );
 
-			cls.InheritsFrom.ForEach( s => Write( s.Index ) );
+			cls.SuperClasses.ForEach( s => Write( s.Index ) );
 
 			if (cls.DefaultHandler == null)
 				Write( 0 );
@@ -60,7 +60,7 @@ namespace VMILLib {
 			foreach (var handler in cls.Handlers)
 				Write( handlers[handler] );
 
-			foreach (var innerCls in cls.Classes)
+			foreach (var innerCls in cls.InnerClasses)
 				Write( classes[innerCls] );
 		}
 
@@ -198,7 +198,7 @@ namespace VMILLib {
 				if (cls.DefaultHandler != null)
 					handlers.Add( cls.DefaultHandler, handlers.Count + 1 );
 				cls.Handlers.ForEach( h => handlers.Add( h, handlers.Count + 1 ) );
-				MapHandlers( cls.Classes );
+				MapHandlers( cls.InnerClasses );
 			}
 		}
 

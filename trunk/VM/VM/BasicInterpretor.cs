@@ -24,6 +24,9 @@ namespace VM {
 
 		BasicInterpretor( Handle<AppObject> entrypointObject, Handle<VMILMessageHandler> entrypoint, params Handle<AppObject>[] args ) {
 			stack.Push( entrypointObject.Value.Class, entrypointObject.Value );
+			if (args.Length != entrypoint.Value.ArgumentCount)
+				throw new VMAppException( "Entrypoint takes " + entrypoint.Value.ArgumentCount + " arguments, but " + args.Length + " was supplied." );
+
 			foreach (var arg in args)
 				stack.Push( arg.Value.Class, arg.Value );
 			stack.PushFrame( new ExecutionStack.ReturnAddress(), entrypoint );
@@ -35,6 +38,7 @@ namespace VM {
 
 		entry:
 			var receiver = (AppObject) stack.GetArgument( 0 ).Value;
+
 			for (; pc < handler.InstructionCount; pc++) {
 				if (state == InterpretorState.Stopped)
 					return null;
@@ -92,7 +96,7 @@ namespace VM {
 						}
 					case VMILLib.OpCode.SendMessage: {
 							var messageVal = stack.Pop();
-							if (messageVal.Type != VirtualMachine.StringClass)
+							if (messageVal.Type != VirtualMachine.StringClass.Value)
 								throw new InvalidOperationException( "Value on top of stack is not a message." );
 							var message = (h.String) messageVal.Value;
 							var argCount = ParseArgumentCount( message );
@@ -116,7 +120,7 @@ namespace VM {
 								if (newHandler == 0)
 									throw new MessageNotUnderstoodException( message.ToHandle(), ((AppObject) newReceiver.Value).ToHandle() );
 
-								stack.PushFrame( new ExecutionStack.ReturnAddress( handler, pc ), newHandler );
+								stack.PushFrame( new ExecutionStack.ReturnAddress( handler, pc + 1 ), newHandler );
 								pc = 0;
 								handler = newHandler;
 								goto entry;
@@ -139,7 +143,7 @@ namespace VM {
 						break;
 					case VMILLib.OpCode.JumpIfTrue: {
 							var v = stack.Pop();
-							if ((v.Type == VirtualMachine.IntegerClass || v.Type == VirtualMachine.StringClass) && v.Value != 0)
+							if ((v.Type == VirtualMachine.IntegerClass.Value || v.Type == VirtualMachine.StringClass.Value) && v.Value != 0)
 								pc += operand;
 							else
 								throw new NotImplementedException( "JumpIfTrue for AppObject" );
@@ -147,7 +151,7 @@ namespace VM {
 						}
 					case VMILLib.OpCode.JumpIfFalse: {
 							var v = stack.Pop();
-							if ((v.Type == VirtualMachine.IntegerClass || v.Type == VirtualMachine.StringClass) && v.Value == 0)
+							if ((v.Type == VirtualMachine.IntegerClass.Value || v.Type == VirtualMachine.StringClass.Value) && v.Value == 0)
 								pc += operand;
 							else
 								throw new NotImplementedException( "JumpIfTrue for AppObject" );

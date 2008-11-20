@@ -7,6 +7,7 @@ using VMILLib;
 namespace VM.VMObjects {
 	public struct ClassManager : IVMObject<ClassManager> {
 		#region Properties
+		public bool IsNull { get { return start == 0; } }
 		public TypeId TypeId { get { return VMILLib.TypeId.ClassManager; } }
 		public int Size { get { return this[ObjectBase.OBJECT_HEADER_OFFSET] >> ObjectBase.OBJECT_SIZE_RSHIFT; } }
 
@@ -38,6 +39,14 @@ namespace VM.VMObjects {
 
 		public static explicit operator ClassManager( int v ) {
 			return new ClassManager { start = v };
+		}
+		#endregion
+
+		#region Instance methods
+		public override string ToString() {
+			if (IsNull)
+				return "{NULL}";
+			return base.ToString();
 		}
 		#endregion
 	}

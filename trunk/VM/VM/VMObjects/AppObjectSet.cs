@@ -12,6 +12,7 @@ namespace VM.VMObjects {
 		#endregion
 
 		#region Properties
+		public bool IsNull { get { return start == 0; } }
 		public TypeId TypeId { get { return VMILLib.TypeId.AppObjectSet; } }
 		public int Size { get { return this[ObjectBase.OBJECT_HEADER_OFFSET] >> ObjectBase.OBJECT_SIZE_RSHIFT; } }
 
@@ -52,6 +53,14 @@ namespace VM.VMObjects {
 
 		public static explicit operator AppObjectSet( AppObject obj ) {
 			return new AppObjectSet { start = obj.Start };
+		}
+		#endregion
+
+		#region Instance methods
+		public override string ToString() {
+			if (IsNull)
+				return "{NULL}";
+			return base.ToString();
 		}
 		#endregion
 	}

@@ -17,6 +17,7 @@ namespace VM.VMObjects {
 		#endregion
 
 		#region Properties
+		public bool IsNull { get { return start == 0; } }
 		public TypeId TypeId { get { return VMILLib.TypeId.String; } }
 		public int Size { get { return this[ObjectBase.OBJECT_HEADER_OFFSET] >> ObjectBase.OBJECT_SIZE_RSHIFT; } }
 
@@ -100,9 +101,9 @@ namespace VM.VMObjects {
 
 			var s1WC = s1Len / 2 + s1Len % 2;
 
-			for (var i = String.LENGTH_OFFSET + 1; i < s1WC; i++)
+			for (var i = String.FIRST_CHAR_OFFSET; i < String.FIRST_CHAR_OFFSET + s1WC; i++)
 				if (this[i] != value[i])
-					return false;
+					return i != String.FIRST_CHAR_OFFSET + s1WC - 1 ? false : s1Len % 2 == 1 && (this[i] & 0xFFFF0000) == (value[i] & 0xFFFF0000);
 
 			return true;
 		}
@@ -142,7 +143,7 @@ namespace VM.VMObjects {
 			var lastMatch = 0;
 			for (int i = 0; i < Length; ) {
 			top:
-				for (int j = 0; j < splitAt.Length; j++)
+				for (int j = 0; j < splitAt.Length && i < Length; j++)
 					if (CharAt( i ) != splitAt.CharAt( j )) {
 						i += j + 1;
 						goto top;
@@ -152,7 +153,7 @@ namespace VM.VMObjects {
 				lastMatch = i + splitAt.Length;
 				i += splitAt.Length;
 			}
-			list.Add( Substring( lastMatch ) );
+
 			return list.ToArray();
 		}
 
@@ -187,8 +188,12 @@ namespace VM.VMObjects {
 			for (int cur = start, w = FIRST_CHAR_OFFSET; cur < count + start; cur += 2, w++) {
 				if (cur % 2 == 0)
 					newStr[w] = this[cur / 2 + FIRST_CHAR_OFFSET];
-				else
-					newStr[w] = (this[cur / 2 + FIRST_CHAR_OFFSET] << 16) | (cur / 2 + 1 + FIRST_CHAR_OFFSET < Size ? (this[cur / 2 + 1 + FIRST_CHAR_OFFSET] >> 16) : (Word) 0);
+				else {
+					Word w1 = (this[cur / 2 + FIRST_CHAR_OFFSET] << 16);
+					Word w2 = (cur / 2 + 1 + FIRST_CHAR_OFFSET < Size ? (this[cur / 2 + 1 + FIRST_CHAR_OFFSET] >> 16) : (Word) 0);
+					Word w3 = w1 | w2;
+					newStr[w] = w1 | w2;
+				}
 			}
 
 			return newStr;
@@ -229,6 +234,8 @@ namespace VM.VMObjects {
 		}
 
 		public override string ToString() {
+			if (IsNull)
+				return "{NULL}";
 			return Encoding.Unicode.GetString( GetUInts().ToByteStream().Take( Length * 2 ).ToArray() );
 		}
 
@@ -238,8 +245,10 @@ namespace VM.VMObjects {
 		}
 		#endregion
 
+		#region Static methods
 		public static String CreateInstance( int length ) {
 			return VirtualMachine.MemoryManager.Allocate<String>( FIRST_CHAR_OFFSET - 1 + (length + 1) / 2 );
 		}
+		#endregion
 	}
 }

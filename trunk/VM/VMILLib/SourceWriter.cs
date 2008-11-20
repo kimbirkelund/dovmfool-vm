@@ -25,7 +25,7 @@ namespace VMILLib {
 		}
 
 		void WriteClass( Class cls ) {
-			output.WriteLine( ".class " + cls.Visibility.ToString().ToLower() + " " + cls.Name + (cls.InheritsFrom.Count != 0 ? " extends " + cls.InheritsFrom.Join( ", " ) + " " : " ") + "{" );
+			output.WriteLine( ".class " + cls.Visibility.ToString().ToLower() + " " + cls.Name + (cls.SuperClasses.Count != 0 ? " extends " + cls.SuperClasses.Join( ", " ) + " " : " ") + "{" );
 			output.IndentationLevel++;
 
 			var actions = new List<Action>();
@@ -39,8 +39,8 @@ namespace VMILLib {
 			if (cls.Handlers.Count != 0)
 				actions.Add( () => cls.Handlers.Join( h => WriteMessageHandler( h ), () => output.WriteLine() ) );
 
-			if (cls.Classes.Count != 0)
-				actions.Add( () => cls.Classes.Join( c => WriteClass( c ), () => output.WriteLine() ) );
+			if (cls.InnerClasses.Count != 0)
+				actions.Add( () => cls.InnerClasses.Join( c => WriteClass( c ), () => output.WriteLine() ) );
 
 			actions.Join( a => a(), () => output.WriteLine() );
 

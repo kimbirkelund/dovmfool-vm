@@ -12,6 +12,7 @@ namespace VM.VMObjects {
 		#endregion
 
 		#region Properties
+		public bool IsNull { get { return start == 0; } }
 		public TypeId TypeId { get { return VMILLib.TypeId.DelegateMessageHandler; } }
 		public int Size { get { return this[ObjectBase.OBJECT_HEADER_OFFSET] >> ObjectBase.OBJECT_SIZE_RSHIFT; } }
 
@@ -54,8 +55,18 @@ namespace VM.VMObjects {
 		}
 		#endregion
 
+		#region Instance methods
+		public override string ToString() {
+			if (IsNull)
+				return "{NULL}";
+			return ".handler " + Visibility.ToString().ToLower() + " " + Name + " .external " + ExternalName + "(" + ArgumentCount + ")";
+		}
+		#endregion
+
+		#region Static methods
 		internal static DelegateMessageHandler CreateInstance() {
 			return VirtualMachine.MemoryManager.Allocate<DelegateMessageHandler>( 3 );
 		}
+		#endregion
 	}
 }
