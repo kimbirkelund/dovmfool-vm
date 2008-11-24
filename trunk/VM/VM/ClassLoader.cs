@@ -6,6 +6,7 @@ using System.IO;
 using Sekhmet;
 using VMILLib;
 using vmo = VM.VMObjects;
+using VM.VMObjects;
 
 namespace VM {
 	class ClassLoader : IDisposable {
@@ -20,7 +21,20 @@ namespace VM {
 			this.input = input;
 		}
 
-		public ClassLoader( string fileName ) : this( new FileStream( fileName, FileMode.Open, FileAccess.Read ) ) { }
+		public ClassLoader( string fileName ) {
+			if (Path.GetExtension( fileName ) == ".vmil") {
+				var memStream = new MemoryStream();
+				using (var reader = new SourceReader( fileName )) {
+					var writer = new VMILLib.BinaryWriter( memStream );
+					writer.Write( reader.Read() );
+				}
+				memStream.Position = 0;
+				input = memStream;
+			} else if (Path.GetExtension( fileName ) == ".vmb")
+				input = new FileStream( fileName, FileMode.Open, FileAccess.Read );
+			else
+				throw new ArgumentException( "Specified input file is not in a known format." );
+		}
 
 		/// <summary>
 		/// Reads the classes stored in input into the virtual machine.
@@ -30,7 +44,12 @@ namespace VM {
 			ReadStrings();
 			ReadMessageHandlers();
 			ReadClasses();
-			classIndexMap.Values.Where( c => c.Value.ParentClass == 0 ).ForEach( c => VirtualMachine.RegisterClass( c ) );
+			foreach (var item in classIndexMap.Values) {
+				if (item.ParentClass() == null)
+					VirtualMachine.RegisterClass( item );
+
+			}
+			//classIndexMap.Values.Where( c => c.ParentClass() == null ).ForEach( c => VirtualMachine.RegisterClass( c ) );
 
 			return entrypoint;
 		}
@@ -51,7 +70,7 @@ namespace VM {
 			for (int i = 0; i < wordCount; i++)
 				str[vmo.String.FIRST_CHAR_OFFSET + i] = ReadW();
 
-			constantIndexMap.Add( index, VirtualMachine.ConstantPool.RegisterString( str.ToHandle() ) );
+			constantIndexMap.Add( index, VirtualMachine.ConstantPool.RegisterString( str ) );
 		}
 
 		void ReadMessageHandlers() {
@@ -64,13 +83,13 @@ namespace VM {
 		void ReadHandler( int index ) {
 			var handlerHeader = ReadW();
 			int argCount = ReadW();
-			vmo.MessageHandlerBase handlerBase;
+			Handle<vmo.MessageHandlerBase> handlerBase;
 
 			if ((handlerHeader & vmo.MessageHandlerBase.IS_INTERNAL_MASK) != 0) {
 				var externalName = constantIndexMap[ReadW()];
 
 				var handler = vmo.DelegateMessageHandler.CreateInstance();
-				handlerBase = handler;
+				handlerBase = handler.To<vmo.MessageHandlerBase>();
 
 				handler[vmo.MessageHandlerBase.HEADER_OFFSET] = handlerHeader != (int) VisibilityModifier.None ? ((constantIndexMap[handlerHeader >> 4]) << 4) | (handlerHeader & 15) : handlerHeader;
 				handler[vmo.DelegateMessageHandler.EXTERNAL_NAME_OFFSET] = VirtualMachine.ConstantPool.GetString( externalName );
@@ -80,11 +99,11 @@ namespace VM {
 				int instructionCount = ReadW();
 
 				var handler = vmo.VMILMessageHandler.CreateInstance( instructionCount );
-				handlerBase = handler;
+				handlerBase = handler.To<vmo.MessageHandlerBase>();
 
 				handler[vmo.MessageHandlerBase.HEADER_OFFSET] = handlerHeader != (int) VisibilityModifier.None ? ((constantIndexMap[handlerHeader >> 4]) << 4) | (handlerHeader & 15) : handlerHeader;
 				if ((handlerHeader & vmo.MessageHandlerBase.IS_ENTRYPOINT_MASK) != 0)
-					entrypoint = handler.ToHandle();
+					entrypoint = handler;
 				handler[vmo.VMILMessageHandler.COUNTS_OFFSET] = (argCount << vmo.VMILMessageHandler.ARGUMENT_COUNT_RSHIFT) | (localCount & vmo.VMILMessageHandler.LOCAL_COUNT_MASK);
 
 				for (int i = 0; i < instructionCount; i++) {
@@ -95,7 +114,7 @@ namespace VM {
 				}
 			}
 
-			messageHandlerIndexMap.Add( index + 1, handlerBase.ToHandle() );
+			messageHandlerIndexMap.Add( index + 1, handlerBase );
 		}
 
 		void ReadClasses() {
@@ -144,7 +163,7 @@ namespace VM {
 				innerCls[vmo.Class.PARENT_CLASS_OFFSET] = cls;
 			} );
 
-			classIndexMap.Add( index, cls.ToHandle() );
+			classIndexMap.Add( index, cls );
 		}
 
 		byte[] byteArr4 = new byte[4];

@@ -18,25 +18,9 @@ namespace VM.VMObjects {
 		#endregion
 
 		#region Properties
-		public bool IsNull { get { return start == 0; } }
-		public TypeId TypeId { get { return (TypeId) (int) (this[0] & 0x0000000F); } }
-		public int Size { get { return this[ObjectBase.OBJECT_HEADER_OFFSET] >> ObjectBase.OBJECT_SIZE_RSHIFT; } }
-
-		public Word this[int index] {
-			get { return VirtualMachine.MemoryManager[Start + index]; }
-			set { VirtualMachine.MemoryManager[Start + index] = value; }
-		}
-
 		int start;
-		public int Start {
-			get { return start; }
-		}
-
-		public VisibilityModifier Visibility { get { return (VisibilityModifier) (this[MessageHandlerBase.HEADER_OFFSET] & MessageHandlerBase.VISIBILITY_MASK); } }
-		public bool IsInternal { get { return ((this[MessageHandlerBase.HEADER_OFFSET] & MessageHandlerBase.IS_INTERNAL_MASK) >> MessageHandlerBase.IS_INTERNAL_RSHIFT) != 0; } }
-		public String Name { get { return VirtualMachine.ConstantPool.GetString( this[MessageHandlerBase.HEADER_OFFSET] >> MessageHandlerBase.NAME_RSHIFT ); } }
-		public Class Class { get { return (Class) this[CLASS_POINTER_OFFSET]; } }
-		public bool IsEntrypoint { get { return (this[HEADER_OFFSET] & IS_ENTRYPOINT_MASK) != 0; } }
+		public int Start { get { return start; } }
+		public TypeId TypeIdAtInstancing { get { return TypeId.Undefined; } }
 		#endregion
 
 		#region Cons
@@ -51,9 +35,7 @@ namespace VM.VMObjects {
 
 		#region Instance methods
 		public override string ToString() {
-			if (IsNull)
-				return "{NULL}";
-			return ".handler " + Visibility.ToString().ToLower() + " " + Name;
+			return ExtMessageHandlerBase.ToString( this );
 		}
 		#endregion
 
@@ -82,5 +64,33 @@ namespace VM.VMObjects {
 			return new MessageHandlerBase( v.Start );
 		}
 		#endregion
+	}
+
+	public static class ExtMessageHandlerBase {
+		public static VisibilityModifier Visibility( this Handle<MessageHandlerBase> obj ) {
+			return (VisibilityModifier) (obj[MessageHandlerBase.HEADER_OFFSET] & MessageHandlerBase.VISIBILITY_MASK);
+		}
+
+		public static bool IsInternal( this Handle<MessageHandlerBase> obj ) {
+			return ((obj[MessageHandlerBase.HEADER_OFFSET] & MessageHandlerBase.IS_INTERNAL_MASK) >> MessageHandlerBase.IS_INTERNAL_RSHIFT) != 0;
+		}
+
+		public static String Name( this Handle<MessageHandlerBase> obj ) {
+			return VirtualMachine.ConstantPool.GetString( obj[MessageHandlerBase.HEADER_OFFSET] >> MessageHandlerBase.NAME_RSHIFT );
+		}
+
+		public static Class Class( this Handle<MessageHandlerBase> obj ) {
+			return (Class) obj[MessageHandlerBase.CLASS_POINTER_OFFSET];
+		}
+
+		public static bool IsEntrypoint( this Handle<MessageHandlerBase> obj ) {
+			return (obj[MessageHandlerBase.HEADER_OFFSET] & MessageHandlerBase.IS_ENTRYPOINT_MASK) != 0;
+		}
+
+		public static string ToString( this Handle<MessageHandlerBase> obj ) {
+			if (obj.IsInternal())
+				return obj.To<DelegateMessageHandler>().ToString();
+			return obj.To<VMILMessageHandler>().ToString();
+		}
 	}
 }

@@ -12,20 +12,9 @@ namespace VM.VMObjects {
 		#endregion
 
 		#region Properties
-		public bool IsNull { get { return start == 0; } }
-		public TypeId TypeId { get { return VMILLib.TypeId.AppObjectSet; } }
-		public int Size { get { return this[ObjectBase.OBJECT_HEADER_OFFSET] >> ObjectBase.OBJECT_SIZE_RSHIFT; } }
-
-		public Word this[int index] {
-			get { return VirtualMachine.MemoryManager[Start + index]; }
-			set { VirtualMachine.MemoryManager[Start + index] = value; }
-		}
-
 		int start;
-		public int Start {
-			get { return start; }
-			set { start = value; }
-		}
+		public int Start { get { return start; } }
+		public TypeId TypeIdAtInstancing { get { return TypeId.AppObjectSet; } }
 		#endregion
 
 		#region Cons
@@ -48,7 +37,7 @@ namespace VM.VMObjects {
 		}
 
 		public static implicit operator AppObject( AppObjectSet s ) {
-			return new AppObject { Start = s.start };
+			return new AppObject( s.start );
 		}
 
 		public static explicit operator AppObjectSet( AppObject obj ) {
@@ -58,10 +47,16 @@ namespace VM.VMObjects {
 
 		#region Instance methods
 		public override string ToString() {
-			if (IsNull)
-				return "{NULL}";
-			return base.ToString();
+			return ExtAppObjectSet.ToString( this );
 		}
 		#endregion
+	}
+
+	public static class ExtAppObjectSet {
+		public static string ToString( this Handle<AppObjectSet> obj ) {
+			if (obj.IsNull())
+				return "{NULL}";
+			return "object-set";
+		}
 	}
 }

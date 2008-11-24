@@ -75,7 +75,7 @@ namespace VM {
 		public readonly string Argument;
 
 		public ArgumentException() { }
-		public ArgumentException( string message ) { }
+		public ArgumentException( string message ) : base( message ) { }
 		public ArgumentException( string message, string argument ) : base( message ) { this.Argument = argument; }
 		public ArgumentException( string message, Exception inner ) : base( message, inner ) { }
 		protected ArgumentException(

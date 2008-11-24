@@ -68,7 +68,6 @@ namespace VM {
 		public static explicit operator DelegateMessageHandler( Word w ) { return new DelegateMessageHandler( (int) w.v ); }
 		public static explicit operator VMObjects.String( Word w ) { return new VMObjects.String( (int) w.v ); }
 		public static explicit operator Integer( Word w ) { return new Integer( (int) w.v ); }
-		public static explicit operator List( Word w ) { return new List( (int) w.v ); }
 		public static explicit operator VMObjects.Array( Word w ) { return new VMObjects.Array( (int) w.v ); }
 
 		public static implicit operator Word( ObjectBase w ) { return new Word( w.Start ); }
@@ -80,8 +79,7 @@ namespace VM {
 		public static implicit operator Word( VMILMessageHandler w ) { return new Word( w.Start ); }
 		public static implicit operator Word( DelegateMessageHandler w ) { return new Word( w.Start ); }
 		public static implicit operator Word( VMObjects.String w ) { return new Word( w.Start ); }
-		public static implicit operator Word( Integer w ) { return new Word( w.Start ); }
-		public static implicit operator Word( List w ) { return new Word( w.Start ); }
+		public static implicit operator Word( Integer w ) { return new Word( w.Value ); }
 		public static implicit operator Word( VM.VMObjects.Array w ) { return new Word( w.Start ); }
 		#endregion
 

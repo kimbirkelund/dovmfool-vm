@@ -12,22 +12,10 @@ namespace VM.VMObjects {
 		#endregion
 
 		#region Properties
-		public bool IsNull { get { return start == 0; } }
-		public TypeId TypeId { get { return VMILLib.TypeId.List; } }
-		public int Size { get { return this[ObjectBase.OBJECT_HEADER_OFFSET] >> ObjectBase.OBJECT_SIZE_RSHIFT; } }
-
-		public Word this[int index] {
-			get { return VirtualMachine.MemoryManager[Start + index]; }
-			set { VirtualMachine.MemoryManager[Start + index] = value; }
-		}
-
 		int start;
-		public int Start {
-			get { return start; }
-			set { start = value; }
-		}
+		public int Start { get { return start; } }
 
-		public int Length { get { return Size - this[FIRST_ELEMENT_OFFSET_OFFSET]; } }
+		public TypeId TypeIdAtInstancing { get { return TypeId.Array; } }
 		#endregion
 
 		#region Cons
@@ -35,8 +23,8 @@ namespace VM.VMObjects {
 			this.start = start;
 		}
 
-		public Array New( int startPosition ) {
-			return new Array( startPosition );
+		public Array New( int start ) {
+			return new Array( start );
 		}
 		#endregion
 
@@ -51,70 +39,98 @@ namespace VM.VMObjects {
 		#endregion
 
 		#region Instance methods
-		public T Get<T>( int arrayIndex ) where T : struct, IVMObject<T> {
-			if (arrayIndex < 0 || Length <= arrayIndex)
-				throw new ArgumentOutOfBoundsException( "arrayIndex" );
-
-			return new T().New( this[this[FIRST_ELEMENT_OFFSET_OFFSET] + arrayIndex] );
-		}
-
-		public void Set<T>( int arrayIndex, T obj ) where T : struct, IVMObject<T> {
-			if (arrayIndex < 0 || Length <= arrayIndex)
-				throw new ArgumentOutOfBoundsException( "arrayIndex" );
-
-			this[this[FIRST_ELEMENT_OFFSET_OFFSET] + arrayIndex] = obj.Start;
-			SetReference( arrayIndex, obj.TypeId != TypeId.Integer );
-		}
-
-		bool IsReference( int arrayIndex ) {
-			var word = arrayIndex / 32;
-			var bit = arrayIndex % 32;
-			return (this[FIRST_MAP_WORD_OFFSET + word] & (1 << bit)) != 0;
-		}
-
-		void SetReference( int arrayIndex, bool isReference ) {
-			var word = arrayIndex / 32;
-			var bit = arrayIndex % 32;
-
-			if (isReference)
-				this[FIRST_MAP_WORD_OFFSET + word] = this[FIRST_MAP_WORD_OFFSET + word] | (1 << bit);
-			else
-				this[FIRST_MAP_WORD_OFFSET + word] = this[FIRST_MAP_WORD_OFFSET + word] ^ (1 << bit);
-		}
-
 		public override string ToString() {
-			if (IsNull)
-				return "{NULL}";
-			return "Array{Length: " + Length + "}";
+			return ExtArray.ToString( this );
 		}
 		#endregion
 
 		#region Static methods
-		public static Array CreateInstance( int elementCount ) {
+		public static Handle<Array> CreateInstance( int elementCount ) {
 			var wordCount = (elementCount + 31) / 32;
-			var arr = VirtualMachine.MemoryManager.Allocate<Array>( FIRST_MAP_WORD_OFFSET - 1 + wordCount + elementCount );
-			arr[FIRST_ELEMENT_OFFSET_OFFSET] = wordCount + FIRST_MAP_WORD_OFFSET;
+			var arr = VirtualMachine.MemoryManager.Allocate<Array>( Array.FIRST_MAP_WORD_OFFSET - 1 + wordCount + elementCount );
+			arr[Array.FIRST_ELEMENT_OFFSET_OFFSET] = wordCount + Array.FIRST_MAP_WORD_OFFSET;
 
 			return arr;
 		}
 
-		public static void CopyTo( Array sourceArray, int sourceIndex, Array destinationArray, int destinationIndex, int count ) {
+		public static void Copy( Handle<Array> sourceArray, int sourceIndex, Handle<Array> destinationArray, int destinationIndex, int count ) {
 			if (sourceIndex < 0)
 				throw new ArgumentOutOfBoundsException( "sourceIndex" );
-			if (sourceArray.Length <= sourceIndex + count)
+			if (sourceArray.Length() <= sourceIndex + count)
 				throw new ArgumentOutOfBoundsException( "count" );
 			if (destinationIndex < 0)
 				throw new ArgumentOutOfBoundsException( "sourceIndex" );
-			if (destinationArray.Length < destinationIndex + count)
+			if (destinationArray.Length() < destinationIndex + count)
 				throw new ArgumentOutOfBoundsException( "count" );
 
-			var sourceOffset = sourceArray[FIRST_ELEMENT_OFFSET_OFFSET] + sourceIndex;
-			var destOffset = destinationArray[FIRST_ELEMENT_OFFSET_OFFSET] + destinationIndex;
+			var sourceOffset = sourceArray[Array.FIRST_ELEMENT_OFFSET_OFFSET] + sourceIndex;
+			var destOffset = destinationArray[Array.FIRST_ELEMENT_OFFSET_OFFSET] + destinationIndex;
 			count.ForEach( i => {
 				destinationArray[destOffset + i] = sourceArray[sourceOffset + i];
 				destinationArray.SetReference( destinationIndex + i, sourceArray.IsReference( sourceIndex + i ) );
 			} );
 		}
+
+		public static void CopyDescending( Handle<Array> sourceArray, int sourceIndex, Handle<Array> destinationArray, int destinationIndex, int count ) {
+			if (sourceIndex < 0)
+				throw new ArgumentOutOfBoundsException( "sourceIndex" );
+			if (sourceArray.Length() <= sourceIndex + count)
+				throw new ArgumentOutOfBoundsException( "count" );
+			if (destinationIndex < 0)
+				throw new ArgumentOutOfBoundsException( "sourceIndex" );
+			if (destinationArray.Length() < destinationIndex + count)
+				throw new ArgumentOutOfBoundsException( "count" );
+
+			var sourceOffset = sourceArray[Array.FIRST_ELEMENT_OFFSET_OFFSET] + sourceIndex;
+			var destOffset = destinationArray[Array.FIRST_ELEMENT_OFFSET_OFFSET] + destinationIndex;
+			for (int i = count - 1; i >= 0; i--) {
+				destinationArray[destOffset + i] = sourceArray[sourceOffset + i];
+				destinationArray.SetReference( destinationIndex + i, sourceArray.IsReference( sourceIndex + i ) );
+			}
+		}
 		#endregion
+	}
+
+	public static class ExtArray {
+		public static int Length( this Handle<Array> obj ) {
+			return obj.Size() - obj[Array.FIRST_ELEMENT_OFFSET_OFFSET];
+		}
+
+		public static Word Get( this Handle<Array> obj, int arrayIndex ) {
+			if (arrayIndex < 0 || obj.Length() <= arrayIndex)
+				throw new ArgumentOutOfBoundsException( "arrayIndex" );
+
+			return obj[obj[Array.FIRST_ELEMENT_OFFSET_OFFSET] + arrayIndex];
+		}
+
+		public static void Set( this Handle<Array> obj, int arrayIndex, Word value, bool isReference ) {
+			if (arrayIndex < 0 || obj.Length() <= arrayIndex)
+				throw new ArgumentOutOfBoundsException( "arrayIndex" );
+
+			obj[obj[Array.FIRST_ELEMENT_OFFSET_OFFSET] + arrayIndex] = value;
+			obj.SetReference( arrayIndex, isReference );
+		}
+
+		public static bool IsReference( this Handle<Array> obj, int arrayIndex ) {
+			var word = arrayIndex / 32;
+			var bit = arrayIndex % 32;
+			return (obj[Array.FIRST_MAP_WORD_OFFSET + word] & (1 << bit)) != 0;
+		}
+
+		internal static void SetReference( this Handle<Array> obj, int arrayIndex, bool isReference ) {
+			var word = arrayIndex / 32;
+			var bit = arrayIndex % 32;
+
+			if (isReference)
+				obj[Array.FIRST_MAP_WORD_OFFSET + word] = obj[Array.FIRST_MAP_WORD_OFFSET + word] | (1 << bit);
+			else
+				obj[Array.FIRST_MAP_WORD_OFFSET + word] = obj[Array.FIRST_MAP_WORD_OFFSET + word] ^ (1 << bit);
+		}
+
+		public static string ToString( this Handle<Array> obj ) {
+			if (obj.IsNull())
+				return "{NULL}";
+			return "Array{Length: " + obj.Length() + "}";
+		}
 	}
 }

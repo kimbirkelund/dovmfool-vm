@@ -54,14 +54,15 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="SystemCalls.Array.cs" />
     <Compile Include="SystemCalls.System.Console.cs" />
     <Compile Include="SystemCalls.cs" />
     <Compile Include="VMException.cs" />
     <Compile Include="VMObjects\AppObject.cs" />
     <Compile Include="VMObjects\AppObjectSet.cs" />
     <Compile Include="VMObjects\Array.cs" />
-    <Compile Include="VMObjects\Char.cs" />
-    <Compile Include="VMObjects\Chars.cs" />
+    <Compile Include="VMObjects\Character.cs" />
+    <Compile Include="VMObjects\Characters.cs" />
     <Compile Include="VMObjects\Class.cs" />
     <Compile Include="VMObjects\ClassManager.cs" />
     <Compile Include="VMObjects\DelegateMessageHandler.cs" />

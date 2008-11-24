@@ -5,54 +5,31 @@ using System.Text;
 using VMILLib;
 
 namespace VM.VMObjects {
-	public struct Integer : IVMObject<Integer> {
+	public struct Integer {
 		#region Properties
-		public bool IsNull { get { return false; } }
-		public TypeId TypeId { get { return VMILLib.TypeId.Integer; } }
-		public int Size { get { return this[ObjectBase.OBJECT_HEADER_OFFSET] >> ObjectBase.OBJECT_SIZE_RSHIFT; } }
-
-		public Word this[int index] {
-			get { throw new NotSupportedException(); }
-			set { throw new NotSupportedException(); }
-		}
-
-		int start;
-		public int Start {
-			get { return start; }
-		}
+		int value;
+		public int Value { get { return value; } }
 		#endregion
 
 		#region Cons
-		public Integer( int start ) {
-			this.start = start;
-		}
-
-		public Integer New( int startPosition ) {
-			return new Integer( startPosition );
+		public Integer( int value ) {
+			this.value = value;
 		}
 		#endregion
 
 		#region Instance methods
 		public override string ToString() {
-			return start.ToString();
+			return value.ToString();
 		}
 		#endregion
 
 		#region Casts
 		public static implicit operator int( Integer v ) {
-			return v.start;
+			return v.value;
 		}
 
 		public static implicit operator Integer( int v ) {
-			return new Integer { start = v };
-		}
-
-		public static implicit operator AppObject( Integer s ) {
-			return new AppObject { Start = s.start };
-		}
-
-		public static explicit operator Integer( AppObject obj ) {
-			return (int) obj;
+			return new Integer( v );
 		}
 		#endregion
 	}

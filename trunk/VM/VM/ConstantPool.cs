@@ -35,7 +35,7 @@ namespace VM {
 			vmStr[VMObjects.String.LENGTH_OFFSET] = str.Length;
 			ints.ForEach( ( b, i ) => vmStr[i + VMObjects.String.FIRST_CHAR_OFFSET] = b );
 
-			return GetString( RegisterString( vmStr.ToHandle() ) );
+			return GetString( RegisterString( vmStr ) );
 		}
 	}
 }
