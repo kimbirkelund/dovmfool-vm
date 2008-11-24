@@ -12,7 +12,9 @@
 		load-field console
 		return
 	}
-
+	
+	.handler public new-array .external System.Array.New(size)
+	
 	.class public Object {
 		.handler public get-type .external System.Object.get-type()
 		.handler public to-string .external System.Object.to-string()
@@ -124,5 +126,15 @@
 	
 	.class private Console {
 		.handler public write-line .external System.Console.write-line(str)
+	}
+	
+	.class public Collections {
+		.class public List {
+			.fields { arr, count, capacity }
+			
+			.handler public initialize(initialSize) {
+				
+			}			
+		}
 	}
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Reflection;
+using VM.VMObjects;
 
 namespace VM {
 	delegate Handle<VMObjects.AppObject> SystemCall( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments );
@@ -41,14 +42,14 @@ namespace VM {
 				if (!initialized)
 					Init();
 
-				var dotIndex = name.Value.IndexOf( VMObjects.String.Dot );
+				var dotIndex = name.IndexOf( VMObjects.String.Dot );
 				if (dotIndex == -1)
-					dotIndex = name.Value.Length;
+					dotIndex = name.Length();
 
-				var curName = name.Value.Substring( 0, dotIndex ).ToHandle();
-				var restName = dotIndex < name.Value.Length ? name.Value.Substring( dotIndex + 1 ).ToHandle() : VMObjects.String.Empty; ;
+				var curName = name.Substring( 0, dotIndex );
+				var restName = dotIndex < name.Length() ? name.Substring( dotIndex + 1 ) : VMObjects.String.Empty; ;
 
-				if (restName.Value.Length == 0) {
+				if (restName.Length() == 0) {
 					if (methods.ContainsKey( curName ))
 						return methods[curName];
 				} else if (classes.ContainsKey( curName ))

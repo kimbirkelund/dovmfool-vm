@@ -39,6 +39,7 @@ namespace VMILLib {
 	}
 
 	public enum TypeId : int {
+		Undefined = -1,
 		Null = 0,
 		AppObject = 1,
 		AppObjectSet = 2,

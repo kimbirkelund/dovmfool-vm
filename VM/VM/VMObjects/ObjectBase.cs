@@ -13,20 +13,10 @@ namespace VM.VMObjects {
 		#endregion
 
 		#region Properties
-		public bool IsNull { get { return start == 0; } }
-		public TypeId TypeId { get { return (TypeId) (int) (this[0] & OBJECT_TYPE_MASK); } }
-		public int Size { get { return this[ObjectBase.OBJECT_HEADER_OFFSET] >> ObjectBase.OBJECT_SIZE_RSHIFT; } }
-
-		public Word this[int index] {
-			get { return VirtualMachine.MemoryManager[Start + index]; }
-			set { VirtualMachine.MemoryManager[Start + index] = value; }
-		}
-
 		int start;
-		public int Start {
-			get { return start; }
-			set { start = value; }
-		}
+		public int Start { get { return start; } }
+
+		public TypeId TypeIdAtInstancing { get { return TypeId.Undefined; } }
 		#endregion
 
 		#region Cons
@@ -41,9 +31,7 @@ namespace VM.VMObjects {
 
 		#region Instance methods
 		public override string ToString() {
-			if (IsNull)
-				return "{NULL}";
-			return "{" + TypeId.ToString() + "}";
+			return ExtObjectBase.ToString( this );
 		}
 		#endregion
 
@@ -130,10 +118,15 @@ namespace VM.VMObjects {
 		public static implicit operator ObjectBase( String obj ) {
 			return new ObjectBase( obj.Start );
 		}
-
-		public static implicit operator ObjectBase( Integer obj ) {
-			return new ObjectBase( obj.Start );
-		}
 		#endregion
+	}
+
+	public static class ExtObjectBase {
+		public static string ToString( this Handle<ObjectBase> obj ) {
+			if (obj.IsNull())
+				return "{NULL}";
+			return "{" + obj.TypeId().ToString() + "}";
+		}
+
 	}
 }

@@ -14,13 +14,7 @@ namespace VM {
 
 		internal override Word this[int index] {
 			get { return memory[index]; }
-			set {
-//#if DEBUG
-//                var frame = new System.Diagnostics.StackTrace().GetFrame( 2 );
-//                System.Diagnostics.Trace.TraceInformation( index.ToString( "X8" ) + "=" + ((uint) value).ToString( "X8" ) + ": " + frame.GetMethod().Name );
-//#endif
-				memory[index] = value;
-			}
+			set { memory[index] = value; }
 		}
 
 		public NoncollectingMemoryManager( int size ) {
@@ -30,7 +24,7 @@ namespace VM {
 			memory = new Word[size];
 		}
 
-		internal override T Allocate<T>( int size ) {
+		internal override Handle<T> Allocate<T>( int size ) {
 			if (position + size >= memory.Length)
 				throw new OutOfMemoryException();
 
@@ -38,8 +32,8 @@ namespace VM {
 			size += 1;
 			position += size;
 
-			var obj = new T().New( pos );
-			memory[pos] = (size << 4) | (((int) obj.TypeId) & 0x0000000F);
+			var obj = new Handle<T>( new T().New( pos ) );
+			memory[pos] = (size << 4) | (((int) obj.Value.TypeIdAtInstancing) & 0x0000000F);
 			return obj;
 		}
 	}

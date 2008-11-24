@@ -11,11 +11,12 @@ namespace VM {
 		public abstract int FreeSizeInWords { get; }
 		public abstract int AllocatedSizeInWords { get; }
 
-		internal abstract T Allocate<T>( int size ) where T : struct, IVMObject<T>;
-		internal virtual T Allocate<T>( int size, bool writeZeroes ) where T : struct, IVMObject<T> {
+		internal abstract Handle<T> Allocate<T>( int size ) where T : struct, IVMObject<T>;
+		internal virtual Handle<T> Allocate<T>( int size, bool writeZeroes ) where T : struct, IVMObject<T> {
 			var obj = Allocate<T>( size );
-			for (var i = 1; i < size + 1; i++)
-				obj[i] = 0;
+			if (writeZeroes)
+				for (var i = 1; i < size + 1; i++)
+					obj[i] = 0;
 
 			return obj;
 		}

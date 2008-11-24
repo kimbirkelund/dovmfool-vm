@@ -35,23 +35,23 @@ namespace VM {
 			var name = className.ToString();
 			if (name.IsNullOrEmpty())
 				return null;
-			var names = className.Value.Split( VMObjects.String.Dot ).ToHandle();
+			var names = className.Split( VMObjects.String.Dot );
 
-			if (!classes.ContainsKey( names.Value.Get<VMObjects.String>( 0 ).ToHandle() ))
-				throw new ClassNotFoundException( names.Value.Get<VMObjects.String>( 0 ).ToHandle() );
-			var current = classes[names.Value.Get<VMObjects.String>( 0 ).ToHandle()];
+			if (!classes.ContainsKey( ((VMObjects.String) names.Get( 0 )).ToHandle() ))
+				throw new ClassNotFoundException( ((VMObjects.String) names.Get( 0 )).ToHandle() );
+			var current = classes[((VMObjects.String) names.Get( 0 )).ToHandle()];
 
-			for (int i = 1; i < names.Value.Length; i++) {
-				current = current.Value.ResolveClass( referencer, names.Value.Get<VMObjects.String>( i ).ToHandle() ).ToHandle();
+			for (int i = 1; i < names.Length(); i++) {
+				current = current.ResolveClass( referencer, ((VMObjects.String) names.Get( i )).ToHandle() );
 				if (current == null)
-					throw new ClassNotFoundException( names.Value.Get<VMObjects.String>( i ).ToHandle() );
+					throw new ClassNotFoundException( ((VMObjects.String) names.Get( i )).ToHandle() );
 			}
 
 			return current;
 		}
 
 		internal static void RegisterClass( Handle<VMObjects.Class> cls ) {
-			classes.Add( cls.Value.Name.ToHandle(), cls );
+			classes.Add( cls.Name(), cls );
 		}
 
 		public static void Execute( string inputFile ) {
@@ -60,10 +60,10 @@ namespace VM {
 			if (entrypoint == null)
 				throw new VMException( "No entry point specified." );
 
-			var obj = AppObject.CreateInstance( entrypoint.Value.Class ).ToHandle();
+			var obj = AppObject.CreateInstance( entrypoint.Class() );
 
 
-			SystemInstance = AppObject.CreateInstance( SystemClass.Value ).ToHandle();
+			SystemInstance = AppObject.CreateInstance( SystemClass.Value );
 			var intp = InterpretorFactory.CreateInstance( obj, entrypoint, SystemInstance );
 
 			intp.Send( ConstantPool.RegisterString( "initialize:0" ), SystemInstance );

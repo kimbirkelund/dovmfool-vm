@@ -15,28 +15,9 @@ namespace VM.VMObjects {
 		#endregion
 
 		#region Properties
-		public bool IsNull { get { return start == 0; } }
-		public TypeId TypeId { get { return VMILLib.TypeId.VMILMessageHandler; } }
-		public int Size { get { return this[ObjectBase.OBJECT_HEADER_OFFSET] >> ObjectBase.OBJECT_SIZE_RSHIFT; } }
-
-		public Word this[int index] {
-			get { return VirtualMachine.MemoryManager[Start + index]; }
-			set { VirtualMachine.MemoryManager[Start + index] = value; }
-		}
-
 		int start;
-		public int Start {
-			get { return start; }
-		}
-
-		public VisibilityModifier Visibility { get { return (VisibilityModifier) (this[MessageHandlerBase.HEADER_OFFSET] & MessageHandlerBase.VISIBILITY_MASK); } }
-		public static bool IsInternal { get { return false; } }
-		public String Name { get { return VirtualMachine.ConstantPool.GetString( this[MessageHandlerBase.HEADER_OFFSET] >> MessageHandlerBase.NAME_RSHIFT ); } }
-		public int ArgumentCount { get { return this[VMILMessageHandler.COUNTS_OFFSET] >> VMILMessageHandler.ARGUMENT_COUNT_RSHIFT; } }
-		public int LocalCount { get { return this[VMILMessageHandler.COUNTS_OFFSET] & VMILMessageHandler.LOCAL_COUNT_MASK; } }
-		public int InstructionCount { get { return this.Size - VMILMessageHandler.INSTRUCTIONS_OFFSET; } }
-		public Class Class { get { return (Class) this[MessageHandlerBase.CLASS_POINTER_OFFSET]; } }
-		public bool IsEntrypoint { get { return (this[MessageHandlerBase.HEADER_OFFSET] & MessageHandlerBase.IS_ENTRYPOINT_MASK) != 0; } }
+		public int Start { get { return start; } }
+		public TypeId TypeIdAtInstancing { get { return TypeId.VMILMessageHandler; } }
 		#endregion
 
 		#region Cons
@@ -50,7 +31,7 @@ namespace VM.VMObjects {
 		#endregion
 
 		#region Static methods
-		public static VMILMessageHandler CreateInstance( int instructionCount ) {
+		public static Handle<VMILMessageHandler> CreateInstance( int instructionCount ) {
 			return VirtualMachine.MemoryManager.Allocate<VMILMessageHandler>( INSTRUCTIONS_OFFSET + instructionCount );
 		}
 		#endregion
@@ -66,15 +47,48 @@ namespace VM.VMObjects {
 		#endregion
 
 		#region Instance methods
-		public Word GetInstruction( int instruction ) {
-			return this[VMILMessageHandler.INSTRUCTIONS_OFFSET + instruction];
+		#endregion
+	}
+
+	public static class ExtVMILMessageHandler {
+		public static bool IsInternal( this Handle<VMILMessageHandler> obj ) { return false; }
+
+		public static VisibilityModifier Visibility( this Handle<VMILMessageHandler> obj ) {
+			return (VisibilityModifier) (obj[MessageHandlerBase.HEADER_OFFSET] & MessageHandlerBase.VISIBILITY_MASK);
 		}
 
-		public override string ToString() {
-			if (IsNull)
-				return "{NULL}";
-			return ".handler " + Visibility.ToString().ToLower() + " " + Name + "(" + ArgumentCount + ")";
+		public static Handle<String> Name( this Handle<VMILMessageHandler> obj ) {
+			return VirtualMachine.ConstantPool.GetString( obj[MessageHandlerBase.HEADER_OFFSET] >> MessageHandlerBase.NAME_RSHIFT );
 		}
-		#endregion
+
+		public static int ArgumentCount( this Handle<VMILMessageHandler> obj ) {
+			return obj[VMILMessageHandler.COUNTS_OFFSET] >> VMILMessageHandler.ARGUMENT_COUNT_RSHIFT;
+		}
+
+		public static int LocalCount( this Handle<VMILMessageHandler> obj ) {
+			return obj[VMILMessageHandler.COUNTS_OFFSET] & VMILMessageHandler.LOCAL_COUNT_MASK;
+		}
+
+		public static int InstructionCount( this Handle<VMILMessageHandler> obj ) {
+			return obj.Size() - VMILMessageHandler.INSTRUCTIONS_OFFSET;
+		}
+
+		public static Handle<Class> Class( this Handle<VMILMessageHandler> obj ) {
+			return (Class) obj[MessageHandlerBase.CLASS_POINTER_OFFSET];
+		}
+
+		public static bool IsEntrypoint( this Handle<VMILMessageHandler> obj ) {
+			return (obj[MessageHandlerBase.HEADER_OFFSET] & MessageHandlerBase.IS_ENTRYPOINT_MASK) != 0;
+		}
+
+		public static Word GetInstruction( this Handle<VMILMessageHandler> obj, int instruction ) {
+			return obj[VMILMessageHandler.INSTRUCTIONS_OFFSET + instruction];
+		}
+
+		public static string ToString( this Handle<VMILMessageHandler> obj ) {
+			if (obj == null)
+				return "{NULL}";
+			return ".handler " + obj.Visibility().ToString().ToLower() + " " + obj.Name() + "(" + obj.ArgumentCount() + ")";
+		}
 	}
 }

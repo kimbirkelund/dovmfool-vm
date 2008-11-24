@@ -1,0 +1,54 @@
+.class public Program extends Object {
+       .fields { str1, str2 }
+
+       .handler public main(sys) {
+       		.entrypoint
+       		.locals { console }
+		load-argument sys
+		push-literal "get-console:0"
+		send-message
+		store-local console
+
+		push-literal "Program.StringHolder"
+		dup
+		new-instance
+		dup
+		push-literal "Hello World!"
+		push-literal "initialize:1"
+		send-message
+		store-field str1
+		new-instance
+		dup
+		push-literal "Hello Universe!"
+		push-literal "initialize:1"
+		send-message
+		store-field str2
+
+		load-local console
+		load-field str1
+		push-literal "write-line:1"
+		send-message
+
+		load-local console
+		load-field str2
+		push-literal "write-line:1"
+		send-message
+
+		return-void
+       }
+
+       .class public StringHolder {
+       	      .fields { str }
+
+	      .handler public initialize(str) {
+	      	     load-argument str
+		     store-field str       		
+		     return-void
+	      }
+
+	      .handler public to-string() {
+	             load-field str
+		     return
+	      }
+       }
+}

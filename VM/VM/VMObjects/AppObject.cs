@@ -11,23 +11,12 @@ namespace VM.VMObjects {
 		public const int FIELDS_OFFSET = 2;
 		#endregion
 
+
 		#region Properties
-		public bool IsNull { get { return start == 0; } }
-		public TypeId TypeId { get { return VMILLib.TypeId.AppObject; } }
-		public int Size { get { return this[ObjectBase.OBJECT_HEADER_OFFSET] >> ObjectBase.OBJECT_SIZE_RSHIFT; } }
-
-		public Word this[int index] {
-			get { return VirtualMachine.MemoryManager[Start + index]; }
-			set { VirtualMachine.MemoryManager[Start + index] = value; }
-		}
-
 		int start;
-		public int Start {
-			get { return start; }
-			set { start = value; }
-		}
+		public int Start { get { return start; } }
 
-		public Class Class { get { return (Class) this[AppObject.CLASS_OFFSET]; } }
+		public TypeId TypeIdAtInstancing { get { return TypeId.AppObject; } }
 		#endregion
 
 		#region Cons
@@ -50,50 +39,85 @@ namespace VM.VMObjects {
 		}
 		#endregion
 
-		#region Instance methods
-		public bool Extends( Class cls ) {
-			return this.Class.Extends( cls );
-		}
-
-		public Class GetFieldType( int index ) {
-			if (index < 0 || this.Class.FieldCount <= index)
-				throw new ArgumentOutOfRangeException( "Index must be less than the number of fields." );
-
-			return (Class) this[AppObject.FIELDS_OFFSET + index * 2];
-		}
-
-		public Word GetFieldValue( int index ) {
-			if (index < 0 || this.Class.FieldCount <= index)
-				throw new ArgumentOutOfRangeException( "Index must be less than the number of fields." );
-
-			return this[AppObject.FIELDS_OFFSET + index * 2 + 1];
-		}
-
-		public void SetField( int index, Class cls, Word value ) {
-			if (index < 0 || this.Class.FieldCount <= index)
-				throw new ArgumentOutOfRangeException( "Index must be less than the number of fields." );
-
-			this[AppObject.FIELDS_OFFSET + index * 2] = cls;
-			this[AppObject.FIELDS_OFFSET + index * 2 + 1] = value;
-		}
-
-		public void SetField( int index, Class cls, AppObject value ) {
-			this.SetField( index, cls, value );
-		}
-
-		public override string ToString() {
-			if (IsNull)
-				return "{NULL}";
-			return base.ToString();
-		}
-		#endregion
-
 		#region Static methods
-		public static AppObject CreateInstance( Class cls ) {
-			var obj = VirtualMachine.MemoryManager.Allocate<AppObject>( cls.InstanceSize );
+		public static Handle<AppObject> CreateInstance( Handle<Class> cls ) {
+			var obj = VirtualMachine.MemoryManager.Allocate<AppObject>( cls.InstanceSize() );
 			obj[AppObject.CLASS_OFFSET] = cls;
 			return obj;
 		}
+
+		public static Handle<AppObject> CreateInstance( Handle<String> clsName ) {
+			var cls = VirtualMachine.ResolveClass( null, clsName );
+			if (cls != null)
+				throw new ClassNotFoundException( clsName );
+
+			return CreateInstance( cls );
+		}
+
+		public static Handle<AppObject> CreateInstance( string clsName ) {
+			return CreateInstance( clsName.ToVMString() );
+		}
 		#endregion
+
+		#region Instance methods
+		public override string ToString() {
+			return ExtAppObject.ToString( this );
+		}
+		#endregion
+	}
+
+	public static class ExtAppObject {
+		public static Handle<Class> Class( this Handle<AppObject> obj ) {
+			if (obj.TypeId() == TypeId.String)
+				return VirtualMachine.StringClass;
+			if (obj.TypeId() == TypeId.Integer)
+				return VirtualMachine.IntegerClass;
+			return (Class) obj[AppObject.CLASS_OFFSET];
+		}
+
+		public static bool Extends( this Handle<AppObject> obj, Handle<Class> cls ) {
+			return obj.Class().Extends( cls );
+		}
+
+		public static Handle<Class> GetFieldType( this Handle<AppObject> obj, int index ) {
+			if (index < 0 || obj.Class().FieldCount() <= index)
+				throw new ArgumentOutOfRangeException( "Index must be less than the number of fields." );
+
+			return (Class) obj[AppObject.FIELDS_OFFSET + index * 2];
+		}
+
+		public static Word GetFieldValue( this Handle<AppObject> obj, int index ) {
+			if (index < 0 || obj.Class().FieldCount() <= index)
+				throw new ArgumentOutOfRangeException( "Index must be less than the number of fields." );
+
+			return obj[AppObject.FIELDS_OFFSET + index * 2 + 1];
+		}
+
+		public static void SetField( this Handle<AppObject> obj, int index, Handle<Class> cls, int value ) {
+			if (index < 0 || obj.Class().FieldCount() <= index)
+				throw new ArgumentOutOfRangeException( "Index must be less than the number of fields." );
+
+			obj[AppObject.FIELDS_OFFSET + index * 2] = cls;
+			obj[AppObject.FIELDS_OFFSET + index * 2 + 1] = value;
+		}
+
+		public static void SetField( this Handle<AppObject> obj, int index, Handle<Class> cls, Handle<AppObject> value ) {
+			obj.SetField( index, cls, value );
+		}
+
+		public static string ToString( this Handle<AppObject> obj ) {
+			if (obj.IsNull())
+				return "{NULL}";
+			return "Instance of " + obj.Class();
+		}
+
+		public static Handle<AppObject> Invoke( this Handle<AppObject> obj, Handle<String> message, params Handle<AppObject>[] args ) {
+			var interp = VirtualMachine.InterpretorFactory.CreateInstance();
+			return interp.Send( message, obj, args );
+		}
+
+		public static Handle<AppObject> Invoke( this Handle<AppObject> obj, string message, params Handle<AppObject>[] args ) {
+			return Invoke( obj, message.ToVMString(), args );
+		}
 	}
 }

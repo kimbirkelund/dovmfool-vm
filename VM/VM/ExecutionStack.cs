@@ -71,18 +71,18 @@ namespace VM {
 			if (stackPointer < stack.Length / 2 && stackPointer > initialSize)
 				Shrink();
 
-			return stack[stackPointer];
+			return stack[stackPointer - 1];
 		}
 
-		public void PushFrame( ReturnAddress returnAddress, VMILMessageHandler callee ) {
+		public void PushFrame( ReturnAddress returnAddress, Handle<VMILMessageHandler> callee ) {
 			Push( (Class) TYPE_RETURN_HANDLER, returnAddress.Handler );
 			Push( (Class) TYPE_RETURN_INSTRUCTION_OFFSET, returnAddress.InstructionOffset );
 			Push( (Class) TYPE_BASE_POINTER, basePointer );
 			Push( (Class) TYPE_FRAME_BOUNDARY, frameBoundary );
-			frameBoundary = stackPointer - ARGUMENT_OFFSET - callee.ArgumentCount;
+			frameBoundary = stackPointer - ARGUMENT_OFFSET - callee.ArgumentCount();
 			basePointer = stackPointer;
 
-			for (var i = 0; i < callee.LocalCount; i++)
+			for (var i = 0; i < callee.LocalCount(); i++)
 				Push( new StackValue() );
 		}
 
@@ -153,10 +153,10 @@ namespace VM {
 
 		#region ReturnAddress
 		public struct ReturnAddress {
-			public readonly VMILMessageHandler Handler;
+			public readonly Handle<VMILMessageHandler> Handler;
 			public readonly int InstructionOffset;
 
-			public ReturnAddress( VMILMessageHandler handler, int instructionOffset ) {
+			public ReturnAddress( Handle<VMILMessageHandler> handler, int instructionOffset ) {
 				this.Handler = handler;
 				this.InstructionOffset = instructionOffset;
 			}

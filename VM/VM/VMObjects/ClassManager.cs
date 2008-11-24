@@ -7,19 +7,9 @@ using VMILLib;
 namespace VM.VMObjects {
 	public struct ClassManager : IVMObject<ClassManager> {
 		#region Properties
-		public bool IsNull { get { return start == 0; } }
-		public TypeId TypeId { get { return VMILLib.TypeId.ClassManager; } }
-		public int Size { get { return this[ObjectBase.OBJECT_HEADER_OFFSET] >> ObjectBase.OBJECT_SIZE_RSHIFT; } }
-
-		public Word this[int index] {
-			get { return VirtualMachine.MemoryManager[Start + index]; }
-			set { VirtualMachine.MemoryManager[Start + index] = value; }
-		}
-
 		int start;
-		public int Start {
-			get { return start; }
-		}
+		public int Start { get { return start; } }
+		public TypeId TypeIdAtInstancing { get { return TypeId.ClassManager; } }
 		#endregion
 
 		#region Cons
@@ -27,8 +17,8 @@ namespace VM.VMObjects {
 			this.start = start;
 		}
 
-		public ClassManager New( int startPosition ) {
-			return new ClassManager( startPosition );
+		public ClassManager New( int start ) {
+			return new ClassManager( start );
 		}
 		#endregion
 
@@ -44,10 +34,16 @@ namespace VM.VMObjects {
 
 		#region Instance methods
 		public override string ToString() {
-			if (IsNull)
-				return "{NULL}";
-			return base.ToString();
+			return ExtClassManager.ToString( this );
 		}
 		#endregion
+	}
+
+	public static class ExtClassManager {
+		public static string ToString( this Handle<ClassManager> obj ) {
+			if (obj == null)
+				return "{NULL}";
+			return "ClassManager";
+		}
 	}
 }

@@ -12,27 +12,9 @@ namespace VM.VMObjects {
 		#endregion
 
 		#region Properties
-		public bool IsNull { get { return start == 0; } }
-		public TypeId TypeId { get { return VMILLib.TypeId.DelegateMessageHandler; } }
-		public int Size { get { return this[ObjectBase.OBJECT_HEADER_OFFSET] >> ObjectBase.OBJECT_SIZE_RSHIFT; } }
-
-		public Word this[int index] {
-			get { return VirtualMachine.MemoryManager[Start + index]; }
-			set { VirtualMachine.MemoryManager[Start + index] = value; }
-		}
-
 		int start;
-		public int Start {
-			get { return start; }
-		}
-
-		public VisibilityModifier Visibility { get { return (VisibilityModifier) (this[MessageHandlerBase.HEADER_OFFSET] & MessageHandlerBase.VISIBILITY_MASK); } }
-		public bool IsInternal { get { return true; } }
-		public String Name { get { return VirtualMachine.ConstantPool.GetString( this[MessageHandlerBase.HEADER_OFFSET] >> MessageHandlerBase.NAME_RSHIFT ); } }
-		public Class Class { get { return (Class) this[MessageHandlerBase.CLASS_POINTER_OFFSET]; } }
-		public bool IsEntrypoint { get { return (this[MessageHandlerBase.HEADER_OFFSET] & MessageHandlerBase.IS_ENTRYPOINT_MASK) != 0; } }
-		public String ExternalName { get { return (String) this[EXTERNAL_NAME_OFFSET]; } }
-		public int ArgumentCount { get { return this[ARGUMENT_COUNT_OFFSET]; } }
+		public int Start { get { return start; } }
+		public TypeId TypeIdAtInstancing { get { return TypeId.DelegateMessageHandler; } }
 		#endregion
 
 		#region Cons
@@ -57,16 +39,48 @@ namespace VM.VMObjects {
 
 		#region Instance methods
 		public override string ToString() {
-			if (IsNull)
-				return "{NULL}";
-			return ".handler " + Visibility.ToString().ToLower() + " " + Name + " .external " + ExternalName + "(" + ArgumentCount + ")";
+			return ExtDelegateMessageHandler.ToString( this );
 		}
 		#endregion
 
 		#region Static methods
-		internal static DelegateMessageHandler CreateInstance() {
-			return VirtualMachine.MemoryManager.Allocate<DelegateMessageHandler>( 3 );
+		internal static Handle<DelegateMessageHandler> CreateInstance() {
+			return VirtualMachine.MemoryManager.Allocate<DelegateMessageHandler>( ARGUMENT_COUNT_OFFSET );
 		}
 		#endregion
+	}
+
+	public static class ExtDelegateMessageHandler {
+		public static VisibilityModifier Visibility( this Handle<DelegateMessageHandler> obj ) {
+			return (VisibilityModifier) (obj[MessageHandlerBase.HEADER_OFFSET] & MessageHandlerBase.VISIBILITY_MASK);
+		}
+
+		public static bool IsInternal( this Handle<DelegateMessageHandler> obj ) { return true; }
+
+		public static Handle<String> Name( this Handle<DelegateMessageHandler> obj ) {
+			return VirtualMachine.ConstantPool.GetString( obj[MessageHandlerBase.HEADER_OFFSET] >> MessageHandlerBase.NAME_RSHIFT );
+		}
+
+		public static Handle<Class> Class( this Handle<DelegateMessageHandler> obj ) {
+			return (Class) obj[MessageHandlerBase.CLASS_POINTER_OFFSET];
+		}
+
+		public static bool IsEntrypoint( this Handle<DelegateMessageHandler> obj ) {
+			return (obj[MessageHandlerBase.HEADER_OFFSET] & MessageHandlerBase.IS_ENTRYPOINT_MASK) != 0;
+		}
+
+		public static String ExternalName( this Handle<DelegateMessageHandler> obj ) {
+			return (String) obj[DelegateMessageHandler.EXTERNAL_NAME_OFFSET];
+		}
+
+		public static int ArgumentCount( this Handle<DelegateMessageHandler> obj ) {
+			return obj[DelegateMessageHandler.ARGUMENT_COUNT_OFFSET];
+		}
+
+		public static string ToString( this Handle<DelegateMessageHandler> obj ) {
+			if (obj == null)
+				return "{NULL}";
+			return ".handler " + obj.Visibility().ToString().ToLower() + " " + obj.Name() + " .external " + obj.ExternalName() + "(" + obj.ArgumentCount() + ")";
+		}
 	}
 }
