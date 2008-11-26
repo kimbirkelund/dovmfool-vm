@@ -56,7 +56,7 @@ namespace VM.VMObjects {
 		public static void Copy( Handle<Array> sourceArray, int sourceIndex, Handle<Array> destinationArray, int destinationIndex, int count ) {
 			if (sourceIndex < 0)
 				throw new ArgumentOutOfBoundsException( "sourceIndex" );
-			if (sourceArray.Length() <= sourceIndex + count)
+			if (sourceArray.Length() < sourceIndex + count)
 				throw new ArgumentOutOfBoundsException( "count" );
 			if (destinationIndex < 0)
 				throw new ArgumentOutOfBoundsException( "sourceIndex" );
@@ -103,6 +103,13 @@ namespace VM.VMObjects {
 			return obj[obj[Array.FIRST_ELEMENT_OFFSET_OFFSET] + arrayIndex];
 		}
 
+		public static Handle<T> Get<T>( this Handle<Array> obj, int arrayIndex ) where T : struct, IVMObject<T> {
+			if (arrayIndex < 0 || obj.Length() <= arrayIndex)
+				throw new ArgumentOutOfBoundsException( "arrayIndex" );
+
+			return new T().New( obj[obj[Array.FIRST_ELEMENT_OFFSET_OFFSET] + arrayIndex] ).ToHandle();
+		}
+
 		public static void Set( this Handle<Array> obj, int arrayIndex, Word value, bool isReference ) {
 			if (arrayIndex < 0 || obj.Length() <= arrayIndex)
 				throw new ArgumentOutOfBoundsException( "arrayIndex" );
@@ -131,6 +138,12 @@ namespace VM.VMObjects {
 			if (obj.IsNull())
 				return "{NULL}";
 			return "Array{Length: " + obj.Length() + "}";
+		}
+
+		public static Handle<Array> ToVMArray<T>( this List<Handle<T>> list ) where T : struct, IVMObject<T> {
+			var arr = Array.CreateInstance( list.Count );
+			list.ForEach( ( e, i ) => arr.Set( i, e, !(e is IntHandle) ) );
+			return arr;
 		}
 	}
 }

@@ -1,3 +1,19 @@
+.class public Object {
+	.handler public get-type .external System.Object.get-type()
+	.handler public to-string .external System.Object.to-string()
+	.handler public equals .external System.Object.equals(other)
+	
+	.handler public is-true() {
+		push-literal 1
+		return
+	}
+
+	.handler public is-false() {
+		push-literal 0			
+		return
+	}
+}
+
 .class public System {
 	.fields { console }
 	
@@ -14,23 +30,7 @@
 	}
 	
 	.handler public new-array .external System.Array.New(size)
-	
-	.class public Object {
-		.handler public get-type .external System.Object.get-type()
-		.handler public to-string .external System.Object.to-string()D:\school\vm\VM\VM\BaseTypes.vmil
-		.handler public equals .external System.Object.equals(other)
 		
-		.handler public is-true() {
-			push-literal 1
-			return
-		}
-
-		.handler public is-false() {
-			push-literal 0			
-			return
-		}
-	}
-	
 	.class private Array {
 		.handler public get .external System.Array.get(index)
 		.handler public set .external System.Array.set(index)
@@ -75,7 +75,7 @@
 		}
 	}
 	
-	.class public String extends Hashable, Comparable {
+	.class public String extends System.Hashable, System.Comparable {
 		.handler public to-string() {
 			load-this
 			return
@@ -90,7 +90,7 @@
 		.handler public last-index-of .external System.String.last-index-of(substring)
 	}
 	
-	.class public Integer extends Hashable, Comparable {
+	.class public Integer extends System.Hashable, System.Comparable {
 		.handler public to-string .external System.Integer.to-string()
 		.handler public subtract .external System.Integer.subtract(other)		
 		.handler public add .external System.Integer.add(other)

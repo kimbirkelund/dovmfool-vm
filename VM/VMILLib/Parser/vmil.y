@@ -38,7 +38,7 @@ fields :
 
 extendspart : 
 	{ $$ = new List<string>(); }
-|	Extends names { $$ = $2; };
+|	Extends longnames { $$ = $2; };
 
 handlers : 
 	{ $$ = new List<MessageHandlerBase>(); }
@@ -93,6 +93,14 @@ names :
 names2 :
 	{ $$ = new List<string>(); }
 |	Comma Identifier names2 { $$ = $2.As<string>() + (List<string>) $3; };
+
+longnames : 
+	{ $$ = new List<string>(); }
+|	longidentifier longnames2 { $$ = $1.As<string>() + (List<string>) $2; };
+
+longnames2 :
+	{ $$ = new List<string>(); }
+|	Comma longidentifier names2 { $$ = $2.As<string>() + (List<string>) $3; };
 
 instructions :
 	{ $$ = new List<Instruction>(); }
