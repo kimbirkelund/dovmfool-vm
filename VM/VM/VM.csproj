@@ -54,7 +54,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="SystemCalls.Array.cs" />
+    <Compile Include="SystemCalls.System.Array.cs" />
     <Compile Include="SystemCalls.System.Console.cs" />
     <Compile Include="SystemCalls.cs" />
     <Compile Include="VMException.cs" />
