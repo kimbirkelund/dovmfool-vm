@@ -183,19 +183,19 @@ namespace VM.VMObjects {
 			return obj.IndexOf( str, 0 );
 		}
 
-        public static int LastIndexOf(this Handle<String> obj, Handle<String> str) {
-            int last = -1;
-            last = obj.IndexOf(str, 0);
-            top:
-            if (last != -1) {
-                int next = obj.IndexOf(str, last+1);
-                if (next != -1) {
-                    last = next;
-                    goto top;
-                }
-            }
-            return last;
-        }
+		public static int LastIndexOf( this Handle<String> obj, Handle<String> str ) {
+			int last = -1;
+			last = obj.IndexOf( str, 0 );
+		top:
+			if (last != -1) {
+				int next = obj.IndexOf( str, last + 1 );
+				if (next != -1) {
+					last = next;
+					goto top;
+				}
+			}
+			return last;
+		}
 
 		public static Handle<String> Substring( this Handle<String> obj, int start, int count ) {
 			if (start < 0)
@@ -253,6 +253,31 @@ namespace VM.VMObjects {
 			}
 
 			return 0;
+		}
+
+		public static Handle<String> Concat( this Handle<String> str1, Handle<VM.VMObjects.String> str2 ) {
+			var str = String.CreateInstance( str1.Length() + str2.Length() );
+
+			var s1Len = str1.Length();
+			var s1WC = (s1Len + 3) / 4;
+			var s2Len = str2.Length();
+			var s2WC = (s2Len + 3) / 4;
+
+			for (int i = 0; i < s1WC; i++)
+				str[String.FIRST_CHAR_OFFSET + i] = str1[String.FIRST_CHAR_OFFSET + i];
+
+			if (s1Len % 2 == 0) {
+				for (int i = 0; i < s2WC; i++)
+					str[String.FIRST_CHAR_OFFSET + s1WC + i] = str2[String.FIRST_CHAR_OFFSET + i];
+			} else {
+				int j = String.FIRST_CHAR_OFFSET + s1WC;
+				for (int i = 0; i < s2WC; i++) {
+					str[j++] |= str2[String.FIRST_CHAR_OFFSET + i] >> 16;
+					str[j] |= str2[String.FIRST_CHAR_OFFSET + i] << 16;
+				}
+			}
+
+			return str;
 		}
 
 		public static string ToString( this Handle<String> obj ) {

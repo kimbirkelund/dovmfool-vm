@@ -14,6 +14,7 @@ namespace VM {
 		internal static Handle<AppObject> SystemInstance { get; private set; }
 		internal static Handle<Class> StringClass { get; private set; }
 		internal static Handle<Class> IntegerClass { get; private set; }
+		internal static Handle<Class> ArrayClass { get; private set; }
 		internal static IInterpretorFactory InterpretorFactory { get; private set; }
 
 		static VirtualMachine() {
@@ -24,9 +25,10 @@ namespace VM {
 			using (var loader = new ClassLoader( new MemoryStream( Resources.BaseTypes ) ))
 				loader.Read();
 
-			StringClass = ResolveClass( null, ConstantPool.RegisterString( "System.String" ) );
-			IntegerClass = ResolveClass( null, ConstantPool.RegisterString( "System.Integer" ) );
-			SystemClass = ResolveClass( null, ConstantPool.RegisterString( "System" ) );
+			SystemClass = ResolveClass( null, "System".ToVMString() );
+			StringClass = ResolveClass( null, "System.String".ToVMString() );
+			IntegerClass = ResolveClass( null, "System.Integer".ToVMString() );
+			ArrayClass = ResolveClass( null, "System.Array".ToVMString() );
 		}
 
 		static Dictionary<Handle<VMObjects.String>, Handle<VMObjects.Class>> classes = new Dictionary<Handle<VM.VMObjects.String>, Handle<Class>>();
@@ -62,8 +64,8 @@ namespace VM {
 
 			var obj = AppObject.CreateInstance( entrypoint.Class() );
 
-
-			SystemInstance = AppObject.CreateInstance( SystemClass.Value );
+			if (SystemInstance == null)
+				SystemInstance = AppObject.CreateInstance( SystemClass.Value );
 			var intp = InterpretorFactory.CreateInstance( obj, entrypoint, SystemInstance );
 
 			intp.Send( ConstantPool.RegisterString( "initialize:0" ), SystemInstance );

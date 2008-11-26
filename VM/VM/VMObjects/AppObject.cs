@@ -81,6 +81,8 @@ namespace VM.VMObjects {
 				return VirtualMachine.StringClass;
 			if (obj.TypeId() == TypeId.Integer)
 				return VirtualMachine.IntegerClass;
+			if (obj.TypeId() == TypeId.Array)
+				return VirtualMachine.ArrayClass;
 			return (Class) obj[AppObject.CLASS_OFFSET];
 		}
 

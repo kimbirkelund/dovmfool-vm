@@ -88,6 +88,7 @@
 		.handler public split .external System.String.split(splitter)
 		.handler public index-of .external System.String.index-of(substring)
 		.handler public last-index-of .external System.String.last-index-of(substring)
+		.handler public concat .external System.String.concat(otherString)
 	}
 	
 	.class public Integer extends System.Hashable, System.Comparable {
