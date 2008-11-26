@@ -14,12 +14,6 @@ namespace VMShell {
 			System.Diagnostics.Trace.Listeners.Add( new System.Diagnostics.ConsoleTraceListener() );
 
 			VM.VirtualMachine.Execute( inputFileArg.Value );
-
-			//var str = "å";
-			//var bytes = Encoding.UTF8.GetBytes( str );
-			//Console.WriteLine( bytes[0] + " " + bytes[1] );
-			//str = Encoding.UTF8.GetString( bytes );
-			//Console.WriteLine( str );
 		}
 	}
 }

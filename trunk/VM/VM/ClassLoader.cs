@@ -135,9 +135,17 @@ namespace VM {
 
 			cls[vmo.Class.HEADER_OFFSET] = (constantIndexMap[clsHeader >> 2] << 2) | (clsHeader & 3);
 
-			cls[vmo.Class.COUNTS_OFFSET] = (fieldCount << vmo.Class.COUNTS_FIELDS_RSHIFT) | ((handlerCount << vmo.Class.COUNTS_HANDLERS_RSHIFT) & vmo.Class.COUNTS_HANDLERS_MASK) | (vmo.Class.COUNTS_SUPERCLASSES_MASK & superClassCount);
+			var isObject = cls.Name() == VirtualMachine.ConstantPool.RegisterString( "Object" );
 
-			superClassCount.ForEach( i => { cls[vmo.Class.SUPERCLASSES_OFFSET + i] = constantIndexMap[ReadW()]; } );
+			cls[vmo.Class.COUNTS_OFFSET] = (fieldCount << vmo.Class.COUNTS_FIELDS_RSHIFT) | ((handlerCount << vmo.Class.COUNTS_HANDLERS_RSHIFT) & vmo.Class.COUNTS_HANDLERS_MASK) | (vmo.Class.COUNTS_SUPERCLASSES_MASK & (isObject ? 0 : Math.Max( 1, superClassCount )));
+			cls[vmo.Class.LINEARIZATION_OFFSET] = 0;
+			cls[vmo.Class.INSTANCE_SIZE_OFFSET] = -1;
+
+			if (superClassCount == 0 && !isObject) {
+				cls[vmo.Class.SUPERCLASSES_OFFSET + 1] = VirtualMachine.ConstantPool.RegisterString( "Object" );
+				superClassCount++;
+			} else
+				superClassCount.ForEach( i => { cls[vmo.Class.SUPERCLASSES_OFFSET + i] = constantIndexMap[ReadW()]; } );
 
 			var offset = vmo.Class.SUPERCLASSES_OFFSET + superClassCount;
 			int defaultHandlerIndex = ReadW();

@@ -47,6 +47,9 @@ namespace VM.VMObjects {
 		#endregion
 
 		#region Instance methods
+		public override string ToString() {
+			return ExtVMILMessageHandler.ToString( this );
+		}
 		#endregion
 	}
 

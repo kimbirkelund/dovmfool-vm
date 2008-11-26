@@ -1,0 +1,171 @@
+.class public A {
+       .fields { str }
+       .handler public init() {
+      		push-literal "A"
+		store-field str
+       }
+       .handler public getA() {
+       		load-field str
+		return
+       }
+}
+.class public B extends A {
+       .fields { str }
+       .handler public init() {
+       		load-this
+       		push-literal "A.init:0"
+		send-message
+      		push-literal "B"
+		store-field str
+       }
+       .handler public getB() {
+       		load-field str
+		return
+       }
+}
+.class public C extends A {
+       .fields { str }
+       .handler public init() {
+       		load-this
+       		push-literal "A.init:0"
+		send-message
+      		push-literal "C"
+		store-field str
+       }
+       .handler public getC() {
+       		load-field str
+		return
+       }
+}
+.class public D extends B {
+       .fields { str }
+       .handler public init() {
+       		load-this
+       		push-literal "B.init:0"
+		send-message
+      		push-literal "D"
+		store-field str
+       }
+       .handler public getD() {
+       		load-field str
+		return
+       }
+}
+.class public E extends B, C {
+       .fields { str }
+       .handler public init() {
+       		load-this
+       		push-literal "B.init:0"
+		send-message
+       		load-this
+       		push-literal "C.init:0"
+		send-message
+      		push-literal "E"
+		store-field str
+       }
+       .handler public getE() {
+       		load-field str
+		return
+       }
+}
+.class public F extends C {
+       .fields { str }
+       .handler public init() {
+       		load-this
+       		push-literal "C.init:0"
+		send-message
+      		push-literal "F"
+		store-field str
+       }
+       .handler public getF() {
+       		load-field str
+		return
+       }
+}
+.class public G extends D, E, F {
+       .fields { str }
+       .handler public init() {
+       		load-this
+       		push-literal "D.init:0"
+		send-message
+       		load-this
+       		push-literal "E.init:0"
+		send-message
+       		load-this
+       		push-literal "F.init:0"
+		send-message
+      		push-literal "G"
+		store-field str
+       }
+       .handler public getG() {
+       		load-field str
+		return
+       }
+}
+
+.class public Program {
+       .handler public Main(sys) {
+       		.entrypoint
+       		.locals { console, o }
+		load-argument sys
+		push-literal "get-console:0"
+		send-message
+		store-local console
+
+		load-local console
+		push-literal "Bob"
+		push-literal "write-line:1"
+		send-message
+
+		push-literal "G"
+		new-instance
+		store-local o
+
+		load-local o
+		push-literal "init:0"
+		send-message
+
+		load-local console
+		load-local o
+		push-literal "getA:0"
+		send-message
+		push-literal "write-line:1"
+		send-message
+		load-local console
+		load-local o
+		push-literal "getB:0"
+		send-message
+		push-literal "write-line:1"
+		send-message
+		load-local console
+		load-local o
+		push-literal "getC:0"
+		send-message
+		push-literal "write-line:1"
+		send-message
+		load-local console
+		load-local o
+		push-literal "getD:0"
+		send-message
+		push-literal "write-line:1"
+		send-message
+		load-local console
+		load-local o
+		push-literal "getE:0"
+		send-message
+		push-literal "write-line:1"
+		send-message
+		load-local console
+		load-local o
+		push-literal "getF:0"
+		send-message
+		push-literal "write-line:1"
+		send-message
+		load-local console
+		load-local o
+		push-literal "getG:0"
+		send-message
+		push-literal "write-line:1"
+		send-message
+       }
+}

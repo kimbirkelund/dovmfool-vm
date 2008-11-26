@@ -41,6 +41,7 @@ namespace VM {
 
 		entry:
 			var receiver = ((AppObject) stack.GetArgument( 0 ).Value).ToHandle();
+			int fieldOffset = receiver.GetFieldOffset( handler.Class() );
 
 			for (; pc < handler.InstructionCount(); pc++) {
 				if (state == InterpretorState.Stopped)
@@ -59,11 +60,11 @@ namespace VM {
 				switch (opcode) {
 					case VMILLib.OpCode.StoreField: {
 							var v = stack.Pop();
-							receiver.SetField( operand, v.Type, v.Value );
+							receiver.SetField( operand + fieldOffset, v.Type, v.Value );
 							break;
 						}
 					case VMILLib.OpCode.LoadField:
-						stack.Push( receiver.GetFieldType( operand ), receiver.GetFieldValue( operand ) );
+						stack.Push( receiver.GetFieldType( operand + fieldOffset ), receiver.GetFieldValue( operand + fieldOffset ) );
 						break;
 					case VMILLib.OpCode.StoreLocal:
 						stack.SetLocal( operand, stack.Pop() );
@@ -101,18 +102,18 @@ namespace VM {
 							var messageVal = stack.Pop();
 							if (messageVal.Type != VirtualMachine.StringClass.Value)
 								throw new InvalidOperationException( "Value on top of stack is not a message." );
-							var message = (h.String) messageVal.Value;
+							var message = ((h.String) messageVal.Value).ToHandle();
 							var argCount = ParseArgumentCount( message );
 							var newReceiver = stack[argCount];
-							var newHandlerBase = newReceiver.Type.ToHandle().ResolveMessageHandler( receiver, message );
+							var newHandlerBase = newReceiver.Type.ToHandle().ResolveMessageHandler( handler.Class(), message );
 							if (newHandlerBase == null)
-								throw new MessageNotUnderstoodException( message.ToHandle(), ((AppObject) newReceiver.Value).ToHandle() );
+								throw new MessageNotUnderstoodException( message, ((AppObject) newReceiver.Value).ToHandle() );
 
 							if (newHandlerBase.IsInternal()) {
 								var newHandler = newHandlerBase.To<VMObjects.DelegateMessageHandler>();
 								var method = SystemCalls.FindMethod( newHandler.ExternalName().ToHandle() );
 								if (method == null)
-									throw new MessageNotUnderstoodException( message.ToHandle(), ((AppObject) newReceiver.Value).ToHandle() );
+									throw new MessageNotUnderstoodException( message, ((AppObject) newReceiver.Value).ToHandle() );
 
 								var args = new Handle<AppObject>[argCount];
 								argCount.ForEachDescending( k => args[k] = ((AppObject) stack.Pop().Value).ToHandle() );
@@ -193,7 +194,7 @@ namespace VM {
 		}
 
 		public Handle<AppObject> Send( Handle<VM.VMObjects.String> message, Handle<AppObject> to, params Handle<AppObject>[] arguments ) {
-			var newHandlerBase = to.Class().ResolveMessageHandler( to, message );
+			var newHandlerBase = to.Class().ResolveMessageHandler( to.Class(), message );
 			if (newHandlerBase.IsInternal()) {
 				var newHandler = newHandlerBase.To<DelegateMessageHandler>();
 				var method = SystemCalls.FindMethod( newHandler.ExternalName() );
