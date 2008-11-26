@@ -1,0 +1,58 @@
+.class public Program {
+       .handler public main(sys) {
+       		.entrypoint
+       		.locals { console, i }
+		load-argument sys
+		push-literal "get-console:0"
+		send-message
+		store-local console
+
+		push-literal 0
+		store-local i
+
+       		beginning1:				
+				load-local i
+				push-literal 5
+				push-literal "subtract:1"
+				send-message
+				jump-if-true end1
+
+				load-local console
+				load-local i
+				push-literal "write-line:1"
+				send-message
+				
+				load-local i
+				push-literal 1
+				push-literal "add:1"
+				send-message
+				store-local i
+
+				jump beginning1
+		end1:
+
+		push-literal 0
+		store-local i
+
+       		beginning2:				
+				push-literal 5
+				load-local i
+				push-literal "subtract:1"
+				send-message
+				jump-if-false end2
+
+				load-local console
+				load-local i
+				push-literal "write-line:1"
+				send-message
+				
+				load-local i
+				push-literal 1
+				push-literal "add:1"
+				send-message
+				store-local i
+
+				jump beginning2
+		end2:
+       }
+}

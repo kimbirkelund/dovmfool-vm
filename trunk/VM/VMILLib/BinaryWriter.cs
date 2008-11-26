@@ -144,7 +144,7 @@ namespace VMILLib {
 						var offset = labelMap[(string) ins.Operand] - index;
 						if (offset < 0) {
 							offset *= -1;
-							eins |= 1 << 27;
+							eins |= 0x04000000;
 						}
 						eins |= (uint) offset;
 						break;
