@@ -17,7 +17,7 @@
 	
 	.class public Object {
 		.handler public get-type .external System.Object.get-type()
-		.handler public to-string .external System.Object.to-string()
+		.handler public to-string .external System.Object.to-string()D:\school\vm\VM\VM\BaseTypes.vmil
 		.handler public equals .external System.Object.equals(other)
 		
 		.handler public is-true() {
@@ -87,15 +87,15 @@
 		.handler public substring .external System.String.substring(start, count)
 		.handler public split .external System.String.split(splitter)
 		.handler public index-of .external System.String.index-of(substring)
-		.handler public last-index-of .external System.String.index-of(substring)
+		.handler public last-index-of .external System.String.last-index-of(substring)
 	}
 	
 	.class public Integer extends Hashable, Comparable {
 		.handler public to-string .external System.Integer.to-string()
-		.handler public subtract .external System.Integer.minus(other)		
-		.handler public add .external System.Integer.minus(other)
-		.handler public multiply .external System.Integer.minus(other)
-		.handler public divide .external System.Integer.minus(other)
+		.handler public subtract .external System.Integer.subtract(other)		
+		.handler public add .external System.Integer.add(other)
+		.handler public multiply .external System.Integer.multiply(other)
+		.handler public divide .external System.Integer.divide(other)
 		
 		.handler public compare-to(other) {
 			load-this

@@ -183,6 +183,20 @@ namespace VM.VMObjects {
 			return obj.IndexOf( str, 0 );
 		}
 
+        public static int LastIndexOf(this Handle<String> obj, Handle<String> str) {
+            int last = -1;
+            last = obj.IndexOf(str, 0);
+            top:
+            if (last != -1) {
+                int next = obj.IndexOf(str, last+1);
+                if (next != -1) {
+                    last = next;
+                    goto top;
+                }
+            }
+            return last;
+        }
+
 		public static Handle<String> Substring( this Handle<String> obj, int start, int count ) {
 			if (start < 0)
 				throw new ArgumentOutOfBoundsException( "start" );

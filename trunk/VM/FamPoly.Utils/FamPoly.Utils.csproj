@@ -78,6 +78,7 @@
   -->
   <PropertyGroup>
     <PostBuildEvent>copy /Y "$(TargetPath)" "$(SolutionDir)"
-copy /Y "$(TargetDir)\Sekhmet.dll" "$(SolutionDir)"</PostBuildEvent>
+copy /Y "$(TargetDir)\Sekhmet.dll" "$(SolutionDir)"
+copy /Y "$(TargetPath).config" "$(SolutionDir)"</PostBuildEvent>
   </PropertyGroup>
 </Project>
