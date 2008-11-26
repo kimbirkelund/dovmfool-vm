@@ -32,7 +32,6 @@ namespace VM {
 			var ints = bytes.ToUIntStream();
 
 			var vmStr = VMObjects.String.CreateInstance( str.Length );
-			vmStr[VMObjects.String.LENGTH_OFFSET] = str.Length;
 			ints.ForEach( ( b, i ) => vmStr[i + VMObjects.String.FIRST_CHAR_OFFSET] = b );
 
 			return GetString( RegisterString( vmStr ) );

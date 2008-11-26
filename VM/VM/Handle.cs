@@ -84,7 +84,7 @@ namespace VM {
 		}
 
 		#region Equals
-		public bool Equals( Handle<T> value ) {
+		public virtual bool Equals( Handle<T> value ) {
 			return this.IsNull() || value.IsNull() ? this.IsNull() && value.IsNull() : Value.Equals( value.Value );
 		}
 
@@ -114,7 +114,7 @@ namespace VM {
 		int value;
 		public new int Value { get { return value; } }
 		public override bool IsValid { get { return false; } }
-		public override int Start { get { return 0; } }
+		public override int Start { get { return Value; } }
 		public override MemoryManagerBase.HandleBase.HandleUpdater Updater { get { return null; } }
 
 		public IntHandle( int value )
@@ -135,6 +135,14 @@ namespace VM {
 
 		public static implicit operator IntHandle( int value ) {
 			return new IntHandle( value );
+		}
+
+		public override bool Equals( Handle<VM.VMObjects.AppObject> value ) {
+			if (object.ReferenceEquals( value, null ))
+				return false;
+			if (!(value is IntHandle))
+				return false;
+			return Value == ((IntHandle) value).Value;
 		}
 	}
 }

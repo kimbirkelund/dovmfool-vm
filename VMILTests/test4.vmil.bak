@@ -4,7 +4,7 @@
       		push-literal "A"
 		store-field str
        }
-       .handler public getA() {
+       .handler public get() {
        		load-field str
 		return
        }
@@ -18,8 +18,13 @@
       		push-literal "B"
 		store-field str
        }
-       .handler public getB() {
+       .handler public get() {
+       		load-this
+       		push-literal "A.get:0"
+		send-message
        		load-field str
+		push-literal "concat:1"
+		send-message
 		return
        }
 }
@@ -32,8 +37,13 @@
       		push-literal "C"
 		store-field str
        }
-       .handler public getC() {
+       .handler public get() {
+       		load-this
+       		push-literal "A.get:0"
+		send-message
        		load-field str
+		push-literal "concat:1"
+		send-message
 		return
        }
 }
@@ -46,8 +56,13 @@
       		push-literal "D"
 		store-field str
        }
-       .handler public getD() {
+       .handler public get() {
+       		load-this
+       		push-literal "B.get:0"
+		send-message
        		load-field str
+		push-literal "concat:1"
+		send-message
 		return
        }
 }
@@ -63,8 +78,18 @@
       		push-literal "E"
 		store-field str
        }
-       .handler public getE() {
+       .handler public get() {
+       		load-this
+       		push-literal "B.get:0"
+		send-message
+       		load-this
+       		push-literal "C.get:0"
+		send-message
+		push-literal "concat:1"
+		send-message
        		load-field str
+		push-literal "concat:1"
+		send-message
 		return
        }
 }
@@ -77,8 +102,13 @@
       		push-literal "F"
 		store-field str
        }
-       .handler public getF() {
+       .handler public get() {
+       		load-this
+       		push-literal "C.get:0"
+		send-message
        		load-field str
+		push-literal "concat:1"
+		send-message
 		return
        }
 }
@@ -97,8 +127,23 @@
       		push-literal "G"
 		store-field str
        }
-       .handler public getG() {
+       .handler public get() {
+       		load-this
+       		push-literal "D.get:0"
+		send-message
+       		load-this
+       		push-literal "E.get:0"
+		send-message
+		push-literal "concat:1"
+		send-message
+       		load-this
+       		push-literal "F.get:0"
+		send-message
+		push-literal "concat:1"
+		send-message
        		load-field str
+		push-literal "concat:1"
+		send-message
 		return
        }
 }
@@ -127,43 +172,7 @@
 
 		load-local console
 		load-local o
-		push-literal "getA:0"
-		send-message
-		push-literal "write-line:1"
-		send-message
-		load-local console
-		load-local o
-		push-literal "getB:0"
-		send-message
-		push-literal "write-line:1"
-		send-message
-		load-local console
-		load-local o
-		push-literal "getC:0"
-		send-message
-		push-literal "write-line:1"
-		send-message
-		load-local console
-		load-local o
-		push-literal "getD:0"
-		send-message
-		push-literal "write-line:1"
-		send-message
-		load-local console
-		load-local o
-		push-literal "getE:0"
-		send-message
-		push-literal "write-line:1"
-		send-message
-		load-local console
-		load-local o
-		push-literal "getF:0"
-		send-message
-		push-literal "write-line:1"
-		send-message
-		load-local console
-		load-local o
-		push-literal "getG:0"
+		push-literal "get:0"
 		send-message
 		push-literal "write-line:1"
 		send-message

@@ -77,10 +77,10 @@ namespace VM.VMObjects {
 
 	public static class ExtAppObject {
 		public static Handle<Class> Class( this Handle<AppObject> obj ) {
+			if (obj is IntHandle)
+				return VirtualMachine.IntegerClass;
 			if (obj.TypeId() == TypeId.String)
 				return VirtualMachine.StringClass;
-			if (obj.TypeId() == TypeId.Integer)
-				return VirtualMachine.IntegerClass;
 			if (obj.TypeId() == TypeId.Array)
 				return VirtualMachine.ArrayClass;
 			return (Class) obj[AppObject.CLASS_OFFSET];

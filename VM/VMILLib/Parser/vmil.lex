@@ -6,6 +6,8 @@ digit [0-9]
 int ([0]|[-]?[1-9][0-9]*)
 string \"[^\"\n\r]*\"
 identifier [_a-zA-Z][\-_a-zA-Z0-9]*
+eol (\r\n?|\n)
+comment \/\/[^\n\r]*{eol}
 
 %{
 	public string SourceFile {get; set;}
@@ -15,6 +17,8 @@ identifier [_a-zA-Z][\-_a-zA-Z0-9]*
 %{
 %}
 
+<0> [\ \t\r\n] {}
+<0> {comment} {}
 <0> "public" return (int) Tokens.Public;
 <0> "protected" return (int) Tokens.Protected;
 <0> "private" return (int) Tokens.Private;
@@ -69,8 +73,6 @@ identifier [_a-zA-Z][\-_a-zA-Z0-9]*
 	return (int) Tokens.Integer;
 }
 
-<0> [\ \t\r\n] {}
-<0> //[^\n\r]* {}
 <0> . yyerror("Unexpected character: " + yytext);
 
 %{

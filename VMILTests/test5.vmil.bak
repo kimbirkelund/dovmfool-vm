@@ -1,0 +1,24 @@
+.class public Program {
+       .handler public Main(sys) {
+       		.entrypoint
+       		load-argument sys
+		push-literal "get-console:0"
+		send-message
+       		push-literal "Hello "
+		push-literal "World!"
+		push-literal "concat:1"
+		send-message
+		push-literal "write-line:1"
+		send-message
+ 
+       		load-argument sys
+		push-literal "get-console:0"
+		send-message
+       		push-literal "Hello"
+		push-literal " World!"
+		push-literal "concat:1"
+		send-message
+		push-literal "write-line:1"
+		send-message
+      }
+}

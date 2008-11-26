@@ -43,7 +43,7 @@ namespace VM {
 			var receiver = ((AppObject) stack.GetArgument( 0 ).Value).ToHandle();
 			int fieldOffset = receiver.GetFieldOffset( handler.Class() );
 
-			for (; pc < handler.InstructionCount(); pc++) {
+			for (; pc < handler.InstructionCount(); ) {
 				if (state == InterpretorState.Stopped)
 					return null;
 				if (state == InterpretorState.Paused) {
@@ -116,9 +116,16 @@ namespace VM {
 									throw new MessageNotUnderstoodException( message, ((AppObject) newReceiver.Value).ToHandle() );
 
 								var args = new Handle<AppObject>[argCount];
-								argCount.ForEachDescending( k => args[k] = ((AppObject) stack.Pop().Value).ToHandle() );
+								argCount.ForEachDescending( k => {
+									var v = stack.Pop();
+									if (v.Type == VirtualMachine.IntegerClass)
+										args[k] = new IntHandle( v.Value );
+									else
+										args[k] = ((AppObject) stack.Pop().Value).ToHandle();
+								} );
 								stack.Pop();
-								var ret = method( this, ((AppObject) newReceiver.Value).ToHandle(), args );
+								var newReceiver2 = newReceiver.Type == VirtualMachine.IntegerClass ? new IntHandle( newReceiver.Value ) : ((AppObject) newReceiver.Value).ToHandle();
+								var ret = method( this, newReceiver2, args );
 								if (ret != null)
 									stack.Push( ret.Class().Value, ret.Value );
 								break;
@@ -144,22 +151,39 @@ namespace VM {
 							goto entry;
 						}
 					case VMILLib.OpCode.Jump:
-						pc += operand;
-						break;
+
+						pc += (int) (((operand & 0x04000000) != 0 ? -1 : 1) * (operand & 0x03FFFFFF));
+						continue;
 					case VMILLib.OpCode.JumpIfTrue: {
 							var v = stack.Pop();
-							if ((v.Type == VirtualMachine.IntegerClass.Value || v.Type == VirtualMachine.StringClass.Value) && v.Value != 0)
-								pc += operand;
-							else
-								throw new NotImplementedException( "JumpIfTrue for AppObject" );
+							if ((v.Type == VirtualMachine.IntegerClass.Value || v.Type == VirtualMachine.StringClass.Value)) {
+								if (((int) v.Value) > 0) {
+									pc += (int) (((operand & 0x04000000) != 0 ? -1 : 1) * (operand & 0x03FFFFFF));
+									continue;
+								}
+							} else {
+								var res = Send( "is-true:0".ToVMString(), (VMObjects.AppObject) v.Value );
+								if ((res as IntHandle).Value > 0) {
+									pc += (int) (((operand & 0x04000000) != 0 ? -1 : 1) * (operand & 0x03FFFFFF));
+									continue;
+								}
+							}
 							break;
 						}
 					case VMILLib.OpCode.JumpIfFalse: {
 							var v = stack.Pop();
-							if ((v.Type == VirtualMachine.IntegerClass.Value || v.Type == VirtualMachine.StringClass.Value) && v.Value == 0)
-								pc += operand;
-							else
-								throw new NotImplementedException( "JumpIfTrue for AppObject" );
+							if ((v.Type == VirtualMachine.IntegerClass.Value || v.Type == VirtualMachine.StringClass.Value)) {
+								if (((int) v.Value) <= 0) {
+									pc += (int) (((operand & 0x04000000) != 0 ? -1 : 1) * (operand & 0x03FFFFFF));
+									continue;
+								}
+							} else {
+								var res = Send( "is-false:0".ToVMString(), (VMObjects.AppObject) v.Value );
+								if ((res as IntHandle).Value > 0) {
+									pc += (int) (((operand & 0x04000000) != 0 ? -1 : 1) * (operand & 0x03FFFFFF));
+									continue;
+								}
+							}
 							break;
 						}
 					case VMILLib.OpCode.Throw:
@@ -170,6 +194,7 @@ namespace VM {
 					default:
 						throw new InvalidVMProgramException( "Unknown VMILLib.OpCode encountered: " + opcode );
 				}
+				pc++;
 			}
 
 			throw new InvalidVMProgramException( "Reach end of message handler without returning." );

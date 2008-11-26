@@ -85,7 +85,9 @@ namespace VM.VMObjects {
 
 		#region Static methods
 		public static Handle<String> CreateInstance( int length ) {
-			return VirtualMachine.MemoryManager.Allocate<String>( FIRST_CHAR_OFFSET - 1 + (length + 1) / 2 );
+			var str = VirtualMachine.MemoryManager.Allocate<String>( FIRST_CHAR_OFFSET - 1 + (length + 1) / 2 );
+			str[String.LENGTH_OFFSET] = length;
+			return str;
 		}
 		#endregion
 	}
@@ -205,7 +207,6 @@ namespace VM.VMObjects {
 
 			var wordCount = (count + 1) / 2;
 			var newStr = String.CreateInstance( count );
-			newStr[String.LENGTH_OFFSET] = count;
 
 			for (int cur = start, w = String.FIRST_CHAR_OFFSET; cur < count + start; cur += 2, w++) {
 				if (cur % 2 == 0)
@@ -230,9 +231,9 @@ namespace VM.VMObjects {
 				return 0;
 
 			var s1Len = obj.Length();
-			var s1WC = (s1Len + 3) / 4;
+			var s1WC = (s1Len + 1) / 2;
 			var s2Len = value.Length();
-			var s2WC = (s2Len + 3) / 4;
+			var s2WC = (s2Len + 1) / 2;
 
 			for (var i = String.LENGTH_OFFSET + 1; i < Math.Min( s1WC, s2WC ) + 1; i++) {
 				if (obj[i] == value[i])
@@ -259,9 +260,9 @@ namespace VM.VMObjects {
 			var str = String.CreateInstance( str1.Length() + str2.Length() );
 
 			var s1Len = str1.Length();
-			var s1WC = (s1Len + 3) / 4;
+			var s1WC = (s1Len + 1) / 2;
 			var s2Len = str2.Length();
-			var s2WC = (s2Len + 3) / 4;
+			var s2WC = (s2Len + 1) / 2;
 
 			for (int i = 0; i < s1WC; i++)
 				str[String.FIRST_CHAR_OFFSET + i] = str1[String.FIRST_CHAR_OFFSET + i];
@@ -270,7 +271,7 @@ namespace VM.VMObjects {
 				for (int i = 0; i < s2WC; i++)
 					str[String.FIRST_CHAR_OFFSET + s1WC + i] = str2[String.FIRST_CHAR_OFFSET + i];
 			} else {
-				int j = String.FIRST_CHAR_OFFSET + s1WC;
+				int j = String.FIRST_CHAR_OFFSET + s1WC - 1;
 				for (int i = 0; i < s2WC; i++) {
 					str[j++] |= str2[String.FIRST_CHAR_OFFSET + i] >> 16;
 					str[j] |= str2[String.FIRST_CHAR_OFFSET + i] << 16;

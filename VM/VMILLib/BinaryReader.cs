@@ -93,9 +93,9 @@ namespace VMILLib {
 
 		InstructionList ReadInstructions( int count, int argumentCount, int localCount ) {
 			List<Instruction> inss = new List<Instruction>();
-			Dictionary<uint, Label> labels = new Dictionary<uint, Label>();
+			Dictionary<int, Label> labels = new Dictionary<int, Label>();
 
-			Func<uint, Label> getLabel = offset => {
+			Func<int, Label> getLabel = offset => {
 				if (!labels.ContainsKey( offset ))
 					labels.Add( offset, new Label( "label" + offset ) );
 				return labels[offset];
@@ -154,7 +154,7 @@ namespace VMILLib {
 					case OpCode.Jump:
 					case OpCode.JumpIfTrue:
 					case OpCode.JumpIfFalse:
-						actOperand = getLabel( (uint) (operand + i) );
+						actOperand = getLabel( (int) ((((operand & 0x04000000) != 0 ? -1 : 1) * (operand & 0x03FFFFFF)) + i) );
 						break;
 					default:
 						throw new ArgumentException( "Unexpected opcode : " + opcode );

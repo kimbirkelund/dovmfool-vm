@@ -66,7 +66,6 @@ namespace VM {
 			var wordCount = stringLength / 2 + stringLength % 2;
 
 			var str = VMObjects.String.CreateInstance( stringLength );
-			str[vmo.String.LENGTH_OFFSET] = stringLength;
 			for (int i = 0; i < wordCount; i++)
 				str[vmo.String.FIRST_CHAR_OFFSET + i] = ReadW();
 
