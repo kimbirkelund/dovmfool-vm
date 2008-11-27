@@ -68,18 +68,14 @@ namespace VM {
 					 from a in t.GetCustomAttributes( typeof( SystemCallClassAttribute ), false ).OfType<SystemCallClassAttribute>()
 					 where a != null
 					 select new { Type = t, Attribute = a }).ForEach( p =>
-						 classes.Add(
-							VirtualMachine.ConstantPool.RegisterString( p.Attribute.Name ),
-							new SCCls( p.Type ) ) );
+						 classes.Add( p.Attribute.Name.ToVMString().Intern(), new SCCls( p.Type ) ) );
 
 					methods = new Dictionary<Handle<VM.VMObjects.String>, SystemCall>();
 					(from m in type.GetMethods( BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static )
 					 from a in m.GetCustomAttributes( typeof( SystemCallMethodAttribute ), false ).OfType<SystemCallMethodAttribute>()
 					 where a != null
 					 select new { Method = m, Attribute = a }).ForEach( p =>
-						 methods.Add(
-							VirtualMachine.ConstantPool.RegisterString( p.Attribute.Name ),
-							(SystemCall) Delegate.CreateDelegate( typeof( SystemCall ), p.Method ) ) );
+						 methods.Add( p.Attribute.Name.ToVMString().Intern(), (SystemCall) Delegate.CreateDelegate( typeof( SystemCall ), p.Method ) ) );
 					initialized = true;
 				}
 			}

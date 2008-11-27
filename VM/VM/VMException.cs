@@ -116,7 +116,7 @@ namespace VM {
 			: base( info, context ) { }
 
 		public MessageNotUnderstoodException( Handle<VMObjects.String> invalidMessage, Handle<VMObjects.AppObject> obj )
-			: this() {
+			: base( "Message '" + invalidMessage.ToString() + "' not understood." ) {
 			this.InvalidMessage = invalidMessage;
 			this.Object = obj;
 		}
@@ -130,7 +130,7 @@ namespace VM {
 	public class ClassNotFoundException : VMAppException {
 		public readonly Handle<VMObjects.String> ClassName;
 		public ClassNotFoundException() { }
-		public ClassNotFoundException( Handle<VMObjects.String> className ) : base( "Class not found" ) { ClassName = className; }
+		public ClassNotFoundException( Handle<VMObjects.String> className ) : base( "Class '" + className.ToString() + "' not found" ) { ClassName = className; }
 		public ClassNotFoundException( string message, Handle<VMObjects.String> className ) : base( message ) { ClassName = className; }
 		public ClassNotFoundException( string message ) : base( message ) { }
 		public ClassNotFoundException( string message, Exception inner ) : base( message, inner ) { }
@@ -145,7 +145,7 @@ namespace VM {
 		public Handle<VMObjects.String> SystemCallName { get; private set; }
 
 		public UnknownSystemCallException() : base( "Unknown system call." ) { }
-		public UnknownSystemCallException( Handle<VMObjects.String> systemCall ) : this( systemCall, "Unknown system call." ) { }
+		public UnknownSystemCallException( Handle<VMObjects.String> systemCall ) : this( systemCall, "Unknown system call: '" + systemCall.ToString() + "'." ) { }
 		public UnknownSystemCallException( Handle<VMObjects.String> systemCall, string message ) : base( message ) { SystemCallName = systemCall; }
 		public UnknownSystemCallException( string message, Exception inner ) : base( message, inner ) { }
 		protected UnknownSystemCallException(

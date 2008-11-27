@@ -54,7 +54,7 @@ namespace VM.VMObjects {
 	}
 
 	public static class ExtVMILMessageHandler {
-		public static bool IsInternal( this Handle<VMILMessageHandler> obj ) { return false; }
+		public static bool IsExternal( this Handle<VMILMessageHandler> obj ) { return false; }
 
 		public static VisibilityModifier Visibility( this Handle<VMILMessageHandler> obj ) {
 			return (VisibilityModifier) (obj[MessageHandlerBase.HEADER_OFFSET] & MessageHandlerBase.VISIBILITY_MASK);

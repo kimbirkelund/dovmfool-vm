@@ -55,7 +55,7 @@ namespace VM.VMObjects {
 			return (VisibilityModifier) (obj[MessageHandlerBase.HEADER_OFFSET] & MessageHandlerBase.VISIBILITY_MASK);
 		}
 
-		public static bool IsInternal( this Handle<DelegateMessageHandler> obj ) { return true; }
+		public static bool IsExternal( this Handle<DelegateMessageHandler> obj ) { return true; }
 
 		public static Handle<String> Name( this Handle<DelegateMessageHandler> obj ) {
 			return VirtualMachine.ConstantPool.GetString( obj[MessageHandlerBase.HEADER_OFFSET] >> MessageHandlerBase.NAME_RSHIFT );

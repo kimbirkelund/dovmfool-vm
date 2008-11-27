@@ -112,8 +112,8 @@ namespace VM.VMObjects {
 			obj[obj[AppObject.FIELDS_OFFSET_OFFSET] + index * 2 + 1] = value;
 		}
 
-		public static void SetField( this Handle<AppObject> obj, int index, Handle<Class> cls, Handle<AppObject> value ) {
-			obj.SetField( index, cls, value );
+		public static void SetField( this Handle<AppObject> obj, int index, Handle<AppObject> value ) {
+			obj.SetField( index, value.Class(), value.Start );
 		}
 
 		public static int GetFieldOffset( this Handle<AppObject> obj, Handle<Class> superClass ) {
@@ -131,13 +131,12 @@ namespace VM.VMObjects {
 			return "Instance of " + obj.Class();
 		}
 
-		public static Handle<AppObject> Invoke( this Handle<AppObject> obj, Handle<String> message, params Handle<AppObject>[] args ) {
-			var interp = VirtualMachine.InterpretorFactory.CreateInstance();
-			return interp.Send( message, obj, args );
+		public static Handle<AppObject> Send( this Handle<AppObject> obj, Handle<String> message, params Handle<AppObject>[] args ) {
+			return VirtualMachine.Send( message, obj, args );
 		}
 
-		public static Handle<AppObject> Invoke( this Handle<AppObject> obj, string message, params Handle<AppObject>[] args ) {
-			return Invoke( obj, message.ToVMString(), args );
+		public static Handle<AppObject> Send( this Handle<AppObject> obj, string message, params Handle<AppObject>[] args ) {
+			return Send( obj, message.ToVMString(), args );
 		}
 	}
 }

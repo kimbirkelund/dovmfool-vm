@@ -8,9 +8,11 @@ using Sekhmet;
 namespace VM.VMObjects {
 	public struct String : IVMObject<String> {
 		#region Constants
-		public const int LENGTH_OFFSET = 1;
+		public const int LENGTH_INTERNED_OFFSET = 1;
 		public const int HASH_CODE_OFFSET = 2;
 		public const int FIRST_CHAR_OFFSET = 3;
+		public const int INTERN_RSHIFT = 31;
+		public const int LENGTH_MASK = 0x7FFFFFFF;
 		#endregion
 
 		#region Properties
@@ -22,7 +24,7 @@ namespace VM.VMObjects {
 		public static Handle<String> Empty {
 			get {
 				if (empty == null)
-					empty = VirtualMachine.ConstantPool.RegisterString( "" );
+					empty = "".ToVMString().Intern();
 				return empty;
 			}
 		}
@@ -31,7 +33,7 @@ namespace VM.VMObjects {
 		public static Handle<String> Dot {
 			get {
 				if (dot == null)
-					dot = VirtualMachine.ConstantPool.RegisterString( "." );
+					dot = ".".ToVMString().Intern();
 				return dot;
 			}
 		}
@@ -86,7 +88,7 @@ namespace VM.VMObjects {
 		#region Static methods
 		public static Handle<String> CreateInstance( int length ) {
 			var str = VirtualMachine.MemoryManager.Allocate<String>( FIRST_CHAR_OFFSET - 1 + (length + 1) / 2 );
-			str[String.LENGTH_OFFSET] = length;
+			str[String.LENGTH_INTERNED_OFFSET] = length & LENGTH_MASK;
 			return str;
 		}
 		#endregion
@@ -97,7 +99,11 @@ namespace VM.VMObjects {
 		static readonly int[] byteRShifts = new int[] { 24, 16, 8, 0 };
 
 		public static int Length( this Handle<String> obj ) {
-			return obj[String.LENGTH_OFFSET];
+			return obj[String.LENGTH_INTERNED_OFFSET] & String.LENGTH_MASK;
+		}
+
+		public static bool IsInterned( this Handle<String> obj ) {
+			return obj[String.LENGTH_INTERNED_OFFSET] >> String.INTERN_RSHIFT;
 		}
 
 		public static int GetHashCode( this Handle<String> obj ) {
@@ -235,7 +241,7 @@ namespace VM.VMObjects {
 			var s2Len = value.Length();
 			var s2WC = (s2Len + 1) / 2;
 
-			for (var i = String.LENGTH_OFFSET + 1; i < Math.Min( s1WC, s2WC ) + 1; i++) {
+			for (var i = String.LENGTH_INTERNED_OFFSET + 1; i < Math.Min( s1WC, s2WC ) + 1; i++) {
 				if (obj[i] == value[i])
 					continue;
 
@@ -273,8 +279,10 @@ namespace VM.VMObjects {
 			} else {
 				int j = String.FIRST_CHAR_OFFSET + s1WC - 1;
 				for (int i = 0; i < s2WC; i++) {
+					str[j] &= 0xFFFF0000;
 					str[j++] |= str2[String.FIRST_CHAR_OFFSET + i] >> 16;
-					str[j] |= str2[String.FIRST_CHAR_OFFSET + i] << 16;
+					if (i != s2WC - 1 || s2Len % 2 == 0)
+						str[j] |= str2[String.FIRST_CHAR_OFFSET + i] << 16;
 				}
 			}
 
@@ -293,7 +301,22 @@ namespace VM.VMObjects {
 		}
 
 		public static Handle<String> ToVMString( this string str ) {
-			return VirtualMachine.ConstantPool.RegisterString( str );
+			var bytes = Encoding.Unicode.GetBytes( str );
+			if (bytes.Length % 4 != 0) {
+				var temp = bytes;
+				bytes = new byte[temp.Length + 4 - (temp.Length % 4)];
+				System.Array.Copy( temp, bytes, temp.Length );
+			}
+			var ints = bytes.ToUIntStream();
+
+			var vmStr = VMObjects.String.CreateInstance( str.Length );
+			ints.ForEach( ( b, i ) => vmStr[i + VMObjects.String.FIRST_CHAR_OFFSET] = b );
+
+			return vmStr;
+		}
+
+		public static Handle<String> Intern( this Handle<String> str ) {
+			return VirtualMachine.ConstantPool.Intern( str );
 		}
 	}
 }

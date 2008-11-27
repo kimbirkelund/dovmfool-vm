@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System.Text;
+using VM.VMObjects;
 
 namespace VM {
 	partial class SystemCalls {
@@ -8,7 +9,7 @@ namespace VM {
 			class Integer {
 				[SystemCallMethod( "to-string:0" )]
 				public static Handle<VMObjects.AppObject> ToString( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-					return VM.VirtualMachine.ConstantPool.RegisterString( ((IntHandle) receiver).Value.ToString() ).To<VMObjects.AppObject>();
+					return ((IntHandle) receiver).Value.ToString().ToVMString().To<VMObjects.AppObject>();
 				}
 
 				[SystemCallMethod( "subtract:1" )]
