@@ -5,7 +5,7 @@
 %YYSTYPE VMILLib.Parser.ASTNode
 %YYLTYPE VMILLib.Parser.LexLocation
 
-%token Class Extends Fields Entrypoint External Handler Default Locals StoreField LoadField StoreLocal LoadLocal LoadArgument LoadThis PushLiteral Pop Dup NewInstance SendMessage Return ReturnVoid Jump JumpIfTrue JumpIfFalse Throw Try Catch Colon Dot LeftParen RightParen LeftCBrace RightCBrace Comma Identifier String Integer Public Private Protected
+%token Class Extends Fields Entrypoint External Handler Default Locals StoreField LoadField StoreLocal LoadLocal LoadArgument LoadThis PushLiteral Pop Dup NewInstance SendMessage Return ReturnVoid Jump JumpIfTrue JumpIfFalse Throw Try Catch Colon Dot LeftParen RightParen LeftCBrace RightCBrace Comma Identifier LongIdentifier String Integer Public Private Protected
 
 %start program
 
@@ -54,18 +54,14 @@ handler :
 				(List<Instruction>) $9,
 				$7.As<bool>());
 	}
-|	visibility Identifier External longidentifier LeftParen names RightParen {
+|	visibility Identifier External LongIdentifier LeftParen names RightParen {
 		$$ = new ExternalMessageHandler(@$,
 				$1.As<VisibilityModifier>(),
 				$2.As<string>(),
 				$4.As<string>(),
 				(List<string>) $6);
 	};
-	
-longidentifier :
-	Identifier { $$ = $1; }
-|	Identifier Dot longidentifier { $$ = ($1.As<string>() + "." + $3.As<string>()).ToNode(); };
-	
+		
 entrypoint :
 	{ $$ = false.ToNode(); }
 | Entrypoint { $$ = true.ToNode(); };
@@ -76,7 +72,7 @@ defaulthandler :
 		$$ = new VMILMessageHandler(@$, 
 				VisibilityModifier.None, 
 				null, 
-				new List<string>(), 
+				nerw List<string>(), 
 				(List<string>) $3, 
 				(List<Instruction>) $4,
 				false);
@@ -96,11 +92,13 @@ names2 :
 
 longnames : 
 	{ $$ = new List<string>(); }
-|	longidentifier longnames2 { $$ = $1.As<string>() + (List<string>) $2; };
+|	Identifier longnames2 { $$ = $1.As<string>() + (List<string>) $2; }
+|	LongIdentifier longnames2 { $$ = $1.As<string>() + (List<string>) $2; };
 
 longnames2 :
 	{ $$ = new List<string>(); }
-|	Comma longidentifier names2 { $$ = $2.As<string>() + (List<string>) $3; };
+|	Comma Identifier longnames2 { $$ = $2.As<string>() + (List<string>) $3; }
+|	Comma LongIdentifier longnames2 { $$ = $2.As<string>() + (List<string>) $3; };
 
 instructions :
 	{ $$ = new List<Instruction>(); }

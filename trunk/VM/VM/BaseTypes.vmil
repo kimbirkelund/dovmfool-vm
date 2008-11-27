@@ -1,7 +1,9 @@
+.class private InternalObject { }
+
 .class public Object {
-	.handler public get-type .external System.Object.get-type()
-	.handler public to-string .external System.Object.to-string()
-	.handler public equals .external System.Object.equals(other)
+	.handler public get-type .external Object.get-type()
+	.handler public to-string .external Object.to-string()
+	.handler public equals .external Object.equals(other)
 	
 	.handler public is-true() {
 		push-literal 1
@@ -51,7 +53,7 @@
 		}
 	}
 	
-	.class public NotImplementedException extends Exception {
+	.class public NotImplementedException extends System.Exception {
 		.handler public initialize() {
 			push-literal "The message handler has not been implemented."
 			push-literal "initialize:1"
@@ -127,6 +129,8 @@
 	
 	.class private Console {
 		.handler public write-line .external System.Console.write-line(str)
+		.handler public write-line .external System.Console.write-line()
+		.handler public write .external System.Console.write(str)
 	}
 	
 	.class public Collections {
@@ -136,6 +140,482 @@
 			.handler public initialize(initialSize) {
 				
 			}			
+		}
+	}
+	
+	.class public Reflection {
+		.class public Visibility {
+			.fields { vis }
+			
+			.handler public initialize(vis) {
+				load-argument vis
+				store-field vis
+			}
+			
+			.handler public is-public() {
+				load-field vis
+				push-literal 0
+				push-literal "equals:1"
+				send-message
+				return
+			}
+			
+			.handler public is-protected() {
+				load-field vis
+				push-literal 1
+				push-literal "equals:1"
+				send-message
+				return
+			}
+			
+			.handler public is-private() {
+				load-field vis
+				push-literal 2
+				push-literal "equals:1"
+				send-message
+				return
+			}
+					
+			.handler public is-none() {
+				load-field vis
+				push-literal 2
+				push-literal "compareTo:1"
+				jump-if-true returnTrue
+				
+				load-field vis
+				push-literal 0
+				push-literal "compareTo:1"
+				jump-if-false returnTrue
+				
+				push-literal 0
+				return
+				
+				returnTrue:
+					push-literal 1
+					return
+			}
+			
+			.handler public to-string() {
+				load-this
+				push-literal "is-public:0"
+				send-message
+				jump-if-false notPublic
+				push-literal "public"
+				return
+				
+				notPublic:
+					load-this
+					push-literal "is-protected:0"
+					send-message
+					jump-if-false notProtected
+					push-literal "protected"
+					return
+
+				notProtected:
+					load-this
+					push-literal "is-private:0"
+					send-message
+					jump-if-false notPrivate
+					push-literal "private"
+					return
+					
+				notPrivate:
+					push-literal "none"
+					return
+			}
+			
+			.handler public equals(other) {
+				load-field vis
+				load-argument other
+				push-literal "equals:1"
+				send-message
+				return
+			}
+		}
+	
+		.class public MessageHandler {
+			.fields { handler }
+			
+			.handler public name .external System.Reflection.MessageHandler.name()
+			.handler public argument-count .external System.Reflection.MessageHandler.argument-count()
+			.handler public visibility .external System.Reflection.MessageHandler.visibility()
+			.handler public is-external .external System.Reflection.MessageHandler.is-external()
+			.handler public is-default .external System.Reflection.MessageHandler.is-default()
+
+			.handler public equals .external System.Reflection.MessageHandler.equals(other)
+			
+			.handler public to-string() {
+				load-this
+				push-literal "is-external:0"
+				send-message
+				jump-if-true isExternal
+
+				load-this
+				push-literal "is-default:0"
+				send-message
+				jump-if-true isDefault
+
+				push-literal ".handle "
+				load-this
+				push-literal "visibility:0"
+				send-message
+				push-literal "to-string:0"
+				send-message
+				push-literal "concat:1"
+				send-message
+				push-literal " "
+				push-literal "concat:1"
+				send-message
+				load-this
+				push-literal "name:0"
+				send-message
+				push-literal 0
+				load-this
+				push-literal "name:0"
+				send-message
+				push-literal ":"
+				push-literal "index-of:1"
+				send-message
+				push-literal "substring:2"
+				send-message				
+				push-literal "concat:1"
+				send-message
+				jump argumentCount
+				
+				isExternal:
+					push-literal ".external "
+					load-this
+					push-literal "visibility:0"
+					send-message
+					push-literal "to-string:0"
+					send-message
+					push-literal "concat:1"
+					send-message
+					push-literal " "
+					push-literal "concat:1"
+					send-message
+					load-this
+					push-literal "name:0"
+					send-message
+					push-literal 0
+					load-this
+					push-literal "name:0"
+					send-message
+					push-literal ":"
+					push-literal "index-of:1"
+					send-message
+					push-literal "substring:2"
+					send-message				
+					push-literal "concat:1"
+					send-message
+					jump argumentCount
+					
+				isDefault:
+					push-literal ".default "
+					load-this
+					push-literal "visibility:0"
+					send-message
+					push-literal "to-string:0"
+					send-message
+					push-literal "concat:1"
+					send-message
+					jump argumentCount
+				
+				argumentCount:
+					push-literal "("
+					push-literal "concat:1"
+					send-message
+					load-this
+					push-literal "argument-count:0"
+					send-message
+					push-literal "to-string:0"
+					send-message
+					push-literal "concat:1"
+					send-message
+					push-literal ")"
+					push-literal "concat:1"
+					send-message
+					return
+			}
+		}
+		
+		.class public Class {
+			.fields { class }
+			
+			.handler public name .external System.Reflection.Class.name()
+			.handler public visibility .external System.Reflection.Class.visibility()
+			
+			.handler public parent-class .external System.Reflection.Class.parent-class()
+			.handler public super-class-names .external System.Reflection.Class.super-class-names()
+			.handler public super-classes .external System.Reflection.Class.super-classes()
+			.handler public default-message-handler .external System.Reflection.Class.default-message-handler()
+			.handler public message-handlers .external System.Reflection.Class.message-handlers()
+			.handler public inner-classes .external System.Reflection.Class.inner-classes()
+			
+			.handler public equals .external System.Reflection.Class.equals(other)
+			
+			.handler public to-string() {
+				.locals { arr, i, length }
+				push-literal ".class "
+				load-this
+				push-literal "visibility:0"
+				send-message
+				push-literal "to-string:0"
+				send-message
+				push-literal "concat:1"
+				send-message
+				push-literal " "
+				push-literal "concat:1"
+				send-message
+				load-this
+				push-literal "name:0"
+				send-message
+				push-literal "concat:1"
+				send-message
+
+				push-literal 1
+				store-local i
+				load-this
+				push-literal "super-class-names:0"
+				send-message
+				store-local arr
+				
+				load-local arr
+				push-literal "length:0"
+				send-message 
+				dup
+				store-local length
+				
+				jump-if-false end
+				
+				push-literal " extends "
+				push-literal "concat:1"
+				send-message 
+				load-local arr
+				push-literal 0
+				push-literal "get:1"
+				send-message
+				push-literal "concat:1"
+				send-message
+				
+				start:
+					load-local length
+					load-local i
+					push-literal "subtract:1"
+					send-message
+					jump-if-false end
+					
+					push-literal ", "
+					push-literal "concat:1"
+					send-message
+					load-local arr
+					load-local i
+					push-literal "get:1"
+					send-message
+					push-literal "concat:1"
+					send-message
+					
+					load-local i
+					push-literal 1
+					push-literal "add:1"
+					send-message
+					store-local i
+					
+					jump start
+					
+				end:
+
+				return
+			}
+			
+			.handler public trace(console) {
+				load-this
+				load-argument console
+				push-literal 0
+				push-literal "trace:2"
+				send-message
+			}
+			
+			.handler private trace(console, indent) {
+				.locals { indent, arr, i, length }
+				load-argument indent
+				store-local indent
+				
+				load-this
+				load-argument console
+				load-argument indent
+				push-literal "pad:2"
+				send-message
+				
+				load-argument console
+				load-this
+				push-literal "to-string:0"
+				send-message
+				push-literal " {"
+				push-literal "concat:1"
+				send-message
+				push-literal "write-line:1"
+				send-message
+				
+				load-local indent
+				push-literal 1
+				push-literal "add:1"
+				send-message
+				store-local indent
+				
+				load-argument console
+				load-this
+				push-literal "default-message-handler:0"
+				send-message
+				jump-if-false noDefaultHandler
+				load-this
+				load-argument console
+				load-local indent
+				push-literal "pad:2"
+				send-message
+				push-literal "to-string:0"
+				send-message
+				push-literal "write-line:1"
+				send-message
+				jump messageHandlers
+				noDefaultHandler:
+					pop
+				
+				messageHandlers:
+					load-this
+					push-literal "message-handlers:0"
+					send-message
+					store-local arr
+					push-literal 0
+					store-local i
+					load-local arr
+					push-literal "length:0"
+					send-message
+					store-local length
+					
+				messageHandlersStart:
+					load-local length
+					load-local i
+					push-literal "subtract:1"
+					send-message
+					jump-if-false messageHandlersEnd
+				
+					load-this
+					load-argument console
+					load-local indent
+					push-literal "pad:2"
+					send-message
+					load-argument console
+					load-local arr
+					load-local i
+					push-literal "get:1"
+					send-message
+					push-literal "to-string:0"
+					send-message
+					push-literal "write-line:1"
+					send-message
+					
+					load-local i
+					push-literal 1
+					push-literal "add:1"
+					send-message
+					store-local i
+					
+					jump messageHandlersStart
+					
+				messageHandlersEnd:
+									
+					load-this
+					push-literal "inner-classes:0"
+					send-message
+					store-local arr
+					push-literal 0
+					store-local i
+					load-local arr
+					push-literal "length:0"
+					send-message
+					store-local length
+					
+				innerClassesStart:
+					load-local length
+					load-local i
+					push-literal "subtract:1"
+					send-message
+					jump-if-false innerClassesEnd
+				
+					load-argument console
+					push-literal "write-line:0"
+					send-message
+
+					load-local arr
+					load-local i
+					push-literal "get:1"
+					send-message
+					load-argument console
+					load-local indent
+					push-literal "trace:2"
+					send-message
+					
+					load-local i
+					push-literal 1
+					push-literal "add:1"
+					send-message
+					store-local i
+					
+					jump innerClassesStart
+					
+				innerClassesEnd:
+				
+				load-local indent
+				push-literal 1
+				push-literal "subtract:1"
+				send-message
+				store-local indent
+				
+				load-this
+				load-argument console
+				load-argument indent
+				push-literal "pad:2"
+				send-message
+
+				load-argument console
+				push-literal "}"
+				push-literal "write-line:1"
+				send-message
+			}
+			
+			.handler private pad(console, indent) {
+				.locals { i }
+				push-literal 0
+				store-local i
+				
+				start:
+					load-argument indent
+					load-local i
+					push-literal "subtract:1"
+					send-message
+					jump-if-false end
+					
+					load-argument console
+					push-literal "  "
+					push-literal "write:1"
+					send-message
+					
+					load-local i
+					push-literal 1
+					push-literal "add:1"
+					send-message
+					store-local i
+					
+					jump start
+					
+				end:
+			}
+		}
+		
+		.class public Reflector {
+			.handler public classes .external System.Reflection.Reflector.classes()
+			.handler public find-class .external System.Reflection.Reflector.find-class(name)
 		}
 	}
 }

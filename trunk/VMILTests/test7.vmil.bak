@@ -1,0 +1,52 @@
+.class public Program {
+       .handler public main(sys) {
+       		.entrypoint
+       		.locals { console, ref, cls, arr, i, length }
+		load-argument sys
+		push-literal "get-console:0"
+		send-message
+		store-local console
+
+       		push-literal "System.Reflection.Reflector"
+		new-instance
+		store-local ref
+
+		push-literal 0
+		store-local i
+
+		load-local ref
+		push-literal "classes:0"
+		send-message
+		dup
+		store-local arr
+		
+		push-literal "length:0"
+		send-message
+		store-local length
+		
+		start:
+			load-local length
+			load-local i
+			push-literal "subtract:1"
+			send-message
+			jump-if-false end
+					
+			load-local arr
+			load-local i
+			push-literal "get:1"
+			send-message
+			load-local console
+			push-literal "trace:1"
+			send-message
+					
+			load-local i
+			push-literal 1
+			push-literal "add:1"
+			send-message
+			store-local i
+					
+			jump start
+				
+		end:
+       }
+}

@@ -22,19 +22,17 @@ namespace VM {
 			return index;
 		}
 
-		public Handle<VMObjects.String> RegisterString( string str ) {
-			var bytes = Encoding.Unicode.GetBytes( str );
-			if (bytes.Length % 4 != 0) {
-				var temp = bytes;
-				bytes = new byte[temp.Length + 4 - (temp.Length % 4)];
-				System.Array.Copy( temp, bytes, temp.Length );
-			}
-			var ints = bytes.ToUIntStream();
+		public Handle<VMObjects.String> Intern( Handle<VMObjects.String> str ) {
+			if (str.IsInterned())
+				return str;
 
-			var vmStr = VMObjects.String.CreateInstance( str.Length );
-			ints.ForEach( ( b, i ) => vmStr[i + VMObjects.String.FIRST_CHAR_OFFSET] = b );
+			foreach (var istr in strings)
+				if (istr.Equals( str ))
+					return istr;
 
-			return GetString( RegisterString( vmStr ) );
+			strings.Add( str );
+			str[VMObjects.String.LENGTH_INTERNED_OFFSET] |= 0x80000000;
+			return str;
 		}
 	}
 }

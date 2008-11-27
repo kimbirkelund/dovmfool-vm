@@ -10,6 +10,9 @@ using VM.VMObjects;
 
 namespace VM {
 	class ClassLoader : IDisposable {
+		static Handle<VM.VMObjects.String> objStr = "Object".ToVMString().Intern();
+		static int objStrIndex = VirtualMachine.ConstantPool.RegisterString( objStr );
+
 		bool disposed;
 		Stream input;
 		Dictionary<int, int> constantIndexMap = new Dictionary<int, int>();
@@ -49,7 +52,6 @@ namespace VM {
 					VirtualMachine.RegisterClass( item );
 
 			}
-			//classIndexMap.Values.Where( c => c.ParentClass() == null ).ForEach( c => VirtualMachine.RegisterClass( c ) );
 
 			return entrypoint;
 		}
@@ -84,13 +86,13 @@ namespace VM {
 			int argCount = ReadW();
 			Handle<vmo.MessageHandlerBase> handlerBase;
 
-			if ((handlerHeader & vmo.MessageHandlerBase.IS_INTERNAL_MASK) != 0) {
+			if ((handlerHeader & vmo.MessageHandlerBase.IS_EXTERNAL_MASK) != 0) {
 				var externalName = constantIndexMap[ReadW()];
 
 				var handler = vmo.DelegateMessageHandler.CreateInstance();
 				handlerBase = handler.To<vmo.MessageHandlerBase>();
 
-				handler[vmo.MessageHandlerBase.HEADER_OFFSET] = handlerHeader != (int) VisibilityModifier.None ? ((constantIndexMap[handlerHeader >> 4]) << 4) | (handlerHeader & 15) : handlerHeader;
+				handler[vmo.MessageHandlerBase.HEADER_OFFSET] = handlerHeader != (int) VisibilityModifier.None ? ((constantIndexMap[handlerHeader >> vmo.MessageHandlerBase.NAME_RSHIFT]) << vmo.MessageHandlerBase.NAME_RSHIFT) | (handlerHeader & 15) : handlerHeader;
 				handler[vmo.DelegateMessageHandler.EXTERNAL_NAME_OFFSET] = VirtualMachine.ConstantPool.GetString( externalName );
 				handler[vmo.DelegateMessageHandler.ARGUMENT_COUNT_OFFSET] = argCount;
 			} else {
@@ -100,7 +102,7 @@ namespace VM {
 				var handler = vmo.VMILMessageHandler.CreateInstance( instructionCount );
 				handlerBase = handler.To<vmo.MessageHandlerBase>();
 
-				handler[vmo.MessageHandlerBase.HEADER_OFFSET] = handlerHeader != (int) VisibilityModifier.None ? ((constantIndexMap[handlerHeader >> 4]) << 4) | (handlerHeader & 15) : handlerHeader;
+				handler[vmo.MessageHandlerBase.HEADER_OFFSET] = handlerHeader != (int) VisibilityModifier.None ? ((constantIndexMap[handlerHeader >> vmo.MessageHandlerBase.NAME_RSHIFT]) << vmo.MessageHandlerBase.NAME_RSHIFT) | (handlerHeader & 15) : handlerHeader;
 				if ((handlerHeader & vmo.MessageHandlerBase.IS_ENTRYPOINT_MASK) != 0)
 					entrypoint = handler;
 				handler[vmo.VMILMessageHandler.COUNTS_OFFSET] = (argCount << vmo.VMILMessageHandler.ARGUMENT_COUNT_RSHIFT) | (localCount & vmo.VMILMessageHandler.LOCAL_COUNT_MASK);
@@ -130,19 +132,19 @@ namespace VM {
 			int innerClassCount = ReadW();
 			var clsHeader = ReadW();
 
-			var cls = vmo.Class.CreateInstance( superClassCount, handlerCount, innerClassCount );
+			var cls = vmo.Class.CreateInstance( Math.Max( 1, superClassCount ), handlerCount, innerClassCount );
 
 			cls[vmo.Class.HEADER_OFFSET] = (constantIndexMap[clsHeader >> 2] << 2) | (clsHeader & 3);
 
-			var isObject = cls.Name() == VirtualMachine.ConstantPool.RegisterString( "Object" );
+			var isObject = cls.Name() == objStr;
 
 			cls[vmo.Class.COUNTS_OFFSET] = (fieldCount << vmo.Class.COUNTS_FIELDS_RSHIFT) | ((handlerCount << vmo.Class.COUNTS_HANDLERS_RSHIFT) & vmo.Class.COUNTS_HANDLERS_MASK) | (vmo.Class.COUNTS_SUPERCLASSES_MASK & (isObject ? 0 : Math.Max( 1, superClassCount )));
 			cls[vmo.Class.LINEARIZATION_OFFSET] = 0;
 			cls[vmo.Class.INSTANCE_SIZE_OFFSET] = -1;
 
 			if (superClassCount == 0 && !isObject) {
-				cls[vmo.Class.SUPERCLASSES_OFFSET + 1] = VirtualMachine.ConstantPool.RegisterString( "Object" );
-				superClassCount++;
+				cls[vmo.Class.SUPERCLASSES_OFFSET] = objStrIndex;
+				superClassCount = 1;
 			} else
 				superClassCount.ForEach( i => { cls[vmo.Class.SUPERCLASSES_OFFSET + i] = constantIndexMap[ReadW()]; } );
 

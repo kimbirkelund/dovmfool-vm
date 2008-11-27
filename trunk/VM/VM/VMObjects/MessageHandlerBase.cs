@@ -10,8 +10,8 @@ namespace VM.VMObjects {
 		public const int HEADER_OFFSET = 1;
 		public const int CLASS_POINTER_OFFSET = 2;
 		public static readonly Word VISIBILITY_MASK = 0x00000003;
-		public static readonly Word IS_INTERNAL_MASK = 0x00000004;
-		public const int IS_INTERNAL_RSHIFT = 2;
+		public static readonly Word IS_EXTERNAL_MASK = 0x00000004;
+		public const int IS_EXTERNAL_RSHIFT = 2;
 		public static readonly Word IS_ENTRYPOINT_MASK = 0x00000008;
 		public const int IS_ENTRYPOINT_RSHIFT = 3;
 		public const int NAME_RSHIFT = 4;
@@ -71,15 +71,15 @@ namespace VM.VMObjects {
 			return (VisibilityModifier) (obj[MessageHandlerBase.HEADER_OFFSET] & MessageHandlerBase.VISIBILITY_MASK);
 		}
 
-		public static bool IsInternal( this Handle<MessageHandlerBase> obj ) {
-			return ((obj[MessageHandlerBase.HEADER_OFFSET] & MessageHandlerBase.IS_INTERNAL_MASK) >> MessageHandlerBase.IS_INTERNAL_RSHIFT) != 0;
+		public static bool IsExternal( this Handle<MessageHandlerBase> obj ) {
+			return ((obj[MessageHandlerBase.HEADER_OFFSET] & MessageHandlerBase.IS_EXTERNAL_MASK) >> MessageHandlerBase.IS_EXTERNAL_RSHIFT) != 0;
 		}
 
-		public static String Name( this Handle<MessageHandlerBase> obj ) {
+		public static Handle<String> Name( this Handle<MessageHandlerBase> obj ) {
 			return VirtualMachine.ConstantPool.GetString( obj[MessageHandlerBase.HEADER_OFFSET] >> MessageHandlerBase.NAME_RSHIFT );
 		}
 
-		public static Class Class( this Handle<MessageHandlerBase> obj ) {
+		public static Handle<Class> Class( this Handle<MessageHandlerBase> obj ) {
 			return (Class) obj[MessageHandlerBase.CLASS_POINTER_OFFSET];
 		}
 
@@ -87,8 +87,14 @@ namespace VM.VMObjects {
 			return (obj[MessageHandlerBase.HEADER_OFFSET] & MessageHandlerBase.IS_ENTRYPOINT_MASK) != 0;
 		}
 
+		public static int ArgumentCount( this Handle<MessageHandlerBase> obj ) {
+			if (obj.IsExternal())
+				return obj.To<DelegateMessageHandler>().ArgumentCount();
+			return obj.To<VMILMessageHandler>().ArgumentCount();
+		}
+
 		public static string ToString( this Handle<MessageHandlerBase> obj ) {
-			if (obj.IsInternal())
+			if (obj.IsExternal())
 				return obj.To<DelegateMessageHandler>().ToString();
 			return obj.To<VMILMessageHandler>().ToString();
 		}

@@ -14,15 +14,18 @@ namespace VM {
 		public Word( int v ) { this.v = (uint) v; }
 		public Word( byte v ) { this.v = v; }
 		public Word( char v ) { this.v = v; }
+		public Word( bool v ) { this.v = v ? 1u : 0u; }
 
 		public static implicit operator int( Word w ) { return (int) w.v; }
 		public static implicit operator uint( Word w ) { return w.v; }
 		public static implicit operator byte( Word w ) { return (byte) w.v; }
 		public static implicit operator char( Word w ) { return (char) w.v; }
+		public static implicit operator bool( Word w ) { return Convert.ToBoolean( w.v ); }
 		public static implicit operator Word( int v ) { return new Word( v ); }
 		public static implicit operator Word( uint v ) { return new Word( v ); }
 		public static implicit operator Word( byte v ) { return new Word( v ); }
 		public static implicit operator Word( char v ) { return new Word( v ); }
+		public static implicit operator Word( bool v ) { return new Word( v ); }
 
 		public static Word operator >>( Word w, int c ) { return new Word( w.v >> c ); }
 		public static Word operator <<( Word w, int c ) { return new Word( w.v << c ); }

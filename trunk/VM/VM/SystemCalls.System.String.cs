@@ -9,6 +9,8 @@ namespace VM {
 		partial class System {
 			[SystemCallClass( "String" )]
 			class String {
+				static Handle<VMObjects.String> toStringStr = "to-string:0".ToVMString().Intern();
+
 				[SystemCallMethod( "get-hashcode:0" )]
 				public static Handle<VMObjects.AppObject> GetHashcode( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
 					//var objBase = arguments[0];
@@ -64,7 +66,7 @@ namespace VM {
 				[SystemCallMethod( "concat:1" )]
 				public static Handle<VMObjects.AppObject> Concat( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
 					var str1 = receiver.To<VMObjects.String>();
-					var str2 = interpretor.Send( "to-string:0".ToVMString(), arguments[0] ).To<VMObjects.String>();
+					var str2 = interpretor.Send( toStringStr, arguments[0] ).To<VMObjects.String>();
 
 					return str1.Concat( str2 ).To<VMObjects.AppObject>();
 				}

@@ -8,6 +8,9 @@ using System.Threading;
 
 namespace VM {
 	class BasicInterpretor : IInterpretor {
+		static Handle<VM.VMObjects.String> isTrueStr = "is-true:0".ToVMString().Intern();
+		static Handle<VM.VMObjects.String> isFalseStr = "is-false:0".ToVMString().Intern();
+
 		bool isBlocked = false;
 		InterpretorState state;
 		public InterpretorState State {
@@ -109,7 +112,7 @@ namespace VM {
 							if (newHandlerBase == null)
 								throw new MessageNotUnderstoodException( message, ((AppObject) newReceiver.Value).ToHandle() );
 
-							if (newHandlerBase.IsInternal()) {
+							if (newHandlerBase.IsExternal()) {
 								var newHandler = newHandlerBase.To<VMObjects.DelegateMessageHandler>();
 								var method = SystemCalls.FindMethod( newHandler.ExternalName().ToHandle() );
 								if (method == null)
@@ -121,7 +124,7 @@ namespace VM {
 									if (v.Type == VirtualMachine.IntegerClass)
 										args[k] = new IntHandle( v.Value );
 									else
-										args[k] = ((AppObject) stack.Pop().Value).ToHandle();
+										args[k] = ((AppObject) v.Value).ToHandle();
 								} );
 								stack.Pop();
 								var newReceiver2 = newReceiver.Type == VirtualMachine.IntegerClass ? new IntHandle( newReceiver.Value ) : ((AppObject) newReceiver.Value).ToHandle();
@@ -162,7 +165,7 @@ namespace VM {
 									continue;
 								}
 							} else {
-								var res = Send( "is-true:0".ToVMString(), (VMObjects.AppObject) v.Value );
+								var res = Send( isTrueStr, (VMObjects.AppObject) v.Value );
 								if ((res as IntHandle).Value > 0) {
 									pc += (int) (((operand & 0x04000000) != 0 ? -1 : 1) * (operand & 0x03FFFFFF));
 									continue;
@@ -178,7 +181,7 @@ namespace VM {
 									continue;
 								}
 							} else {
-								var res = Send( "is-false:0".ToVMString(), (VMObjects.AppObject) v.Value );
+								var res = Send( isTrueStr, (VMObjects.AppObject) v.Value );
 								if ((res as IntHandle).Value > 0) {
 									pc += (int) (((operand & 0x04000000) != 0 ? -1 : 1) * (operand & 0x03FFFFFF));
 									continue;
@@ -220,7 +223,7 @@ namespace VM {
 
 		public Handle<AppObject> Send( Handle<VM.VMObjects.String> message, Handle<AppObject> to, params Handle<AppObject>[] arguments ) {
 			var newHandlerBase = to.Class().ResolveMessageHandler( to.Class(), message );
-			if (newHandlerBase.IsInternal()) {
+			if (newHandlerBase.IsExternal()) {
 				var newHandler = newHandlerBase.To<DelegateMessageHandler>();
 				var method = SystemCalls.FindMethod( newHandler.ExternalName() );
 				if (method == null)

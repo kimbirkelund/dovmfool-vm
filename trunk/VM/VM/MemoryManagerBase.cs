@@ -38,10 +38,12 @@ namespace VM {
 			if (handle.IsValid)
 				handle.Unregister();
 			else {
-				if (!handles.ContainsKey( handle.Start ))
-					return;
+				lock (handles) {
+					if (!handles.ContainsKey( handle.Start ))
+						return;
 
-				handles[handle.Start].Remove( handle.Updater );
+					handles[handle.Start].Remove( handle.Updater );
+				}
 			}
 		}
 

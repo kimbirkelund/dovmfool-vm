@@ -8,23 +8,30 @@ using System.IO;
 
 namespace VM {
 	public static class VirtualMachine {
+		static Handle<VM.VMObjects.String> initStr;
 		internal static MemoryManagerBase MemoryManager { get; private set; }
 		internal static ConstantPool ConstantPool { get; private set; }
+		internal static Handle<Class> ObjectClass { get; private set; }
+		internal static Handle<Class> InternalObjectClass { get; private set; }
 		internal static Handle<Class> SystemClass { get; private set; }
 		internal static Handle<AppObject> SystemInstance { get; private set; }
 		internal static Handle<Class> StringClass { get; private set; }
 		internal static Handle<Class> IntegerClass { get; private set; }
 		internal static Handle<Class> ArrayClass { get; private set; }
-		internal static IInterpretorFactory InterpretorFactory { get; private set; }
+		static IInterpretorFactory InterpretorFactory { get; set; }
 
 		static VirtualMachine() {
-			MemoryManager = new NoncollectingMemoryManager( 5000 );
+			MemoryManager = new NoncollectingMemoryManager( 20000 );
 			ConstantPool = new ConstantPool();
 			InterpretorFactory = new BasicInterpretor.Factory();
+
+			initStr = "initialize:0".ToVMString().Intern();
 
 			using (var loader = new ClassLoader( new MemoryStream( Resources.BaseTypes ) ))
 				loader.Read();
 
+			ObjectClass = ResolveClass( null, "Object".ToVMString() );
+			InternalObjectClass = ResolveClass( null, "InternalObject".ToVMString() );
 			SystemClass = ResolveClass( null, "System".ToVMString() );
 			StringClass = ResolveClass( null, "System.String".ToVMString() );
 			IntegerClass = ResolveClass( null, "System.Integer".ToVMString() );
@@ -32,6 +39,10 @@ namespace VM {
 		}
 
 		static Dictionary<Handle<VMObjects.String>, Handle<VMObjects.Class>> classes = new Dictionary<Handle<VM.VMObjects.String>, Handle<Class>>();
+
+		internal static IEnumerable<Handle<Class>> Classes() {
+			return classes.Values;
+		}
 
 		internal static Handle<VMObjects.Class> ResolveClass( Handle<Class> referencer, Handle<VMObjects.String> className ) {
 			var name = className.ToString();
@@ -44,7 +55,7 @@ namespace VM {
 			var current = classes[((VMObjects.String) names.Get( 0 )).ToHandle()];
 
 			for (int i = 1; i < names.Length(); i++) {
-				current = current.ResolveClass( referencer, ((VMObjects.String) names.Get( i )).ToHandle() );
+				current = current.ResolveInnerClass( referencer, ((VMObjects.String) names.Get( i )).ToHandle() );
 				if (current == null)
 					throw new ClassNotFoundException( ((VMObjects.String) names.Get( i )).ToHandle() );
 			}
@@ -64,13 +75,18 @@ namespace VM {
 
 			var obj = AppObject.CreateInstance( entrypoint.Class() );
 
-			if (SystemInstance == null)
+			if (SystemInstance == null) {
 				SystemInstance = AppObject.CreateInstance( SystemClass.Value );
+				Send( initStr, SystemInstance );
+			}
+
 			var intp = InterpretorFactory.CreateInstance( obj, entrypoint, SystemInstance );
-
-			intp.Send( ConstantPool.RegisterString( "initialize:0" ), SystemInstance );
-
 			intp.Start();
+		}
+
+		public static Handle<VMObjects.AppObject> Send( Handle<VMObjects.String> message, Handle<VMObjects.AppObject> to, params Handle<AppObject>[] arguments ) {
+			var interp = InterpretorFactory.CreateInstance();
+			return interp.Send( message, to, arguments );
 		}
 	}
 }

@@ -72,7 +72,7 @@ namespace VM.VMObjects {
 			return obj[Class.COUNTS_OFFSET] >> Class.COUNTS_FIELDS_RSHIFT;
 		}
 
-		public static int HandlerCount( this Handle<Class> obj ) {
+		public static int MessageHandlerCount( this Handle<Class> obj ) {
 			return (obj[Class.COUNTS_OFFSET] & Class.COUNTS_HANDLERS_MASK) >> Class.COUNTS_HANDLERS_RSHIFT;
 		}
 
@@ -81,7 +81,7 @@ namespace VM.VMObjects {
 		}
 
 		public static int InnerClassCount( this Handle<Class> obj ) {
-			return (obj.Size() - Class.SUPERCLASSES_OFFSET - obj.SuperClassCount() - 1 - obj.HandlerCount() * 2) / 2;
+			return (obj.Size() - Class.SUPERCLASSES_OFFSET - obj.SuperClassCount() - 1 - obj.MessageHandlerCount() * 2) / 2;
 		}
 
 		public static int TotalFieldCount( this Handle<Class> obj ) {
@@ -116,7 +116,7 @@ namespace VM.VMObjects {
 
 		public static IEnumerable<Handle<MessageHandlerBase>> MessageHandlers( this Handle<Class> obj ) {
 			var firstHandler = Class.SUPERCLASSES_OFFSET + obj.SuperClassCount() + 1;
-			var handlers = obj.HandlerCount() * 2;
+			var handlers = obj.MessageHandlerCount() * 2;
 			for (var i = 1; i < handlers; i += 2)
 				yield return (MessageHandlerBase) obj[firstHandler + i];
 		}
@@ -155,7 +155,7 @@ namespace VM.VMObjects {
 
 		static Handle<MessageHandlerBase> InternResolveMessageHandler( this Handle<Class> obj, Handle<Class> caller, Handle<String> messageName ) {
 			var firstHandler = Class.SUPERCLASSES_OFFSET + obj.SuperClassCount() + 1;
-			var handlers = obj.HandlerCount() * 2;
+			var handlers = obj.MessageHandlerCount() * 2;
 
 			for (var i = 0; i < handlers; i += 2) {
 				var header = obj[firstHandler + i];
@@ -175,8 +175,15 @@ namespace VM.VMObjects {
 			return null;
 		}
 
-		public static Handle<Class> ResolveClass( this Handle<Class> obj, Handle<Class> referencer, Handle<String> className ) {
-			var firstClass = Class.SUPERCLASSES_OFFSET + obj.SuperClassCount() + obj.HandlerCount() * 2 + 1;
+		public static IEnumerable<Handle<Class>> InnerClasses( this Handle<Class> obj ) {
+			var firstClass = Class.SUPERCLASSES_OFFSET + obj.SuperClassCount() + obj.MessageHandlerCount() * 2 + 1;
+			var classes = obj.InnerClassCount() * 2;
+			for (var i = 1; i < classes; i += 2)
+				yield return (Class) obj[firstClass + i];
+		}
+
+		public static Handle<Class> ResolveInnerClass( this Handle<Class> obj, Handle<Class> referencer, Handle<String> className ) {
+			var firstClass = Class.SUPERCLASSES_OFFSET + obj.SuperClassCount() + obj.MessageHandlerCount() * 2 + 1;
 			var classes = obj.InnerClassCount() * 2;
 
 			for (var i = 0; i < classes; i += 2) {

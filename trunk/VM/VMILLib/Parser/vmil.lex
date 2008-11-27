@@ -3,9 +3,10 @@
 %using Sekhmet.Logging;
 
 digit [0-9]
-int ([0]|[-]?[1-9][0-9]*)
+int ([0]|[\-]?[1-9][0-9]*)
 string \"[^\"\n\r]*\"
 identifier [_a-zA-Z][\-_a-zA-Z0-9]*
+longidentifier [_a-zA-Z][\-_\.a-zA-Z0-9]*
 eol (\r\n?|\n)
 comment \/\/[^\n\r]*{eol}
 
@@ -24,12 +25,12 @@ comment \/\/[^\n\r]*{eol}
 <0> "private" return (int) Tokens.Private;
 <0> ".class" return (int) Tokens.Class;
 <0> "extends" return (int) Tokens.Extends;
-<0> ".handler" return (int) Tokens.Handler;
-<0> ".default" return (int) Tokens.Default;
-<0> ".locals" return (int) Tokens.Locals;
-<0> ".fields" return (int) Tokens.Fields;
-<0> ".entrypoint" return (int) Tokens.Entrypoint;
-<0> ".external" return (int) Tokens.External;
+<0> "\.handler" return (int) Tokens.Handler;
+<0> "\.default" return (int) Tokens.Default;
+<0> "\.locals" return (int) Tokens.Locals;
+<0> "\.fields" return (int) Tokens.Fields;
+<0> "\.entrypoint" return (int) Tokens.Entrypoint;
+<0> "\.external" return (int) Tokens.External;
 
 <0> "store-field" return (int) Tokens.StoreField;
 <0> "load-field" return (int) Tokens.LoadField;
@@ -48,7 +49,7 @@ comment \/\/[^\n\r]*{eol}
 <0> "jump-if-true" return (int) Tokens.JumpIfTrue;
 <0> "jump-if-false" return (int) Tokens.JumpIfFalse;
 <0> "throw" return (int) Tokens.Throw;
-<0> ".try" return (int) Tokens.Try;
+<0> "\.try" return (int) Tokens.Try;
 <0> "catch" return (int) Tokens.Catch;
 <0> "{" return (int) Tokens.LeftCBrace;
 <0> "}" return (int) Tokens.RightCBrace;
@@ -56,11 +57,16 @@ comment \/\/[^\n\r]*{eol}
 <0> ")" return (int) Tokens.RightParen;
 <0> "," return (int) Tokens.Comma;
 <0> ":" return (int) Tokens.Colon;
-<0> "." return (int) Tokens.Dot;
+<0> "\." return (int) Tokens.Dot;
 
 <0> {identifier} {
 	yylval = yytext.ToNode();
 	return (int) Tokens.Identifier;
+}
+
+<0> {longidentifier} {
+	yylval = yytext.ToNode();
+	return (int) Tokens.LongIdentifier;
 }
 
 <0> {string} {
