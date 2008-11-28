@@ -1,0 +1,16 @@
+.class public Program {
+       .handler public main(sys) {
+       		.entrypoint
+
+		load-argument sys
+		push-literal "get-type:0"
+		send-message
+
+		load-argument sys
+		push-literal "get-console:0"
+		send-message
+
+		push-literal "trace:1"
+		send-message
+       }
+}

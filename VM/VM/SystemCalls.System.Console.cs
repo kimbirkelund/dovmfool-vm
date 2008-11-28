@@ -29,6 +29,11 @@ namespace VM {
 					global::System.Console.Write( arguments[0].Send( toStringStr ).To<VMObjects.String>().Value.ToString() );
 					return null;
 				}
+
+				[SystemCallMethod( "read-line:0" )]
+				public static Handle<AppObject> ReadLine( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
+					return global::System.Console.ReadLine().ToVMString().To<AppObject>();
+				}
 			}
 		}
 	}

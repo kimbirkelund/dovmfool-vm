@@ -13,22 +13,14 @@ namespace VM {
 
 				[SystemCallMethod( "get-hashcode:0" )]
 				public static Handle<VMObjects.AppObject> GetHashcode( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-					//var objBase = arguments[0];
-					//if (objBase.TypeId() == VMILLib.TypeId.String)
-					//    global::System.Console.WriteLine( objBase.To<VMObjects.String>().Value.ToString() );
-					//else if (objBase is IntHandle)
-					//    global::System.Console.WriteLine( ((IntHandle) objBase).Value );
-					//else {
-					//var str = interpretor.Send(VirtualMachine.ConstantPool.RegisterString("to-string:0"), arguments[0]).To<VMObjects.String>().Value.ToString();
-					//global::System.Console.WriteLine(str);
-					//}
-
 					return new IntHandle( receiver.To<VMObjects.String>().GetHashCode() );
 				}
 
 				[SystemCallMethod( "equals:1" )]
 				public static Handle<VMObjects.AppObject> Equals( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-					return new IntHandle( receiver.To<VMObjects.String>().Equals( arguments[0] ) ? 1 : 0 );
+					if (arguments[0].Class() != KnownClasses.SystemString)
+						return new IntHandle( 0 );
+					return new IntHandle( receiver.To<VMObjects.String>().Equals( arguments[0].To<VMObjects.String>() ) ? 1 : 0 );
 				}
 
 				[SystemCallMethod( "compare-to:1" )]
@@ -69,6 +61,11 @@ namespace VM {
 					var str2 = interpretor.Send( toStringStr, arguments[0] ).To<VMObjects.String>();
 
 					return str1.Concat( str2 ).To<VMObjects.AppObject>();
+				}
+
+				[SystemCallMethod( "length:0" )]
+				public static Handle<AppObject> Length( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
+					return new IntHandle( receiver.To<VMObjects.String>().Length() );
 				}
 			}
 		}

@@ -90,6 +90,7 @@
 		.handler public index-of .external System.String.index-of(substring)
 		.handler public last-index-of .external System.String.last-index-of(substring)
 		.handler public concat .external System.String.concat(otherString)
+		.handler public length .external System.String.length()
 	}
 	
 	.class public Integer extends System.Hashable, System.Comparable {
@@ -130,6 +131,7 @@
 		.handler public write-line .external System.Console.write-line(str)
 		.handler public write-line .external System.Console.write-line()
 		.handler public write .external System.Console.write(str)
+		.handler public read-line .external System.Console.read-line()
 	}
 	
 	.class public Collections {
@@ -233,8 +235,6 @@
 		}
 	
 		.class public MessageHandler {
-			.fields { handler }
-			
 			.handler public name .external System.Reflection.MessageHandler.name()
 			.handler public argument-count .external System.Reflection.MessageHandler.argument-count()
 			.handler public visibility .external System.Reflection.MessageHandler.visibility()
@@ -339,8 +339,6 @@
 		}
 		
 		.class public Class {
-			.fields { class }
-			
 			.handler public name .external System.Reflection.Class.name()
 			.handler public visibility .external System.Reflection.Class.visibility()
 			
@@ -616,5 +614,9 @@
 			.handler public classes .external System.Reflection.Reflector.classes()
 			.handler public find-class .external System.Reflection.Reflector.find-class(name)
 		}
+	}
+	
+	.class public Threading {
+		.handler public sleep .external System.Threading.sleep(milis)
 	}
 }
