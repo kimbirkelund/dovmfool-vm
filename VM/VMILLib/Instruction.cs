@@ -28,7 +28,7 @@ namespace VMILLib {
 		}
 
 		public override string ToString() {
-			return OpCode.ToString() + (Operand != null ? " " + (Operand is CString ? "\"" + Operand + "\"" : Operand) : "");
+			return OpCode.ToString() + (Operand != null ? " " + (Operand is string ? "\"" + Operand + "\"" : Operand) : "");
 		}
 	}
 }

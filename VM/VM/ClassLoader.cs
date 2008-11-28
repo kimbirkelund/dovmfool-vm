@@ -4,188 +4,181 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using Sekhmet;
-using VMILLib;
+using vml = VMILLib;
 using vmo = VM.VMObjects;
 using VM.VMObjects;
 
 namespace VM {
 	class ClassLoader : IDisposable {
-		static Handle<VM.VMObjects.String> objStr = "Object".ToVMString().Intern();
-		static int objStrIndex = VirtualMachine.ConstantPool.RegisterString( objStr );
-
 		bool disposed;
-		Stream input;
-		Dictionary<int, int> constantIndexMap = new Dictionary<int, int>();
-		Dictionary<int, Handle<VMObjects.MessageHandlerBase>> messageHandlerIndexMap = new Dictionary<int, Handle<VMObjects.MessageHandlerBase>>();
-		Dictionary<int, Handle<VMObjects.Class>> classIndexMap = new Dictionary<int, Handle<VMObjects.Class>>();
+		vml.SourceReader reader;
 		Handle<vmo.VMILMessageHandler> entrypoint;
 
-		public ClassLoader( Stream input ) {
-			this.input = input;
+		public ClassLoader( vml.SourceReader reader ) {
+			this.reader = reader;
 		}
 
-		public ClassLoader( string fileName ) {
-			if (Path.GetExtension( fileName ) == ".vmil") {
-				var memStream = new MemoryStream();
-				using (var reader = new SourceReader( fileName )) {
-					var writer = new VMILLib.BinaryWriter( memStream );
-					writer.Write( reader.Read() );
-				}
-				memStream.Position = 0;
-				input = memStream;
-			} else if (Path.GetExtension( fileName ) == ".vmb")
-				input = new FileStream( fileName, FileMode.Open, FileAccess.Read );
-			else
-				throw new ArgumentException( "Specified input file is not in a known format." );
-		}
+		public ClassLoader( Stream input ) : this( new vml.SourceReader( input ) ) { }
+		public ClassLoader( string fileName ) : this( new vml.SourceReader( fileName ) ) { }
 
 		/// <summary>
 		/// Reads the classes stored in input into the virtual machine.
 		/// </summary>
 		/// <returns>The entrypoint specified in the input if any.</returns>
 		public Handle<vmo.VMILMessageHandler> Read() {
-			ReadStrings();
-			ReadMessageHandlers();
-			ReadClasses();
-			foreach (var item in classIndexMap.Values) {
-				if (item.ParentClass() == null)
-					VirtualMachine.RegisterClass( item );
-
-			}
+			reader.Read().Classes.ForEach( c => VirtualMachine.RegisterClass( ReadClass( null, c ) ) );
 
 			return entrypoint;
 		}
 
-		void ReadStrings() {
-			int stringCount = ReadW();
+		Handle<vmo.Class> ReadClass( Handle<Class> parentClass, vml.Class lc ) {
+			var oc = vmo.Class.CreateInstance( lc.SuperClasses.Count, lc.Handlers.Count, lc.InnerClasses.Count );
 
-			for (int i = 0; i < stringCount; i++)
-				ReadString( i );
+			var handlers = new List<Handle<vmo.MessageHandlerBase>>();
+			lc.Handlers.ForEach( h => handlers.Add( ReadMessageHandler( oc, h ) ) );
+
+			var innerClasses = new List<Handle<vmo.Class>>();
+			lc.InnerClasses.ForEach( c => innerClasses.Add( ReadClass( oc, c ) ) );
+
+			oc.InitInstance( lc.Visibility, lc.Name.ToVMString().Intern(), parentClass, lc.SuperClasses.Select( sc => sc.ToVMString().Intern() ).ToList(), 
+				lc.Fields.Count, lc.DefaultHandler != null ? ReadMessageHandler( oc, lc.DefaultHandler ) : null, handlers, innerClasses );
+
+			return oc;
 		}
 
-		void ReadString( int index ) {
-			int stringLength = ReadW();
-			var wordCount = stringLength / 2 + stringLength % 2;
-
-			var str = VMObjects.String.CreateInstance( stringLength );
-			for (int i = 0; i < wordCount; i++)
-				str[vmo.String.FIRST_CHAR_OFFSET + i] = ReadW();
-
-			constantIndexMap.Add( index, VirtualMachine.ConstantPool.RegisterString( str ) );
-		}
-
-		void ReadMessageHandlers() {
-			int handlerCount = ReadW();
-
-			for (int i = 0; i < handlerCount; i++)
-				ReadHandler( i );
-		}
-
-		void ReadHandler( int index ) {
-			var handlerHeader = ReadW();
-			int argCount = ReadW();
-			Handle<vmo.MessageHandlerBase> handlerBase;
-
-			if ((handlerHeader & vmo.MessageHandlerBase.IS_EXTERNAL_MASK) != 0) {
-				var externalName = constantIndexMap[ReadW()];
-
-				var handler = vmo.DelegateMessageHandler.CreateInstance();
-				handlerBase = handler.To<vmo.MessageHandlerBase>();
-
-				handler[vmo.MessageHandlerBase.HEADER_OFFSET] = handlerHeader != (int) VisibilityModifier.None ? ((constantIndexMap[handlerHeader >> vmo.MessageHandlerBase.NAME_RSHIFT]) << vmo.MessageHandlerBase.NAME_RSHIFT) | (handlerHeader & 15) : handlerHeader;
-				handler[vmo.DelegateMessageHandler.EXTERNAL_NAME_OFFSET] = VirtualMachine.ConstantPool.GetString( externalName );
-				handler[vmo.DelegateMessageHandler.ARGUMENT_COUNT_OFFSET] = argCount;
+		Handle<vmo.MessageHandlerBase> ReadMessageHandler( Handle<Class> cls, vml.MessageHandlerBase lh ) {
+			Handle<vmo.MessageHandlerBase> h;
+			if (lh.IsExternal) {
+				var leh = (vml.ExternalMessageHandler) lh;
+				var oh = vmo.DelegateMessageHandler.CreateInstance();
+				oh.InitInstance( lh.Name.ToVMString().Intern(), lh.Visibility, cls, lh.IsEntrypoint, lh.Arguments.Count, leh.ExternalName.ToVMString().Intern() );
+				h = oh.To<MessageHandlerBase>();
 			} else {
-				int localCount = ReadW();
-				int instructionCount = ReadW();
+				var lvh = (vml.VMILMessageHandler) lh;
+				var vh = vmo.VMILMessageHandler.CreateInstance( lvh.Instructions.Count );
 
-				var handler = vmo.VMILMessageHandler.CreateInstance( instructionCount );
-				handlerBase = handler.To<vmo.MessageHandlerBase>();
+				vh.InitInstance( lvh.Name.ToVMString().Intern(), lvh.Visibility, cls, lvh.IsEntrypoint, lvh.Arguments.Count, lvh.Locals.Count, ReadInstructions( lvh.Instructions ) );
 
-				handler[vmo.MessageHandlerBase.HEADER_OFFSET] = handlerHeader != (int) VisibilityModifier.None ? ((constantIndexMap[handlerHeader >> vmo.MessageHandlerBase.NAME_RSHIFT]) << vmo.MessageHandlerBase.NAME_RSHIFT) | (handlerHeader & 15) : handlerHeader;
-				if ((handlerHeader & vmo.MessageHandlerBase.IS_ENTRYPOINT_MASK) != 0)
-					entrypoint = handler;
-				handler[vmo.VMILMessageHandler.COUNTS_OFFSET] = (argCount << vmo.VMILMessageHandler.ARGUMENT_COUNT_RSHIFT) | (localCount & vmo.VMILMessageHandler.LOCAL_COUNT_MASK);
-
-				for (int i = 0; i < instructionCount; i++) {
-					var ins = ReadW();
-					if ((OpCode) (ins >> 27) == OpCode.PushLiteralString)
-						ins = ((int) OpCode.PushLiteralString << 27) | constantIndexMap[ins & 0x07FFFFFF];
-					handler[i + vmo.VMILMessageHandler.INSTRUCTIONS_OFFSET] = ins;
-				}
+				if (vh.IsEntrypoint())
+					entrypoint = vh;
+				h = vh.To<MessageHandlerBase>();
 			}
 
-			messageHandlerIndexMap.Add( index + 1, handlerBase );
+			return h;
 		}
 
-		void ReadClasses() {
-			int classCount = ReadW();
+		IList<Word> ReadInstructions( vml.InstructionList inssList ) {
+			var labelMap = new Dictionary<string, int>();
+			inssList.ForEach( ( ins, i ) => { if (ins is vml.Label) labelMap.Add( ((vml.Label) ins).Name, i - labelMap.Count ); } );
+			var inss = inssList.Where( i => !(i is vml.Label) );
+			var retInss = new List<Word>();
 
-			for (int i = 0; i < classCount; i++)
-				ReadClass( i );
+			var trycatchMap = MapTryCatches( inss );
+			var trycatchStack = new Stack<TryCatchRecord>();
+
+			int index = 0;
+			foreach (var ins in inss) {
+				Word eins = (uint) ins.OpCode << 27;
+				switch (ins.OpCode) {
+					case vml.OpCode.StoreField:
+					case vml.OpCode.LoadField:
+						eins |= (uint) ins.MessageHandler.Class.Fields.IndexOf( (string) ins.Operand );
+						break;
+					case vml.OpCode.StoreLocal:
+					case vml.OpCode.LoadLocal:
+						eins |= (uint) ins.MessageHandler.Locals.IndexOf( (string) ins.Operand );
+						break;
+					case vml.OpCode.LoadArgument:
+						eins |= (uint) ins.MessageHandler.Arguments.IndexOf( (string) ins.Operand ) + 1;
+						break;
+					case vml.OpCode.LoadThis:
+						eins = (uint) vml.OpCode.LoadArgument << 27;
+						break;
+					case vml.OpCode.PushLiteral:
+						if (ins.Operand is string)
+							eins = ((uint) vml.OpCode.PushLiteralString << 27) | (uint) ((string) ins.Operand).ToVMString().Intern().GetInternIndex();
+						else {
+							int i = (int) ins.Operand;
+							uint ai = i == int.MinValue ? (uint) i : (uint) Math.Abs( i );
+							if (ai > 0x03FFFFFF) {
+								uint i1 = (ai >> 16) & 0x0000FFFF;
+								uint i2 = ai & 0x0000FFFF;
+								eins = ((uint) vml.OpCode.PushLiteralInt << 27) | (uint) (i < 0 ? 1 << 26 : 0) | i1;
+								retInss.Add( eins );
+								eins = ((uint) vml.OpCode.PushLiteralIntExtend << 27) | (uint) (i < 0 ? 1 << 26 : 0) | i2;
+							} else
+								eins = ((uint) vml.OpCode.PushLiteralInt << 27) | (uint) (i < 0 ? 1 << 26 : 0) | (uint) Math.Abs( i );
+						}
+						break;
+					case vml.OpCode.Pop:
+					case vml.OpCode.Dup:
+					case vml.OpCode.NewInstance:
+					case vml.OpCode.SendMessage:
+					case vml.OpCode.ReturnVoid:
+					case vml.OpCode.Return:
+					case vml.OpCode.Throw:
+						break;
+					case vml.OpCode.Jump:
+					case vml.OpCode.JumpIfTrue:
+					case vml.OpCode.JumpIfFalse:
+						var offset = labelMap[(string) ins.Operand] - index;
+						if (offset < 0) {
+							offset *= -1;
+							eins |= 0x04000000;
+						}
+						eins |= (uint) offset;
+						break;
+					case vml.OpCode.Try:
+						var tryrecord = trycatchMap[index];
+						trycatchStack.Push( tryrecord );
+						eins |= (uint) (tryrecord.CatchIndex + 1 - index);
+						break;
+					case vml.OpCode.Catch:
+						eins |= (uint) (trycatchStack.Peek().EndTryCatch + 1 - index);
+						break;
+					case vml.OpCode.EndTryCatch:
+						trycatchStack.Pop();
+						break;
+					default:
+						throw new ArgumentException( "Unexpected opcode : " + ins.OpCode );
+				}
+
+				retInss.Add( eins );
+				index++;
+			}
+
+			return retInss;
 		}
 
-		void ReadClass( int index ) {
-			int superClassCount = ReadW();
-			int fieldCount = ReadW();
-			int handlerCount = ReadW();
-			int innerClassCount = ReadW();
-			var clsHeader = ReadW();
+		Dictionary<int, TryCatchRecord> MapTryCatches( IEnumerable<vml.Instruction> inss ) {
+			var stack = new Stack<TryCatchRecord>();
+			var map = new Dictionary<int, TryCatchRecord>();
 
-			var cls = vmo.Class.CreateInstance( Math.Max( 1, superClassCount ), handlerCount, innerClassCount );
+			int index = 0;
+			foreach (var ins in inss) {
+				if (ins.OpCode == vml.OpCode.Try) {
+					stack.Push( new TryCatchRecord { TryIndex = index } );
+					map.Add( index, stack.Peek() );
+				}
 
-			cls[vmo.Class.HEADER_OFFSET] = (constantIndexMap[clsHeader >> 2] << 2) | (clsHeader & 3);
+				if (ins.OpCode == vml.OpCode.Catch)
+					stack.Peek().CatchIndex = index;
 
-			var isObject = cls.Name() == objStr;
+				if (ins.OpCode == vml.OpCode.EndTryCatch) {
+					stack.Peek().EndTryCatch = index;
+					stack.Pop();
+				}
 
-			cls[vmo.Class.COUNTS_OFFSET] = (fieldCount << vmo.Class.COUNTS_FIELDS_RSHIFT) | ((handlerCount << vmo.Class.COUNTS_HANDLERS_RSHIFT) & vmo.Class.COUNTS_HANDLERS_MASK) | (vmo.Class.COUNTS_SUPERCLASSES_MASK & (isObject ? 0 : Math.Max( 1, superClassCount )));
-			cls[vmo.Class.LINEARIZATION_OFFSET] = 0;
-			cls[vmo.Class.INSTANCE_SIZE_OFFSET] = -1;
+				index++;
+			}
 
-			if (superClassCount == 0 && !isObject) {
-				cls[vmo.Class.SUPERCLASSES_OFFSET] = objStrIndex;
-				superClassCount = 1;
-			} else
-				superClassCount.ForEach( i => { cls[vmo.Class.SUPERCLASSES_OFFSET + i] = constantIndexMap[ReadW()]; } );
-
-			var offset = vmo.Class.SUPERCLASSES_OFFSET + superClassCount;
-			int defaultHandlerIndex = ReadW();
-			if (defaultHandlerIndex != 0) {
-				var defaultHandler = messageHandlerIndexMap[defaultHandlerIndex];
-				cls[offset] = defaultHandler;
-			} else
-				cls[offset] = 0;
-
-			offset = vmo.Class.SUPERCLASSES_OFFSET + superClassCount + 1;
-			handlerCount.ForEach( i => {
-				var handler = messageHandlerIndexMap[ReadW()];
-				cls[offset + 2 * i] = handler[vmo.MessageHandlerBase.HEADER_OFFSET];
-				cls[offset + 2 * i + 1] = handler;
-				handler[vmo.MessageHandlerBase.CLASS_POINTER_OFFSET] = cls;
-			} );
-
-			offset = vmo.Class.SUPERCLASSES_OFFSET + superClassCount + 1 + handlerCount * 2;
-			innerClassCount.ForEach( i => {
-				var innerCls = classIndexMap[ReadW()];
-				cls[offset + 2 * i] = innerCls[vmo.Class.HEADER_OFFSET];
-				cls[offset + 2 * i + 1] = innerCls;
-				innerCls[vmo.Class.PARENT_CLASS_OFFSET] = cls;
-			} );
-
-			classIndexMap.Add( index, cls );
+			return map;
 		}
 
-		byte[] byteArr4 = new byte[4];
-		Word ReadW() {
-			input.Read( byteArr4, 0, 4 );
-			var w = byteArr4.ToUIntStream().First();
-
-			//#if DEBUG
-			//            var frame = new System.Diagnostics.StackTrace().GetFrame( 1 );
-			//            System.Diagnostics.Trace.TraceInformation( w.ToString( "X8" ) + ": " + frame.GetMethod().Name );
-			//#endif
-
-			return w;
+		class TryCatchRecord {
+			public int TryIndex;
+			public int CatchIndex;
+			public int EndTryCatch;
 		}
 
 		public void Dispose() {
@@ -195,9 +188,9 @@ namespace VM {
 			}
 			disposed = true;
 
-			if (input != null) {
-				input.Dispose();
-				input = null;
+			if (reader != null) {
+				reader.Dispose();
+				reader = null;
 			}
 		}
 	}

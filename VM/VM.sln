@@ -3,11 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VM", "VM\VM.csproj", "{B64CA0FD-3F02-414D-ACF1-BD1CEED657D4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VMILAssembler", "VMILAssembler\VMILAssembler.csproj", "{5F42D3E1-BB7B-48C8-A7B7-156F6ECAB2F3}"
-	ProjectSection(ProjectDependencies) = postProject
-		{754BB504-F01C-41FF-A835-0DC8B5A4C34F} = {754BB504-F01C-41FF-A835-0DC8B5A4C34F}
-	EndProjectSection
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FamPoly.Utils", "FamPoly.Utils\FamPoly.Utils.csproj", "{754BB504-F01C-41FF-A835-0DC8B5A4C34F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GPPG", "GPPG\GPPG.csproj", "{B05F8095-E88A-4E0A-BA5F-6248FB4064F1}"
@@ -32,8 +27,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documents", "Documents", "{
 		..\Documents\Object layouts.txt = ..\Documents\Object layouts.txt
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VMILDisassembler", "VMILDisassembler\VMILDisassembler.csproj", "{79CFB0B1-3E21-47BE-9C22-BC97B5A1C02F}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VMShell", "VMShell\VMShell.csproj", "{5798A068-A460-4175-896C-66AC36703A9C}"
 EndProject
 Global
@@ -49,10 +42,6 @@ Global
 		{B64CA0FD-3F02-414D-ACF1-BD1CEED657D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B64CA0FD-3F02-414D-ACF1-BD1CEED657D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B64CA0FD-3F02-414D-ACF1-BD1CEED657D4}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5F42D3E1-BB7B-48C8-A7B7-156F6ECAB2F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5F42D3E1-BB7B-48C8-A7B7-156F6ECAB2F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5F42D3E1-BB7B-48C8-A7B7-156F6ECAB2F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5F42D3E1-BB7B-48C8-A7B7-156F6ECAB2F3}.Release|Any CPU.Build.0 = Release|Any CPU
 		{754BB504-F01C-41FF-A835-0DC8B5A4C34F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{754BB504-F01C-41FF-A835-0DC8B5A4C34F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{754BB504-F01C-41FF-A835-0DC8B5A4C34F}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -73,10 +62,6 @@ Global
 		{3A3CACF8-FD82-456B-BD98-669FEE60C080}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3A3CACF8-FD82-456B-BD98-669FEE60C080}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3A3CACF8-FD82-456B-BD98-669FEE60C080}.Release|Any CPU.Build.0 = Release|Any CPU
-		{79CFB0B1-3E21-47BE-9C22-BC97B5A1C02F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{79CFB0B1-3E21-47BE-9C22-BC97B5A1C02F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{79CFB0B1-3E21-47BE-9C22-BC97B5A1C02F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{79CFB0B1-3E21-47BE-9C22-BC97B5A1C02F}.Release|Any CPU.Build.0 = Release|Any CPU
 		{5798A068-A460-4175-896C-66AC36703A9C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{5798A068-A460-4175-896C-66AC36703A9C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5798A068-A460-4175-896C-66AC36703A9C}.Release|Any CPU.ActiveCfg = Release|Any CPU

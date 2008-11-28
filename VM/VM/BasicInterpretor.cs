@@ -63,11 +63,15 @@ namespace VM {
 				switch (opcode) {
 					case VMILLib.OpCode.StoreField: {
 							var v = stack.Pop();
-							receiver.SetField( operand + fieldOffset, v.Type, v.Value );
+							if (v.Type == KnownClasses.SystemInteger)
+								receiver.SetField( operand + fieldOffset, new IntHandle( v.Value ) );
+							else
+								receiver.SetField( operand + fieldOffset, new Handle<VMObjects.AppObject>( (VMObjects.AppObject) v.Value ) );
 							break;
 						}
 					case VMILLib.OpCode.LoadField:
-						stack.Push( receiver.GetFieldType( operand + fieldOffset ), receiver.GetFieldValue( operand + fieldOffset ) );
+						var o = receiver.GetFieldValue<VMObjects.AppObject>( operand + fieldOffset );
+						stack.Push( o.Class(), o.Start );
 						break;
 					case VMILLib.OpCode.StoreLocal:
 						stack.SetLocal( operand, stack.Pop() );
@@ -79,15 +83,15 @@ namespace VM {
 						stack.Push( stack.GetArgument( operand ) );
 						break;
 					case VMILLib.OpCode.PushLiteralInt:
-						stack.Push( VirtualMachine.IntegerClass, (operand & 0x03FFFFFF) * ((operand & 0x04000000) != 0 ? -1 : 1) );
+						stack.Push( KnownClasses.SystemInteger, (operand & 0x03FFFFFF) * ((operand & 0x04000000) != 0 ? -1 : 1) );
 						break;
 					case VMILLib.OpCode.PushLiteralString:
-						stack.Push( VirtualMachine.StringClass, VirtualMachine.ConstantPool.GetString( operand ).Value );
+						stack.Push( KnownClasses.SystemString, VMObjects.String.GetString( operand ).Value );
 						break;
 					case VMILLib.OpCode.PushLiteralIntExtend:
 						int i = stack.Pop().Value;
 						i += (operand & 0x03FFFFFF) * ((operand & 0x04000000) != 0 ? -1 : 1);
-						stack.Push( VirtualMachine.IntegerClass, i );
+						stack.Push( KnownClasses.SystemInteger, i );
 						break;
 					case VMILLib.OpCode.Pop:
 						stack.Pop();
@@ -103,7 +107,7 @@ namespace VM {
 						}
 					case VMILLib.OpCode.SendMessage: {
 							var messageVal = stack.Pop();
-							if (messageVal.Type != VirtualMachine.StringClass.Value)
+							if (messageVal.Type != KnownClasses.SystemString.Value)
 								throw new InvalidOperationException( "Value on top of stack is not a message." );
 							var message = ((h.String) messageVal.Value).ToHandle();
 							var argCount = ParseArgumentCount( message );
@@ -121,13 +125,13 @@ namespace VM {
 								var args = new Handle<AppObject>[argCount];
 								argCount.ForEachDescending( k => {
 									var v = stack.Pop();
-									if (v.Type == VirtualMachine.IntegerClass)
+									if (v.Type == KnownClasses.SystemInteger.Value)
 										args[k] = new IntHandle( v.Value );
 									else
 										args[k] = ((AppObject) v.Value).ToHandle();
 								} );
 								stack.Pop();
-								var newReceiver2 = newReceiver.Type == VirtualMachine.IntegerClass ? new IntHandle( newReceiver.Value ) : ((AppObject) newReceiver.Value).ToHandle();
+								var newReceiver2 = newReceiver.Type == KnownClasses.SystemInteger.Value ? new IntHandle( newReceiver.Value ) : ((AppObject) newReceiver.Value).ToHandle();
 								var ret = method( this, newReceiver2, args );
 								if (ret != null)
 									stack.Push( ret.Class().Value, ret.Value );
@@ -159,7 +163,7 @@ namespace VM {
 						continue;
 					case VMILLib.OpCode.JumpIfTrue: {
 							var v = stack.Pop();
-							if ((v.Type == VirtualMachine.IntegerClass.Value || v.Type == VirtualMachine.StringClass.Value)) {
+							if ((v.Type == KnownClasses.SystemInteger.Value || v.Type == KnownClasses.SystemString.Value)) {
 								if (((int) v.Value) > 0) {
 									pc += (int) (((operand & 0x04000000) != 0 ? -1 : 1) * (operand & 0x03FFFFFF));
 									continue;
@@ -175,7 +179,7 @@ namespace VM {
 						}
 					case VMILLib.OpCode.JumpIfFalse: {
 							var v = stack.Pop();
-							if ((v.Type == VirtualMachine.IntegerClass.Value || v.Type == VirtualMachine.StringClass.Value)) {
+							if ((v.Type == KnownClasses.SystemInteger.Value || v.Type == KnownClasses.SystemString.Value)) {
 								if (((int) v.Value) <= 0) {
 									pc += (int) (((operand & 0x04000000) != 0 ? -1 : 1) * (operand & 0x03FFFFFF));
 									continue;

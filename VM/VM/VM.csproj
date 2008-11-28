@@ -48,9 +48,10 @@
   <ItemGroup>
     <Compile Include="BasicInterpretor.cs" />
     <Compile Include="ClassLoader.cs" />
-    <Compile Include="ConstantPool.cs" />
     <Compile Include="ExecutionStack.cs" />
     <Compile Include="IInterpretorFactory.cs" />
+    <Compile Include="KnownClasses.cs" />
+    <Compile Include="KnownStrings.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -70,12 +71,9 @@
     <Compile Include="VMObjects\Character.cs" />
     <Compile Include="VMObjects\Characters.cs" />
     <Compile Include="VMObjects\Class.cs" />
-    <Compile Include="VMObjects\ClassManager.cs" />
     <Compile Include="VMObjects\DelegateMessageHandler.cs" />
     <Compile Include="VMObjects\Integer.cs" />
-    <Compile Include="VMObjects\InternalObjectBase.cs" />
     <Compile Include="IVMObject.cs" />
-    <Compile Include="VMObjects\List.cs" />
     <Compile Include="VMObjects\MessageHandlerBase.cs" />
     <Compile Include="VMObjects\ObjectBase.cs" />
     <Compile Include="VMObjects\String.cs" />
@@ -100,7 +98,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="BaseTypes.vmb" />
     <None Include="BaseTypes.vmil" />
   </ItemGroup>
   <ItemGroup>
@@ -121,6 +118,7 @@
   <PropertyGroup>
     <PostBuildEvent>
     </PostBuildEvent>
-    <PreBuildEvent>"$(SolutionDir)VMILAssembler\bin\$(ConfigurationName)\vmilasm.exe" "$(ProjectDir)BaseTypes.vmil"</PreBuildEvent>
+    <PreBuildEvent>
+    </PreBuildEvent>
   </PropertyGroup>
 </Project>

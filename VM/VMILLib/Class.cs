@@ -6,7 +6,7 @@ using System.Text;
 namespace VMILLib {
 	public sealed class Class {
 		public readonly VisibilityModifier Visibility;
-		public readonly CString Name;
+		public readonly string Name;
 		public readonly NameList SuperClasses;
 		public readonly IList<string> Fields;
 		public readonly MessageHandlerBase DefaultHandler;
@@ -14,7 +14,7 @@ namespace VMILLib {
 		public readonly ClassList InnerClasses;
 		public Class ParentClass { get; private set; }
 
-		public Class( VisibilityModifier visibility, CString name, NameList inheritsFrom, IEnumerable<string> fields, MessageHandlerBase defaultHandler, MessageHandlerList handlers, ClassList classes ) {
+		public Class( VisibilityModifier visibility, string name, NameList inheritsFrom, IEnumerable<string> fields, MessageHandlerBase defaultHandler, MessageHandlerList handlers, ClassList classes ) {
 			this.Visibility = visibility;
 			this.Name = name;
 			this.SuperClasses = inheritsFrom;

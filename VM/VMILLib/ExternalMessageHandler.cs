@@ -5,10 +5,10 @@ using System.Text;
 
 namespace VMILLib {
 	public sealed class ExternalMessageHandler : MessageHandlerBase {
-		public readonly CString ExternalName;
+		public readonly string ExternalName;
 		public override bool IsExternal { get { return true; } }
 
-		public ExternalMessageHandler( VisibilityModifier visibility, CString name, CString externalName, IEnumerable<string> arguments )
+		public ExternalMessageHandler( VisibilityModifier visibility, string name, string externalName, IEnumerable<string> arguments )
 			: base( visibility, name, arguments ) {
 			this.ExternalName = externalName;
 		}

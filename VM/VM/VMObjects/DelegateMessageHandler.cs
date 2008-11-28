@@ -14,7 +14,7 @@ namespace VM.VMObjects {
 		#region Properties
 		int start;
 		public int Start { get { return start; } }
-		public TypeId TypeIdAtInstancing { get { return TypeId.DelegateMessageHandler; } }
+		public Handle<Class> VMClass { get { return KnownClasses.SystemReflectionMessageHandler; } }
 		#endregion
 
 		#region Cons
@@ -52,21 +52,21 @@ namespace VM.VMObjects {
 
 	public static class ExtDelegateMessageHandler {
 		public static VisibilityModifier Visibility( this Handle<DelegateMessageHandler> obj ) {
-			return (VisibilityModifier) (obj[MessageHandlerBase.HEADER_OFFSET] & MessageHandlerBase.VISIBILITY_MASK);
+			return (VisibilityModifier) (obj[MessageHandlerBaseConsts.HEADER_OFFSET] & MessageHandlerBaseConsts.VISIBILITY_MASK);
 		}
 
 		public static bool IsExternal( this Handle<DelegateMessageHandler> obj ) { return true; }
 
 		public static Handle<String> Name( this Handle<DelegateMessageHandler> obj ) {
-			return VirtualMachine.ConstantPool.GetString( obj[MessageHandlerBase.HEADER_OFFSET] >> MessageHandlerBase.NAME_RSHIFT );
+			return String.GetString( obj[MessageHandlerBaseConsts.HEADER_OFFSET] >> MessageHandlerBaseConsts.NAME_RSHIFT );
 		}
 
 		public static Handle<Class> Class( this Handle<DelegateMessageHandler> obj ) {
-			return (Class) obj[MessageHandlerBase.CLASS_POINTER_OFFSET];
+			return (Class) obj[MessageHandlerBaseConsts.CLASS_POINTER_OFFSET];
 		}
 
 		public static bool IsEntrypoint( this Handle<DelegateMessageHandler> obj ) {
-			return (obj[MessageHandlerBase.HEADER_OFFSET] & MessageHandlerBase.IS_ENTRYPOINT_MASK) != 0;
+			return (obj[MessageHandlerBaseConsts.HEADER_OFFSET] & MessageHandlerBaseConsts.IS_ENTRYPOINT_MASK) != 0;
 		}
 
 		public static String ExternalName( this Handle<DelegateMessageHandler> obj ) {
@@ -81,6 +81,24 @@ namespace VM.VMObjects {
 			if (obj == null)
 				return "{NULL}";
 			return ".handler " + obj.Visibility().ToString().ToLower() + " " + obj.Name() + " .external " + obj.ExternalName() + "(" + obj.ArgumentCount() + ")";
+		}
+
+		static void SetHeader( this Handle<DelegateMessageHandler> obj, Handle<String> name, bool isEntrypoint, VisibilityModifier visibility ) {
+			if (name == null && visibility != VisibilityModifier.None)
+				throw new InvalidVMProgramException( "Non-default message handler specified with no name." );
+			if (name != null && visibility == VisibilityModifier.None)
+				throw new InvalidVMProgramException( "Default message handler specified with name." );
+			if (isEntrypoint && visibility == VisibilityModifier.None)
+				throw new InvalidVMProgramException( "Default message handler can not be entrypoint." );
+
+			obj[MessageHandlerBaseConsts.HEADER_OFFSET] = (name.GetInternIndex() << MessageHandlerBaseConsts.NAME_RSHIFT) | (isEntrypoint ? MessageHandlerBaseConsts.IS_ENTRYPOINT_MASK : (Word) 0) | MessageHandlerBaseConsts.IS_EXTERNAL_MASK | (int) visibility;
+		}
+
+		public static void InitInstance( this Handle<DelegateMessageHandler> obj, Handle<String> name, VisibilityModifier visibility, Handle<Class> cls, bool isEntrypoint, int argumentsCount, Handle<String> externalName ) {
+			obj.SetHeader( name, isEntrypoint, visibility );
+			obj[MessageHandlerBaseConsts.CLASS_POINTER_OFFSET] = cls;
+			obj[DelegateMessageHandler.EXTERNAL_NAME_OFFSET] = externalName;
+			obj[DelegateMessageHandler.ARGUMENT_COUNT_OFFSET] = argumentsCount;
 		}
 	}
 }

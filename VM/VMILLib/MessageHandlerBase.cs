@@ -6,7 +6,7 @@ using System.Text;
 namespace VMILLib {
 	public abstract class MessageHandlerBase {
 		public readonly VisibilityModifier Visibility;
-		public readonly CString Name;
+		public readonly string Name;
 		public readonly IList<string> Arguments;
 		public abstract bool IsExternal { get; }
 		public virtual bool IsEntrypoint { get { return false; } }
@@ -21,7 +21,7 @@ namespace VMILLib {
 			}
 		}
 
-		public MessageHandlerBase( VisibilityModifier visibility, CString name, IEnumerable<string> arguments ) {
+		public MessageHandlerBase( VisibilityModifier visibility, string name, IEnumerable<string> arguments ) {
 			this.Visibility = visibility;
 			this.Name = name;
 			this.Arguments = arguments.ToList().AsReadOnly();
