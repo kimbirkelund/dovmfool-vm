@@ -11,7 +11,7 @@ namespace VMILLib {
 		public override bool IsEntrypoint { get { return isEntrypoint; } }
 		public override bool IsExternal { get { return false; } }
 
-		public VMILMessageHandler( VisibilityModifier visibility, CString name, IEnumerable<string> arguments, IEnumerable<string> locals, InstructionList instructions, bool isEntrypoint )
+		public VMILMessageHandler( VisibilityModifier visibility, string name, IEnumerable<string> arguments, IEnumerable<string> locals, InstructionList instructions, bool isEntrypoint )
 			: base( visibility, name, arguments ) {
 			this.Instructions = instructions;
 			this.Locals = locals.ToList().AsReadOnly();

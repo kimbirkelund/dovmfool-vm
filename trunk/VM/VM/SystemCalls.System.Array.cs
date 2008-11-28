@@ -11,7 +11,7 @@ namespace VM {
 			public static partial class Array {
 				[SystemCallMethod( "new-array:1" )]
 				public static Handle<VMObjects.AppObject> New( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-					if (arguments[0].TypeId() != VMILLib.TypeId.Integer)
+					if (arguments[0].Class() != KnownClasses.SystemInteger)
 						throw new ArgumentException( "Argument should be an integer.", "initialSize" );
 
 					var initialSize = (arguments[0] as IntHandle).Value;
@@ -23,7 +23,7 @@ namespace VM {
 				[SystemCallMethod( "set:2" )]
 				public static Handle<AppObject> Set( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
 					var arr = receiver.To<VMObjects.Array>();
-					arr.Set( ((IntHandle) arguments[0]).Value, arguments[1].Start, !(arguments[1] is IntHandle) );
+					arr.Set( arguments[0].Start, arguments[1] );
 					return null;
 				}
 
@@ -31,9 +31,7 @@ namespace VM {
 				public static Handle<AppObject> Get( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
 					var arr = receiver.To<VMObjects.Array>();
 					var index = ((IntHandle) arguments[0]).Value;
-					if (!arr.IsReference( index ))
-						return new IntHandle( arr.Get( index ) );
-					return (AppObject) arr.Get( index );
+					return arr.Get( index );
 				}
 
 				[SystemCallMethod( "length:0" )]

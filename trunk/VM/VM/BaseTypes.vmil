@@ -1,5 +1,3 @@
-.class private InternalObject { }
-
 .class public Object {
 	.handler public get-type .external Object.get-type()
 	.handler public to-string .external Object.to-string()
@@ -15,6 +13,7 @@
 		return
 	}
 }
+.class public ObjectSet extends Object { }
 
 .class public System {
 	.fields { console }

@@ -8,9 +8,7 @@ function global:test($name) {
 	 } else {
 	 	 write-progress $name "Copying"
 	 	 cp "$name.vmil.bak" "$name.vmil"
-	 	 write-progress $name "Assembling"
-	 	 vmilasm "$name.vmil"
 	 	 write-progress $name "Running"
-	 	 vmshl "$name.vmb"
+	 	 vmshl "$name.vmil"
 	}
 }

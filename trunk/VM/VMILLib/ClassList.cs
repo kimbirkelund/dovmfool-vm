@@ -6,9 +6,9 @@ using System.Text;
 namespace VMILLib {
 	public sealed class ClassList : IEnumerable<Class> {
 		public readonly int Count;
-		Dictionary<CString, Class> classes;
+		Dictionary<string, Class> classes;
 
-		public Class this[CString name] {
+		public Class this[string name] {
 			get {
 				if (classes.ContainsKey( name ))
 					return classes[name];

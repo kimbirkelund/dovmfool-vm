@@ -4,24 +4,24 @@ using System.Linq;
 using System.Text;
 
 namespace VMILLib {
-	public sealed class NameList : IEnumerable<CString> {
+	public sealed class NameList : IEnumerable<string> {
 		public readonly int Count;
-		List<CString> vars;
+		List<string> vars;
 
-		public CString this[int index] {
+		public string this[int index] {
 			get { return vars[index]; }
 		}
 
-		public NameList( IEnumerable<CString> fields ) {
+		public NameList( IEnumerable<string> fields ) {
 			this.vars = fields.ToList();
 			this.Count = this.vars.Count;
 		}
 
-		public int IndexOf( CString var ) {
+		public int IndexOf( string var ) {
 			return vars.IndexOf( var );
 		}
 
-		public IEnumerator<CString> GetEnumerator() {
+		public IEnumerator<string> GetEnumerator() {
 			return vars.GetEnumerator();
 		}
 		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() { return GetEnumerator(); }

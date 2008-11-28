@@ -72,7 +72,7 @@ defaulthandler :
 		$$ = new VMILMessageHandler(@$, 
 				VisibilityModifier.None, 
 				null, 
-				nerw List<string>(), 
+				new List<string>(), 
 				(List<string>) $3, 
 				(List<Instruction>) $4,
 				false);

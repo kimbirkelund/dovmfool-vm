@@ -46,11 +46,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assembly.cs" />
-    <Compile Include="BinaryReader.cs" />
-    <Compile Include="BinaryWriter.cs" />
     <Compile Include="Class.cs" />
     <Compile Include="ClassList.cs" />
-    <Compile Include="CString.cs" />
     <Compile Include="ExternalMessageHandler.cs" />
     <Compile Include="Instruction.cs" />
     <Compile Include="InstructionList.cs" />
@@ -59,7 +56,6 @@
     <Compile Include="Parser\Label.cs" />
     <Compile Include="Parser\MessageHandlerBase.cs" />
     <Compile Include="SourceReader.cs" />
-    <Compile Include="SourceWriter.cs" />
     <Compile Include="NameList.cs" />
     <Compile Include="MessageHandlerBase.cs" />
     <Compile Include="MessageHandlerList.cs" />
@@ -76,7 +72,6 @@
     <Compile Include="Parser\Scanner.auto.cs" />
     <Compile Include="Parser\Scanner.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="CStringPool.cs" />
     <Compile Include="VMILMessageHandler.cs" />
   </ItemGroup>
   <ItemGroup>

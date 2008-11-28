@@ -5,17 +5,16 @@ using System.Text;
 using VMILLib;
 
 namespace VM.VMObjects {
-	public struct Array : IVMObject<Array> {
-		#region Constants
-		public const int FIRST_ELEMENT_OFFSET_OFFSET = 1;
-		public const int FIRST_MAP_WORD_OFFSET = 2;
-		#endregion
+	internal static class ArrayConsts {
+		public const int ELEMENT_COUNT_OFFSET = 1;
+		public const int FIRST_ELEMENT_OFFSET = 2;
+	}
 
+	public struct Array : IVMObject<Array> {
 		#region Properties
 		int start;
 		public int Start { get { return start; } }
-
-		public TypeId TypeIdAtInstancing { get { return TypeId.Array; } }
+		public Handle<Class> VMClass { get { return KnownClasses.SystemArray; } }
 		#endregion
 
 		#region Cons
@@ -46,10 +45,9 @@ namespace VM.VMObjects {
 
 		#region Static methods
 		public static Handle<Array> CreateInstance( int elementCount ) {
-			var wordCount = (elementCount + 31) / 32;
-			var arr = VirtualMachine.MemoryManager.Allocate<Array>( Array.FIRST_MAP_WORD_OFFSET - 1 + wordCount + elementCount );
-			arr[Array.FIRST_ELEMENT_OFFSET_OFFSET] = wordCount + Array.FIRST_MAP_WORD_OFFSET;
-
+			var arr = VirtualMachine.MemoryManager.Allocate<Array>( ArrayConsts.FIRST_ELEMENT_OFFSET - 1 + elementCount * 2 );
+			arr[ArrayConsts.ELEMENT_COUNT_OFFSET] = elementCount;
+			elementCount.ForEach( i => arr[ArrayConsts.FIRST_ELEMENT_OFFSET + i * 2] = arr[ArrayConsts.FIRST_ELEMENT_OFFSET + i * 2 + 1] = 0 );
 			return arr;
 		}
 
@@ -63,11 +61,11 @@ namespace VM.VMObjects {
 			if (destinationArray.Length() < destinationIndex + count)
 				throw new ArgumentOutOfBoundsException( "count" );
 
-			var sourceOffset = sourceArray[Array.FIRST_ELEMENT_OFFSET_OFFSET] + sourceIndex;
-			var destOffset = destinationArray[Array.FIRST_ELEMENT_OFFSET_OFFSET] + destinationIndex;
+			var sourceOffset = ArrayConsts.FIRST_ELEMENT_OFFSET + sourceIndex * 2;
+			var destOffset = ArrayConsts.FIRST_ELEMENT_OFFSET + destinationIndex * 2;
 			count.ForEach( i => {
-				destinationArray[destOffset + i] = sourceArray[sourceOffset + i];
-				destinationArray.SetReference( destinationIndex + i, sourceArray.IsReference( sourceIndex + i ) );
+				destinationArray[destOffset + i * 2] = sourceArray[sourceOffset + i * 2];
+				destinationArray[destOffset + i * 2 + 1] = sourceArray[sourceOffset + i * 2 + 1];
 			} );
 		}
 
@@ -81,11 +79,11 @@ namespace VM.VMObjects {
 			if (destinationArray.Length() < destinationIndex + count)
 				throw new ArgumentOutOfBoundsException( "count" );
 
-			var sourceOffset = sourceArray[Array.FIRST_ELEMENT_OFFSET_OFFSET] + sourceIndex;
-			var destOffset = destinationArray[Array.FIRST_ELEMENT_OFFSET_OFFSET] + destinationIndex;
+			var sourceOffset = ArrayConsts.FIRST_ELEMENT_OFFSET + sourceIndex * 2;
+			var destOffset = ArrayConsts.FIRST_ELEMENT_OFFSET + destinationIndex * 2;
 			for (int i = count - 1; i >= 0; i--) {
-				destinationArray[destOffset + i] = sourceArray[sourceOffset + i];
-				destinationArray.SetReference( destinationIndex + i, sourceArray.IsReference( sourceIndex + i ) );
+				destinationArray[destOffset + i * 2] = sourceArray[sourceOffset + i * 2];
+				destinationArray[destOffset + i * 2 + 1] = sourceArray[sourceOffset + i * 2 + 1];
 			}
 		}
 		#endregion
@@ -93,45 +91,47 @@ namespace VM.VMObjects {
 
 	public static class ExtArray {
 		public static int Length( this Handle<Array> obj ) {
-			return obj.Size() - obj[Array.FIRST_ELEMENT_OFFSET_OFFSET];
+			return obj[ArrayConsts.ELEMENT_COUNT_OFFSET];
 		}
 
-		public static Word Get( this Handle<Array> obj, int arrayIndex ) {
+		public static Handle<AppObject> Get( this Handle<Array> obj, int arrayIndex ) {
 			if (arrayIndex < 0 || obj.Length() <= arrayIndex)
 				throw new ArgumentOutOfBoundsException( "arrayIndex" );
 
-			return obj[obj[Array.FIRST_ELEMENT_OFFSET_OFFSET] + arrayIndex];
+			if (obj[ArrayConsts.FIRST_ELEMENT_OFFSET + arrayIndex * 2] == 0 || obj[ArrayConsts.FIRST_ELEMENT_OFFSET + arrayIndex * 2 + 1] == 0)
+				return null;
+			if (obj[ArrayConsts.FIRST_ELEMENT_OFFSET + arrayIndex * 2] == KnownClasses.SystemInteger.Start)
+				return new IntHandle( obj[ArrayConsts.FIRST_ELEMENT_OFFSET + arrayIndex * 2 + 1] );
+			return (AppObject) obj[ArrayConsts.FIRST_ELEMENT_OFFSET + arrayIndex * 2 + 1];
 		}
 
 		public static Handle<T> Get<T>( this Handle<Array> obj, int arrayIndex ) where T : struct, IVMObject<T> {
 			if (arrayIndex < 0 || obj.Length() <= arrayIndex)
 				throw new ArgumentOutOfBoundsException( "arrayIndex" );
 
-			return new T().New( obj[obj[Array.FIRST_ELEMENT_OFFSET_OFFSET] + arrayIndex] ).ToHandle();
+			if (obj[ArrayConsts.FIRST_ELEMENT_OFFSET + arrayIndex * 2] == 0 || obj[ArrayConsts.FIRST_ELEMENT_OFFSET + arrayIndex * 2 + 1] == 0)
+				return null;
+			return new T().New( obj[ArrayConsts.FIRST_ELEMENT_OFFSET + arrayIndex * 2 + 1] );
 		}
 
-		public static void Set( this Handle<Array> obj, int arrayIndex, Word value, bool isReference ) {
+		public static Handle<Class> GetType( this Handle<Array> obj, int arrayIndex ) {
 			if (arrayIndex < 0 || obj.Length() <= arrayIndex)
 				throw new ArgumentOutOfBoundsException( "arrayIndex" );
 
-			obj[obj[Array.FIRST_ELEMENT_OFFSET_OFFSET] + arrayIndex] = value;
-			obj.SetReference( arrayIndex, isReference );
+			return (Class) obj[ArrayConsts.FIRST_ELEMENT_OFFSET + arrayIndex * 2];
 		}
 
-		public static bool IsReference( this Handle<Array> obj, int arrayIndex ) {
-			var word = arrayIndex / 32;
-			var bit = arrayIndex % 32;
-			return (obj[Array.FIRST_MAP_WORD_OFFSET + word] & (1 << bit)) != 0;
-		}
+		public static void Set<T>( this Handle<Array> obj, int arrayIndex, Handle<T> value ) where T : struct, IVMObject<T> {
+			if (arrayIndex < 0 || obj.Length() <= arrayIndex)
+				throw new ArgumentOutOfBoundsException( "arrayIndex" );
 
-		internal static void SetReference( this Handle<Array> obj, int arrayIndex, bool isReference ) {
-			var word = arrayIndex / 32;
-			var bit = arrayIndex % 32;
-
-			if (isReference)
-				obj[Array.FIRST_MAP_WORD_OFFSET + word] = obj[Array.FIRST_MAP_WORD_OFFSET + word] | (1 << bit);
-			else
-				obj[Array.FIRST_MAP_WORD_OFFSET + word] = obj[Array.FIRST_MAP_WORD_OFFSET + word] ^ (1 << bit);
+			if (value == null) {
+				obj[ArrayConsts.FIRST_ELEMENT_OFFSET + arrayIndex * 2] = 0;
+				obj[ArrayConsts.FIRST_ELEMENT_OFFSET + arrayIndex * 2 + 1] = 0;
+			} else {
+				obj[ArrayConsts.FIRST_ELEMENT_OFFSET + arrayIndex * 2] = value.Class().Start;
+				obj[ArrayConsts.FIRST_ELEMENT_OFFSET + arrayIndex * 2 + 1] = value.Start;
+			}
 		}
 
 		public static string ToString( this Handle<Array> obj ) {
@@ -142,7 +142,7 @@ namespace VM.VMObjects {
 
 		public static Handle<Array> ToVMArray<T>( this List<Handle<T>> list ) where T : struct, IVMObject<T> {
 			var arr = Array.CreateInstance( list.Count );
-			list.ForEach( ( e, i ) => arr.Set( i, e, !(e is IntHandle) ) );
+			list.ForEach( ( e, i ) => arr.Set( i, e ) );
 			return arr;
 		}
 	}

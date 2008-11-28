@@ -6,9 +6,9 @@ using System.Text;
 namespace VMILLib {
 	public sealed class MessageHandlerList : IEnumerable<MessageHandlerBase> {
 		public readonly int Count;
-		Dictionary<CString, MessageHandlerBase> handlers;
+		Dictionary<string, MessageHandlerBase> handlers;
 
-		public MessageHandlerBase this[CString name] {
+		public MessageHandlerBase this[string name] {
 			get {
 				if (handlers.ContainsKey( name ))
 					return handlers[name];

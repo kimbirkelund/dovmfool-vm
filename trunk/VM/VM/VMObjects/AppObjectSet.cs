@@ -5,16 +5,16 @@ using System.Text;
 using VMILLib;
 
 namespace VM.VMObjects {
-	public struct AppObjectSet : IVMObject<AppObjectSet> {
-		#region Constants
+	internal static class AppObjectSetConsts {
 		public const uint OBJ_HEADER_APPOBJECTSET_OBJECT_COUNT = 0xFFFFFFF0;
 		public const int OBJ_HEADER_APPOBJECTSET_OBJECT_COUNT_RSHIFT = 4;
-		#endregion
+	}
 
+	public struct AppObjectSet : IVMObject<AppObjectSet> {
 		#region Properties
 		int start;
 		public int Start { get { return start; } }
-		public TypeId TypeIdAtInstancing { get { return TypeId.AppObjectSet; } }
+		public Handle<Class> VMClass { get { return KnownClasses.ObjectSet; } }
 		#endregion
 
 		#region Cons

@@ -33,7 +33,7 @@ namespace VM {
 			position += size;
 
 			var obj = new Handle<T>( new T().New( pos ) );
-			memory[pos] = (size << 4) | (((int) obj.Value.TypeIdAtInstancing) & 0x0000000F);
+			memory[pos] = obj.Value.VMClass.Start;
 			return obj;
 		}
 	}

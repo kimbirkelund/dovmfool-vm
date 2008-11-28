@@ -18,7 +18,7 @@ namespace VM.VMObjects {
 		#region Properties
 		int start;
 		public int Start { get { return start; } }
-		public TypeId TypeIdAtInstancing { get { return TypeId.String; } }
+		public Handle<Class> VMClass { get { return KnownClasses.SystemString; } }
 
 		static Handle<String> empty;
 		public static Handle<String> Empty {
@@ -91,10 +91,19 @@ namespace VM.VMObjects {
 			str[String.LENGTH_INTERNED_OFFSET] = length & LENGTH_MASK;
 			return str;
 		}
+
+		public static Handle<VMObjects.String> GetString( int index ) {
+			return ExtString.GetString( index );
+		}
+
+		public static IEnumerable<Handle<String>> Strings() {
+			return ExtString.GetStrings();
+		}
 		#endregion
 	}
 
 	public static class ExtString {
+		static List<Handle<VMObjects.String>> strings = new List<Handle<VM.VMObjects.String>>();
 		static readonly Word byteMask = 0x000000FF;
 		static readonly int[] byteRShifts = new int[] { 24, 16, 8, 0 };
 
@@ -168,7 +177,7 @@ namespace VM.VMObjects {
 			}
 
 			var arr = Array.CreateInstance( list.Count );
-			list.ForEach( ( e, i ) => arr.Set( i, e, true ) );
+			list.ForEach( ( e, i ) => arr.Set( i, e ) );
 
 			return arr;
 		}
@@ -219,7 +228,7 @@ namespace VM.VMObjects {
 					newStr[w] = obj[cur / 2 + String.FIRST_CHAR_OFFSET];
 				else {
 					Word w1 = (obj[cur / 2 + String.FIRST_CHAR_OFFSET] << 16);
-					Word w2 = (cur / 2 + 1 + String.FIRST_CHAR_OFFSET < obj.Size() ? (obj[cur / 2 + 1 + String.FIRST_CHAR_OFFSET] >> 16) : (Word) 0);
+					Word w2 = (cur < obj.Length() ? (obj[cur / 2 + 1 + String.FIRST_CHAR_OFFSET] >> 16) : (Word) 0);
 					Word w3 = w1 | w2;
 					newStr[w] = w1 | w2;
 				}
@@ -296,7 +305,7 @@ namespace VM.VMObjects {
 		}
 
 		static IEnumerable<uint> GetUInts( this Handle<String> obj ) {
-			for (int i = String.FIRST_CHAR_OFFSET; i < obj.Size(); i++)
+			for (int i = String.FIRST_CHAR_OFFSET; i < (obj.Length() + 1) / 2 + String.FIRST_CHAR_OFFSET; i++)
 				yield return obj[i];
 		}
 
@@ -316,7 +325,30 @@ namespace VM.VMObjects {
 		}
 
 		public static Handle<String> Intern( this Handle<String> str ) {
-			return VirtualMachine.ConstantPool.Intern( str );
+			if (str.IsInterned())
+				return str;
+
+			foreach (var istr in strings)
+				if (istr.Equals( str ))
+					return istr;
+
+			strings.Add( str );
+			str[VMObjects.String.LENGTH_INTERNED_OFFSET] |= 0x80000000;
+			return str;
+		}
+
+		public static IEnumerable<Handle<String>> GetStrings() {
+			return strings;
+		}
+
+		public static Handle<VMObjects.String> GetString( int index ) {
+			return strings[index];
+		}
+
+		public static int GetInternIndex( this Handle<VMObjects.String> str ) {
+			if (!str.IsInterned())
+				throw new ArgumentException( "Specified string must be interned.", "str" );
+			return strings.FindIndex( s => s.Value.Equals( str.Value ) );
 		}
 	}
 }

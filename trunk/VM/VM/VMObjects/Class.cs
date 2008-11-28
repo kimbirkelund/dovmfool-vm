@@ -5,29 +5,30 @@ using System.Text;
 using VMILLib;
 
 namespace VM.VMObjects {
-	public struct Class : IVMObject<Class> {
-		#region Constants
+	internal static class ClassConsts {
 		public const int HEADER_OFFSET = 1;
 		public const int PARENT_CLASS_OFFSET = 2;
-		public const int COUNTS_OFFSET = 3;
-		public const int LINEARIZATION_OFFSET = 4;
-		public const int INSTANCE_SIZE_OFFSET = 5;
-		public const int SUPERCLASSES_OFFSET = 6;
+		public const int COUNTS1_OFFSET = 3;
+		public const int COUNTS2_OFFSET = 4;
+		public const int LINEARIZATION_OFFSET = 5;
+		public const int INSTANCE_SIZE_OFFSET = 6;
+		public const int SUPERCLASSES_OFFSET = 7;
 
 		public static readonly Word VISIBILITY_MASK = 0x00000003;
 
 		public const int NAME_RSHIFT = 2;
 
-		public const int COUNTS_FIELDS_RSHIFT = 18;
-		public static readonly Word COUNTS_HANDLERS_MASK = 0x0003FFF0;
-		public const int COUNTS_HANDLERS_RSHIFT = 4;
-		public static readonly Word COUNTS_SUPERCLASSES_MASK = 0x0000000F;
-		#endregion
+		public const int COUNTS1_FIELDS_RSHIFT = 16;
+		public static readonly Word COUNTS1_HANDLERS_MASK = 0x0000FFFF;
+		public const int COUNTS2_INNERCLASSES_RSHIFT = 16;
+		public static readonly Word COUNTS2_SUPERCLASSES_MASK = 0x0000FFFF;
+	}
 
+	public struct Class : IVMObject<Class> {
 		#region Properties
 		int start;
 		public int Start { get { return start; } }
-		public TypeId TypeIdAtInstancing { get { return TypeId.Class; } }
+		public Handle<Class> VMClass { get { return KnownClasses.SystemReflectionClass; } }
 		#endregion
 
 		#region Cons
@@ -42,7 +43,10 @@ namespace VM.VMObjects {
 
 		#region Static methods
 		public static Handle<Class> CreateInstance( int superClassCount, int handlerCount, int innerClassCount ) {
-			return VirtualMachine.MemoryManager.Allocate<Class>( SUPERCLASSES_OFFSET - 1 + superClassCount + 1 + 2 * handlerCount + 2 * innerClassCount );
+			var cls = VirtualMachine.MemoryManager.Allocate<Class>( ClassConsts.SUPERCLASSES_OFFSET - 1 + superClassCount + 1 + 2 * handlerCount + 2 * innerClassCount );
+			cls[ClassConsts.INSTANCE_SIZE_OFFSET] = -1;
+			cls[ClassConsts.LINEARIZATION_OFFSET] = 0;
+			return cls;
 		}
 		#endregion
 
@@ -65,57 +69,57 @@ namespace VM.VMObjects {
 
 	public static class ExtClass {
 		public static VisibilityModifier Visibility( this Handle<Class> obj ) {
-			return (VisibilityModifier) (obj[Class.HEADER_OFFSET] & Class.VISIBILITY_MASK);
+			return (VisibilityModifier) (obj[ClassConsts.HEADER_OFFSET] & ClassConsts.VISIBILITY_MASK);
 		}
 
 		public static int FieldCount( this Handle<Class> obj ) {
-			return obj[Class.COUNTS_OFFSET] >> Class.COUNTS_FIELDS_RSHIFT;
+			return obj[ClassConsts.COUNTS1_OFFSET] >> ClassConsts.COUNTS1_FIELDS_RSHIFT;
 		}
 
 		public static int MessageHandlerCount( this Handle<Class> obj ) {
-			return (obj[Class.COUNTS_OFFSET] & Class.COUNTS_HANDLERS_MASK) >> Class.COUNTS_HANDLERS_RSHIFT;
+			return obj[ClassConsts.COUNTS1_OFFSET] & ClassConsts.COUNTS1_HANDLERS_MASK;
 		}
 
 		public static int SuperClassCount( this Handle<Class> obj ) {
-			return obj[Class.COUNTS_OFFSET] & Class.COUNTS_SUPERCLASSES_MASK;
+			return obj[ClassConsts.COUNTS2_OFFSET] & ClassConsts.COUNTS2_SUPERCLASSES_MASK;
 		}
 
 		public static int InnerClassCount( this Handle<Class> obj ) {
-			return (obj.Size() - Class.SUPERCLASSES_OFFSET - obj.SuperClassCount() - 1 - obj.MessageHandlerCount() * 2) / 2;
+			return obj[ClassConsts.COUNTS2_OFFSET] >> ClassConsts.COUNTS2_INNERCLASSES_RSHIFT;
 		}
 
 		public static int TotalFieldCount( this Handle<Class> obj ) {
-			if (obj[Class.INSTANCE_SIZE_OFFSET] == -1) {
+			if (obj[ClassConsts.INSTANCE_SIZE_OFFSET] == -1) {
 				int instanceSize = 0;
 				var lin = obj.Linearization();
 				for (int i = 0; i < lin.Length(); i++) {
-					var superCls = ((Class) lin.Get( i )).ToHandle();
+					var superCls = lin.Get<Class>( i );
 					instanceSize += superCls.FieldCount();
 				}
-				obj[Class.INSTANCE_SIZE_OFFSET] = instanceSize;
+				obj[ClassConsts.INSTANCE_SIZE_OFFSET] = instanceSize;
 			}
-			return obj[Class.INSTANCE_SIZE_OFFSET];
+			return obj[ClassConsts.INSTANCE_SIZE_OFFSET];
 		}
 
 		public static Handle<String> Name( this Handle<Class> obj ) {
-			return VirtualMachine.ConstantPool.GetString( obj[Class.HEADER_OFFSET] >> Class.NAME_RSHIFT );
+			return String.GetString( obj[ClassConsts.HEADER_OFFSET] >> ClassConsts.NAME_RSHIFT );
 		}
 
 		public static Handle<MessageHandlerBase> DefaultHandler( this Handle<Class> obj ) {
-			return (MessageHandlerBase) obj[Class.SUPERCLASSES_OFFSET + obj.SuperClassCount()];
+			return (MessageHandlerBase) obj[ClassConsts.SUPERCLASSES_OFFSET + obj.SuperClassCount()];
 		}
 
 		public static Handle<Class> ParentClass( this Handle<Class> obj ) {
-			return (Class) obj[Class.PARENT_CLASS_OFFSET];
+			return (Class) obj[ClassConsts.PARENT_CLASS_OFFSET];
 		}
 
 		public static IEnumerable<Handle<String>> SuperClasses( this Handle<Class> obj ) {
-			for (var i = Class.SUPERCLASSES_OFFSET; i < Class.SUPERCLASSES_OFFSET + obj.SuperClassCount(); i++)
-				yield return VirtualMachine.ConstantPool.GetString( obj[i] );
+			for (var i = ClassConsts.SUPERCLASSES_OFFSET; i < ClassConsts.SUPERCLASSES_OFFSET + obj.SuperClassCount(); i++)
+				yield return (String) obj[i];
 		}
 
 		public static IEnumerable<Handle<MessageHandlerBase>> MessageHandlers( this Handle<Class> obj ) {
-			var firstHandler = Class.SUPERCLASSES_OFFSET + obj.SuperClassCount() + 1;
+			var firstHandler = ClassConsts.SUPERCLASSES_OFFSET + obj.SuperClassCount() + 1;
 			var handlers = obj.MessageHandlerCount() * 2;
 			for (var i = 1; i < handlers; i += 2)
 				yield return (MessageHandlerBase) obj[firstHandler + i];
@@ -154,13 +158,13 @@ namespace VM.VMObjects {
 		}
 
 		static Handle<MessageHandlerBase> InternResolveMessageHandler( this Handle<Class> obj, Handle<Class> caller, Handle<String> messageName ) {
-			var firstHandler = Class.SUPERCLASSES_OFFSET + obj.SuperClassCount() + 1;
+			var firstHandler = ClassConsts.SUPERCLASSES_OFFSET + obj.SuperClassCount() + 1;
 			var handlers = obj.MessageHandlerCount() * 2;
 
 			for (var i = 0; i < handlers; i += 2) {
 				var header = obj[firstHandler + i];
-				var visibility = (VisibilityModifier) (header & MessageHandlerBase.VISIBILITY_MASK);
-				var name = VirtualMachine.ConstantPool.GetString( header >> MessageHandlerBase.NAME_RSHIFT );
+				var visibility = (VisibilityModifier) (header & MessageHandlerBaseConsts.VISIBILITY_MASK);
+				var name = String.GetString( header >> MessageHandlerBaseConsts.NAME_RSHIFT );
 
 				if (visibility == VisibilityModifier.Private && caller != obj)
 					continue;
@@ -176,20 +180,20 @@ namespace VM.VMObjects {
 		}
 
 		public static IEnumerable<Handle<Class>> InnerClasses( this Handle<Class> obj ) {
-			var firstClass = Class.SUPERCLASSES_OFFSET + obj.SuperClassCount() + obj.MessageHandlerCount() * 2 + 1;
+			var firstClass = ClassConsts.SUPERCLASSES_OFFSET + obj.SuperClassCount() + obj.MessageHandlerCount() * 2 + 1;
 			var classes = obj.InnerClassCount() * 2;
 			for (var i = 1; i < classes; i += 2)
 				yield return (Class) obj[firstClass + i];
 		}
 
 		public static Handle<Class> ResolveInnerClass( this Handle<Class> obj, Handle<Class> referencer, Handle<String> className ) {
-			var firstClass = Class.SUPERCLASSES_OFFSET + obj.SuperClassCount() + obj.MessageHandlerCount() * 2 + 1;
+			var firstClass = ClassConsts.SUPERCLASSES_OFFSET + obj.SuperClassCount() + obj.MessageHandlerCount() * 2 + 1;
 			var classes = obj.InnerClassCount() * 2;
 
 			for (var i = 0; i < classes; i += 2) {
 				var header = obj[firstClass + i];
-				var visibility = (VisibilityModifier) (header & Class.VISIBILITY_MASK);
-				var name = VirtualMachine.ConstantPool.GetString( header >> Class.NAME_RSHIFT );
+				var visibility = (VisibilityModifier) (header & ClassConsts.VISIBILITY_MASK);
+				var name = String.GetString( header >> ClassConsts.NAME_RSHIFT );
 
 				if (referencer != null && visibility == VisibilityModifier.Private && referencer != obj)
 					continue;
@@ -226,9 +230,9 @@ namespace VM.VMObjects {
 		}
 
 		public static Handle<Array> Linearization( this Handle<Class> obj ) {
-			if (obj[Class.LINEARIZATION_OFFSET] == 0)
+			if (obj[ClassConsts.LINEARIZATION_OFFSET] == -1)
 				obj.Linearize();
-			return (Array) obj[Class.LINEARIZATION_OFFSET];
+			return (Array) obj[ClassConsts.LINEARIZATION_OFFSET];
 		}
 
 		static void Linearize( this Handle<Class> obj ) {
@@ -250,8 +254,8 @@ namespace VM.VMObjects {
 				arr = Array.CreateInstance( list.Length() + 1 );
 				Array.Copy( list, 0, arr, 1, list.Length() );
 			}
-			arr.Set( 0, obj, true );
-			obj[Class.LINEARIZATION_OFFSET] = arr;
+			arr.Set( 0, obj );
+			obj[ClassConsts.LINEARIZATION_OFFSET] = arr;
 		}
 
 		#region MergeLinearizations
@@ -316,9 +320,9 @@ namespace VM.VMObjects {
 				var l = Array.CreateInstance( l1.Length() + l2.Length() );
 				int j = 0;
 				for (int i = 0; i < l1.Length(); i++)
-					l.Set( j++, l1.Get( i ), true );
+					l.Set( j++, l1.Get<Class>( i ) );
 				for (int i = 0; i < l2.Length(); i++)
-					l.Set( j++, l2.Get( i ), true );
+					l.Set( j++, l2.Get<Class>( i ) );
 				return l;
 			} else {
 				var l = new List<Handle<Class>>();
@@ -350,5 +354,41 @@ namespace VM.VMObjects {
 			}
 		}
 		#endregion
+
+		public static void InitInstance( this Handle<Class> obj, VisibilityModifier visibility, Handle<String> name, Handle<Class> parentClass, IList<Handle<String>> superClasses, int fieldCount, Handle<MessageHandlerBase> defaultHandler, IList<Handle<MessageHandlerBase>> messageHandlers, IList<Handle<Class>> innerClasses ) {
+			if (name == null)
+				throw new InvalidVMProgramException( "Class with no name specified." );
+			if (fieldCount > 0x0000FFFF)
+				throw new InvalidVMProgramException( "Class with more than 65535 fields specified" );
+			if (messageHandlers.Count > 0x0000FFFF)
+				throw new InvalidVMProgramException( "Class with more than 65535 message handlers specified" );
+			if (superClasses.Count > 0x0000FFFF)
+				throw new InvalidVMProgramException( "Class with more than 65535 super classes specified" );
+			if (innerClasses.Count > 0x0000FFFF)
+				throw new InvalidVMProgramException( "Class with more than 65535 inner classes specified" );
+
+			obj[ClassConsts.HEADER_OFFSET] = (name.GetInternIndex() << ClassConsts.NAME_RSHIFT) | (int) visibility;
+			obj[ClassConsts.PARENT_CLASS_OFFSET] = parentClass;
+			obj[ClassConsts.INSTANCE_SIZE_OFFSET] = -1;
+			obj[ClassConsts.LINEARIZATION_OFFSET] = -1;
+			obj[ClassConsts.COUNTS1_OFFSET] = (fieldCount << ClassConsts.COUNTS1_FIELDS_RSHIFT) | messageHandlers.Count;
+			obj[ClassConsts.COUNTS2_OFFSET] = (innerClasses.Count << ClassConsts.COUNTS2_INNERCLASSES_RSHIFT) | superClasses.Count;
+
+			superClasses.ForEach( ( c, i ) => obj[ClassConsts.SUPERCLASSES_OFFSET + i] = c );
+
+			obj[ClassConsts.SUPERCLASSES_OFFSET + obj.SuperClassCount()] = defaultHandler;
+
+			var firstHandler = ClassConsts.SUPERCLASSES_OFFSET + obj.SuperClassCount() + 1;
+			messageHandlers.ForEach( ( h, i ) => {
+				obj[firstHandler + i * 2] = h[MessageHandlerBaseConsts.HEADER_OFFSET];
+				obj[firstHandler + i * 2 + 1] = h;
+			} );
+
+			var firstClass = ClassConsts.SUPERCLASSES_OFFSET + obj.SuperClassCount() + obj.MessageHandlerCount() * 2 + 1;
+			innerClasses.ForEach( ( c, i ) => {
+				obj[firstClass + i * 2] = c[ClassConsts.HEADER_OFFSET];
+				obj[firstClass + i * 2 + 1] = c;
+			} );
+		}
 	}
 }

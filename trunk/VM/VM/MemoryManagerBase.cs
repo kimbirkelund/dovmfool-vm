@@ -5,7 +5,7 @@ using System.Text;
 
 namespace VM {
 	public abstract partial class MemoryManagerBase {
-		Dictionary<int, List<HandleBase.HandleUpdater>> handles = new Dictionary<int, List<HandleBase.HandleUpdater>>();
+		static Dictionary<int, List<HandleBase.HandleUpdater>> handles = new Dictionary<int, List<HandleBase.HandleUpdater>>();
 
 		public abstract int SizeInWords { get; }
 		public abstract int FreeSizeInWords { get; }
@@ -23,18 +23,19 @@ namespace VM {
 
 		internal abstract Word this[int index] { get; set; }
 
-		internal Handle<T> CreateHandle<T>( T obj ) where T : struct, IVMObject<T> {
+		static internal Handle<T> CreateHandle<T>( T obj ) where T : struct, IVMObject<T> {
 			var handle = new Handle<T>( obj );
 
-			if (handles.ContainsKey( handle.Start ))
-				handles[handle.Start].Add( handle.Updater );
-			else
-				handles.Add( handle.Start, new List<HandleBase.HandleUpdater> { handle.Updater } );
-
+			lock (handles) {
+				if (handles.ContainsKey( handle.Start ))
+					handles[handle.Start].Add( handle.Updater );
+				else
+					handles.Add( handle.Start, new List<HandleBase.HandleUpdater> { handle.Updater } );
+			}
 			return handle;
 		}
 
-		void Unregister( HandleBase handle ) {
+		static void Unregister( HandleBase handle ) {
 			if (handle.IsValid)
 				handle.Unregister();
 			else {
@@ -47,16 +48,25 @@ namespace VM {
 			}
 		}
 
-		protected void MoveHandles( int fromPosition, int toPosition ) {
-			if (!handles.ContainsKey( fromPosition ))
-				return;
-			if (handles.ContainsKey( toPosition ))
-				throw new ArgumentException( "Target position already contains a handles list. Those must be moved first.", "toPosition" );
+		internal static void MoveHandles( int fromPosition, int toPosition ) {
+			MoveHandles( fromPosition, toPosition );
+		}
 
-			var l = handles[fromPosition];
-			handles.Remove( fromPosition );
-			handles.Add( toPosition, l );
-			l.ForEach( h => h( toPosition ) );
+		internal static void MoveHandles( int fromPosition, int toPosition, bool ignoreExistingLists ) {
+			lock (handles) {
+				if (!handles.ContainsKey( fromPosition ))
+					return;
+				if (!ignoreExistingLists && handles.ContainsKey( toPosition ))
+					throw new ArgumentException( "Target position already contains a handles list. Those must be moved first.", "toPosition" );
+
+				var l = handles[fromPosition];
+				handles.Remove( fromPosition );
+				if (handles.ContainsKey( toPosition ))
+					handles[toPosition].AddRange( l );
+				else
+					handles.Add( toPosition, l );
+				l.ForEach( h => h( toPosition ) );
+			}
 		}
 	}
 }

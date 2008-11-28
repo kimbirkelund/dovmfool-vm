@@ -5,22 +5,20 @@ using System.Text;
 using VMILLib;
 
 namespace VM.VMObjects {
-	public struct MessageHandlerBase : IVMObject<MessageHandlerBase> {
-		#region Constants
+	public static class MessageHandlerBaseConsts {
 		public const int HEADER_OFFSET = 1;
 		public const int CLASS_POINTER_OFFSET = 2;
 		public static readonly Word VISIBILITY_MASK = 0x00000003;
 		public static readonly Word IS_EXTERNAL_MASK = 0x00000004;
-		public const int IS_EXTERNAL_RSHIFT = 2;
 		public static readonly Word IS_ENTRYPOINT_MASK = 0x00000008;
-		public const int IS_ENTRYPOINT_RSHIFT = 3;
 		public const int NAME_RSHIFT = 4;
-		#endregion
+	}
 
+	public struct MessageHandlerBase : IVMObject<MessageHandlerBase> {
 		#region Properties
 		int start;
 		public int Start { get { return start; } }
-		public TypeId TypeIdAtInstancing { get { return TypeId.Undefined; } }
+		public Handle<Class> VMClass { get { return KnownClasses.SystemReflectionMessageHandler; } }
 		#endregion
 
 		#region Cons
@@ -68,23 +66,23 @@ namespace VM.VMObjects {
 
 	public static class ExtMessageHandlerBase {
 		public static VisibilityModifier Visibility( this Handle<MessageHandlerBase> obj ) {
-			return (VisibilityModifier) (obj[MessageHandlerBase.HEADER_OFFSET] & MessageHandlerBase.VISIBILITY_MASK);
+			return (VisibilityModifier) (obj[MessageHandlerBaseConsts.HEADER_OFFSET] & MessageHandlerBaseConsts.VISIBILITY_MASK);
 		}
 
 		public static bool IsExternal( this Handle<MessageHandlerBase> obj ) {
-			return ((obj[MessageHandlerBase.HEADER_OFFSET] & MessageHandlerBase.IS_EXTERNAL_MASK) >> MessageHandlerBase.IS_EXTERNAL_RSHIFT) != 0;
+			return (obj[MessageHandlerBaseConsts.HEADER_OFFSET] & MessageHandlerBaseConsts.IS_EXTERNAL_MASK) != 0;
 		}
 
 		public static Handle<String> Name( this Handle<MessageHandlerBase> obj ) {
-			return VirtualMachine.ConstantPool.GetString( obj[MessageHandlerBase.HEADER_OFFSET] >> MessageHandlerBase.NAME_RSHIFT );
+			return String.GetString( obj[MessageHandlerBaseConsts.HEADER_OFFSET] >> MessageHandlerBaseConsts.NAME_RSHIFT );
 		}
 
 		public static Handle<Class> Class( this Handle<MessageHandlerBase> obj ) {
-			return (Class) obj[MessageHandlerBase.CLASS_POINTER_OFFSET];
+			return (Class) obj[MessageHandlerBaseConsts.CLASS_POINTER_OFFSET];
 		}
 
 		public static bool IsEntrypoint( this Handle<MessageHandlerBase> obj ) {
-			return (obj[MessageHandlerBase.HEADER_OFFSET] & MessageHandlerBase.IS_ENTRYPOINT_MASK) != 0;
+			return (obj[MessageHandlerBaseConsts.HEADER_OFFSET] & MessageHandlerBaseConsts.IS_ENTRYPOINT_MASK) != 0;
 		}
 
 		public static int ArgumentCount( this Handle<MessageHandlerBase> obj ) {

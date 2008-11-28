@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using VM.VMObjects;
 
 namespace VM {
 	partial class MemoryManagerBase {
@@ -9,16 +10,16 @@ namespace VM {
 			Container container;
 			public virtual bool IsValid { get; private set; }
 			public virtual int Start { get { return container.Start; } }
-			public virtual HandleUpdater Updater { get { return container.Updater; } }
+			internal virtual HandleUpdater Updater { get { return container.Updater; } }
 
-			public virtual void Unregister() {
+			internal virtual void Unregister() {
 				System.GC.SuppressFinalize( this );
 				InternalUnregister();
 			}
 
 			protected virtual void InternalUnregister() {
 				IsValid = false;
-				VirtualMachine.MemoryManager.Unregister( this );
+				MemoryManagerBase.Unregister( this );
 			}
 
 			protected HandleBase( int start ) {
@@ -34,7 +35,7 @@ namespace VM {
 				InternalUnregister();
 			}
 
-			public delegate void HandleUpdater( int newPosition );
+			internal delegate void HandleUpdater( int newPosition );
 
 			#region Container
 			class Container {
@@ -60,7 +61,7 @@ namespace VM {
 		public Handle( T value ) : base( value.Start ) { }
 
 		public static implicit operator Handle<T>( T obj ) {
-			return VirtualMachine.MemoryManager.CreateHandle( obj );
+			return MemoryManagerBase.CreateHandle( obj );
 		}
 
 		public static implicit operator T( Handle<T> handle ) {
@@ -115,7 +116,7 @@ namespace VM {
 		public new int Value { get { return value; } }
 		public override bool IsValid { get { return false; } }
 		public override int Start { get { return Value; } }
-		public override MemoryManagerBase.HandleBase.HandleUpdater Updater { get { return null; } }
+		internal override MemoryManagerBase.HandleBase.HandleUpdater Updater { get { return null; } }
 
 		public IntHandle( int value )
 			: base( (VMObjects.AppObject) 0 ) {
@@ -127,7 +128,7 @@ namespace VM {
 		}
 
 		protected override void InternalUnregister() { }
-		public override void Unregister() { }
+		internal override void Unregister() { }
 
 		public static implicit operator int( IntHandle value ) {
 			return value.Value;

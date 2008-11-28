@@ -7,16 +7,13 @@ using VMILLib;
 namespace VM.VMObjects {
 	public struct ObjectBase : IVMObject<ObjectBase> {
 		#region Constants
-		public const int OBJECT_HEADER_OFFSET = 0;
-		public static readonly Word OBJECT_TYPE_MASK = 0x0000000F;
-		public const int OBJECT_SIZE_RSHIFT = 4;
+		public const int CLASS_POINTER_OFFSET = 0;
 		#endregion
 
 		#region Properties
 		int start;
 		public int Start { get { return start; } }
-
-		public TypeId TypeIdAtInstancing { get { return TypeId.Undefined; } }
+		public Handle<Class> VMClass { get { return KnownClasses.Object; } }
 		#endregion
 
 		#region Cons
@@ -54,37 +51,26 @@ namespace VM.VMObjects {
 
 		public static explicit operator Class( ObjectBase obj ) {
 			return new Class( obj.start );
-
-		}
-
-		public static explicit operator ClassManager( ObjectBase obj ) {
-			return new ClassManager( obj.start );
-
 		}
 
 		public static explicit operator MessageHandlerBase( ObjectBase obj ) {
 			return new MessageHandlerBase( obj.start );
-
 		}
 
 		public static explicit operator VMILMessageHandler( ObjectBase obj ) {
 			return new VMILMessageHandler( obj.start );
-
 		}
 
 		public static explicit operator DelegateMessageHandler( ObjectBase obj ) {
 			return new DelegateMessageHandler( obj.start );
-
 		}
 
 		public static explicit operator String( ObjectBase obj ) {
 			return new String( obj.start );
-
 		}
 
 		public static explicit operator Integer( ObjectBase obj ) {
 			return new Integer( obj.start );
-
 		}
 
 		public static implicit operator ObjectBase( AppObject obj ) {
@@ -96,10 +82,6 @@ namespace VM.VMObjects {
 		}
 
 		public static implicit operator ObjectBase( Class obj ) {
-			return new ObjectBase( obj.Start );
-		}
-
-		public static implicit operator ObjectBase( ClassManager obj ) {
 			return new ObjectBase( obj.Start );
 		}
 
@@ -125,8 +107,39 @@ namespace VM.VMObjects {
 		public static string ToString( this Handle<ObjectBase> obj ) {
 			if (obj.IsNull())
 				return "{NULL}";
-			return "{" + obj.TypeId().ToString() + "}";
+			return "{" + obj.Class().Name().Value.ToString() + "}";
 		}
 
+		public static Handle<T> ToHandle<T>( this T obj ) where T : struct, IVMObject<T> {
+			if (obj.Start == 0)
+				return null;
+			return (Handle<T>) obj;
+		}
+
+		public static IntHandle ToHandle( this Integer obj ) {
+			return new IntHandle( obj.Value );
+		}
+
+		public static IntHandle ToHandle( this int obj ) {
+			return new IntHandle( obj );
+		}
+
+		public static Handle<Class> Class<T>( this Handle<T> obj ) where T : struct, IVMObject<T> {
+			if (obj is IntHandle)
+				return KnownClasses.SystemInteger;
+			if (((int) obj[ObjectBase.CLASS_POINTER_OFFSET]) < 0)
+				obj[ObjectBase.CLASS_POINTER_OFFSET] = KnownClasses.Resolve( obj[ObjectBase.CLASS_POINTER_OFFSET] );
+				return (Class) obj[ObjectBase.CLASS_POINTER_OFFSET];
+		}
+
+		public static void Class<T>( this Handle<T> obj, Handle<Class> cls ) where T : struct, IVMObject<T> {
+			obj[ObjectBase.CLASS_POINTER_OFFSET] = cls;
+		}
+
+		public static bool IsNull<T>( this Handle<T> obj ) where T : struct, IVMObject<T> {
+			if (obj is IntHandle)
+				return false;
+			return (object.ReferenceEquals( obj, null ) ? true : obj.Start == 0);
+		}
 	}
 }

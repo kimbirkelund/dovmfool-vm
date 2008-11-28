@@ -13,7 +13,6 @@ namespace VMILLib {
 		Stream input;
 
 		Assembly assembly;
-		Dictionary<string, CString> strings = new Dictionary<string, CString>();
 
 		public SourceReader( Stream input ) {
 			this.input = input;
@@ -34,14 +33,13 @@ namespace VMILLib {
 				throw new ArgumentException( "Input is not a valid VMIL source file." );
 
 			var classes = new ClassList( parser.Classes.Select( c => ReadClass( c ) ) );
-			var stringPool = new CStringPool( strings.Values );
 
-			return new Assembly( stringPool, classes );
+			return new Assembly( classes );
 		}
 
 		Class ReadClass( Parser.Class cls ) {
 			var visibility = cls.Visibility;
-			var name = ReadString( cls.Name );
+			var name = cls.Name;
 			var inheritsFrom = ReadNames( cls.InheritsFrom );
 			var fields = cls.Fields;
 			var defaultHandler = ReadMessageHandler( cls.DefaultHandler );
@@ -56,13 +54,13 @@ namespace VMILLib {
 				return null;
 
 			var visibility = handlerBase.Visibility;
-			var name = handlerBase.Name != null ? ReadString( handlerBase.Name + ":" + handlerBase.Arguments.Count ) : null;
+			var name = handlerBase.Name != null ? handlerBase.Name + ":" + handlerBase.Arguments.Count : null;
 			var arguments = handlerBase.Arguments;
 
 			if (handlerBase is Parser.ExternalMessageHandler) {
 				var handler = (Parser.ExternalMessageHandler) handlerBase;
 
-				var externalName = ReadString( handler.ExternalName + ":" + handlerBase.Arguments.Count );
+				var externalName = handler.ExternalName + ":" + handlerBase.Arguments.Count;
 
 				return new ExternalMessageHandler( visibility, name, externalName, arguments );
 			} else {
@@ -120,7 +118,7 @@ namespace VMILLib {
 				case OpCode.LoadArgument:
 					return new Instruction( ins.OpCode, (string) ins.Operand );
 				case OpCode.PushLiteral:
-					return new Instruction( OpCode.PushLiteral, ins.Operand is string ? (object) ReadString( (string) ins.Operand ) : (int) ins.Operand );
+					return new Instruction( OpCode.PushLiteral, ins.Operand is string ? (object) (string) ins.Operand : (int) ins.Operand );
 				case OpCode.Jump:
 				case OpCode.JumpIfTrue:
 				case OpCode.JumpIfFalse:
@@ -147,13 +145,7 @@ namespace VMILLib {
 		}
 
 		NameList ReadNames( Parser.List<string> list ) {
-			return new NameList( list.Select( v => ReadString( v ) ) );
-		}
-
-		CString ReadString( string str ) {
-			if (!strings.ContainsKey( str ))
-				strings.Add( str, new CString( strings.Count, str ) );
-			return strings[str];
+			return new NameList( list );
 		}
 
 		#region IDisposable Members
