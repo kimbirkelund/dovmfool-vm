@@ -10,7 +10,7 @@ namespace VM {
 		class Object {
 			[SystemCallMethod( "get-type:0" )]
 			public static Handle<VMObjects.AppObject> GetType( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-				return null;
+				return (AppObject) receiver[0];
 			}
 
 			[SystemCallMethod( "to-string:0" )]

@@ -70,8 +70,9 @@ namespace VM {
 							break;
 						}
 					case VMILLib.OpCode.LoadField:
-						var o = receiver.GetFieldValue<VMObjects.AppObject>( operand + fieldOffset );
-						stack.Push( o.Class(), o.Start );
+						var ftype = receiver.GetFieldType( operand + fieldOffset );
+						var fvalue = receiver.GetFieldValue<VMObjects.ObjectBase>( operand + fieldOffset );
+						stack.Push( ftype, fvalue.Start );
 						break;
 					case VMILLib.OpCode.StoreLocal:
 						stack.SetLocal( operand, stack.Pop() );

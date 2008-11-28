@@ -16,6 +16,8 @@ namespace VM {
 
 		public ClassLoader( vml.SourceReader reader ) {
 			this.reader = reader;
+			this.reader.Logger = new Sekhmet.Logging.Logger();
+			this.reader.Logger.Handlers.Add( new Sekhmet.Logging.ConsoleLogHandler() );
 		}
 
 		public ClassLoader( Stream input ) : this( new vml.SourceReader( input ) ) { }

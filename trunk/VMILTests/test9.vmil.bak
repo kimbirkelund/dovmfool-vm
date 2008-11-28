@@ -1,0 +1,128 @@
+.class public Program {
+       .handler public main(sys) {
+       		.entrypoint
+		.locals { c, name, threading }
+
+		load-argument sys
+		push-literal "get-console:0"
+		send-message
+		store-local c
+
+		push-literal "System.Threading"
+		new-instance
+		store-local threading
+
+		readName:
+			load-this
+			load-local threading
+			load-local c
+			push-literal "Enter your name: "
+			push-literal 0
+			push-literal "print:4"
+			send-message
+
+			load-local c
+			push-literal "read-line:0"
+			send-message
+			store-local name
+
+			load-local name
+			push-literal "length:0"
+			send-message
+			jump-if-false readName
+		
+			load-local name
+			push-literal "{exit}"
+			push-literal "equals:1"
+			send-message
+			jump-if-false issueGreeting
+			return-void
+
+		issueGreeting:
+			load-local c
+			push-literal "write-line:0"
+			send-message
+
+			load-this
+			load-local threading
+			load-local c
+			push-literal "Hello "
+			load-local name
+			push-literal "concat:1"
+			send-message
+			push-literal ", nice to meet you."
+			push-literal "concat:1"
+			send-message
+			push-literal 1
+			push-literal "print:4"
+			send-message
+
+			load-local threading
+			push-literal 1000
+			push-literal "sleep:1"
+			send-message
+			load-local c
+			push-literal "write-line:0"
+			send-message			
+
+			load-this
+			load-local threading
+			load-local c
+			push-literal "Would you like to play a game?"
+			push-literal 0
+			push-literal "print:4"
+			send-message
+
+			load-local c
+			push-literal "read-line:0"
+			send-message
+       }
+
+       .handler private print(threading, console, str, newLine) {
+       		.locals { i, length }
+		
+		push-literal 0
+		store-local i
+		load-argument str
+		push-literal "length:0"
+ 		send-message
+		store-local length
+
+		start:
+			load-local i
+			load-local length
+			push-literal "equals:1"
+			send-message
+			jump-if-true end
+
+			load-argument threading
+			push-literal 150
+			push-literal "sleep:1"
+			send-message
+
+			load-argument console
+			load-argument str
+			load-local i
+			push-literal 1
+			push-literal "substring:2"
+			send-message
+			push-literal "write:1"
+			send-message
+
+			load-local i
+			push-literal 1
+			push-literal "add:1"
+			send-message
+			store-local i
+			jump start
+
+		end:
+			load-argument newLine
+			jump-if-false end2
+			load-argument console
+			push-literal "write-line:0"
+			send-message
+
+		end2:
+       }
+}
