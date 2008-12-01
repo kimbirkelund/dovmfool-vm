@@ -1,0 +1,82 @@
+.class public Program {
+       .fields { console }
+
+       .default {
+       		.locals { message, args, i, length }
+		store-local args
+		store-local message
+
+		load-local args
+		push-literal "length:0"
+		send-message
+		store-local length
+
+		load-field console
+		load-local length
+		push-literal "write-line:1"
+		send-message
+
+		load-field console
+		load-local message
+		push-literal ":"
+		push-literal "concat:1"
+		send-message
+		push-literal "write:1"
+		send-message
+
+		push-literal 0
+		store-local i
+
+		start:
+			load-local i
+			load-local length
+			push-literal "equals:1"
+			send-message
+			jump-if-true end
+
+			load-field console
+			push-literal "["
+			load-local args
+			load-local i
+			push-literal "get:1"
+			send-message
+			push-literal "concat:1"
+			send-message
+			push-literal "] "
+			push-literal "concat:1"
+			send-message		
+			push-literal "write:1"
+			send-message
+
+			load-local i
+			push-literal 1
+			push-literal "add:1"
+			send-message
+			store-local i
+			jump start
+
+		end:						
+
+		load-field console
+		push-literal "write-line:0"
+		send-message
+       }
+
+       .handler public Main(sys) {
+       		.entrypoint
+
+       		load-argument sys
+		push-literal "get-console:0"
+		send-message
+		store-field console
+	
+		load-this
+		push-literal 0
+		push-literal 1
+		push-literal 2
+		push-literal 3
+		push-literal 4
+		push-literal "foo:5"
+		send-message
+       }
+}

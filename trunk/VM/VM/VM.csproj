@@ -49,6 +49,7 @@
     <Compile Include="BasicInterpretor.cs" />
     <Compile Include="ClassLoader.cs" />
     <Compile Include="ExecutionStack.cs" />
+    <Compile Include="HandleCache.cs" />
     <Compile Include="IInterpretorFactory.cs" />
     <Compile Include="KnownClasses.cs" />
     <Compile Include="KnownStrings.cs" />
@@ -65,6 +66,7 @@
     <Compile Include="SystemCalls.System.Reflection.cs" />
     <Compile Include="SystemCalls.System.String.cs" />
     <Compile Include="SystemCalls.System.Threading.cs" />
+    <Compile Include="UValue.cs" />
     <Compile Include="VMException.cs" />
     <Compile Include="VMObjects\AppObject.cs" />
     <Compile Include="VMObjects\AppObjectSet.cs" />

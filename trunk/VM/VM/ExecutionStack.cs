@@ -10,6 +10,7 @@ namespace VM {
 		const int TYPE_RETURN_HANDLER = -2;
 		const int TYPE_RETURN_INSTRUCTION_OFFSET = -3;
 		const int TYPE_FRAME_BOUNDARY = -4;
+		const int TYPE_TRY = -5;
 
 		const int ARGUMENT_OFFSET = 5;
 		const int RETURN_ADDRESS_OFFSET = 4;
@@ -18,13 +19,13 @@ namespace VM {
 		const int OLD_FRAME_BOUNDARY_OFFSET = 1;
 
 		int initialSize;
-		StackValue[] stack;
+		UValue[] stack;
 		int stackPointer = 0, basePointer, frameBoundary;
 		public int BasePointer { get { return basePointer; } }
 		public int StackPointer { get { return stackPointer; } }
 		public int FrameBoundary { get { return frameBoundary; } }
 
-		public StackValue this[int index] {
+		public UValue this[int index] {
 			get {
 				if (stackPointer - index - 1 < 0)
 					throw new ArgumentOutOfRangeException();
@@ -42,21 +43,21 @@ namespace VM {
 			if (initialSize < 0)
 				throw new ArgumentOutOfRangeException( "Argument must be greater than zero.", "initialSize" );
 
-			stack = new StackValue[initialSize];
+			stack = new UValue[initialSize];
 		}
 
 		public void Push( Class type, Word value ) {
-			Push( new StackValue( type, value ) );
+			Push( UValue.Ref( type, value ) );
 		}
 
-		public void Push( StackValue v ) {
+		public void Push( UValue v ) {
 			if (stackPointer == stack.Length)
 				Expand();
 
 			stack[stackPointer++] = v;
 		}
 
-		public StackValue Pop() {
+		public UValue Pop() {
 			if (stackPointer == 0)
 				throw new InvalidOperationException( "Stack is empty." );
 			if (stackPointer < stack.Length / 2 && stackPointer > initialSize)
@@ -65,7 +66,7 @@ namespace VM {
 			return stack[--stackPointer];
 		}
 
-		public StackValue Peek() {
+		public UValue Peek() {
 			if (stackPointer == 0)
 				throw new InvalidOperationException( "Stack is empty." );
 			if (stackPointer < stack.Length / 2 && stackPointer > initialSize)
@@ -83,11 +84,11 @@ namespace VM {
 			basePointer = stackPointer;
 
 			for (var i = 0; i < callee.LocalCount(); i++)
-				Push( new StackValue() );
+				Push( new UValue() );
 		}
 
 		public ReturnAddress PopFrame( bool withReturnValue ) {
-			StackValue ret = withReturnValue ? Pop() : new StackValue();
+			UValue ret = withReturnValue ? Pop() : new UValue();
 
 			var retAdr = new ReturnAddress( (VMILMessageHandler) stack[basePointer - RETURN_ADDRESS_OFFSET].Value, stack[basePointer - RETURN_ADDRESS_INSTRUCTION_OFFSET].Value );
 			stackPointer = frameBoundary;
@@ -100,14 +101,14 @@ namespace VM {
 			return retAdr;
 		}
 
-		public StackValue GetLocal( int index ) {
+		public UValue GetLocal( int index ) {
 			if (index + basePointer >= stackPointer)
 				throw new ArgumentOutOfRangeException( "Index plus base pointer must be less than the stack pointer.", "index" );
 
 			return stack[basePointer + index];
 		}
 
-		public void SetLocal( int index, StackValue value ) {
+		public void SetLocal( int index, UValue value ) {
 			index = basePointer + index;
 			if (index >= stackPointer)
 				throw new ArgumentOutOfRangeException( "Index plus base pointer must be less than the stack pointer.", "index" );
@@ -116,10 +117,10 @@ namespace VM {
 		}
 
 		public void SetLocal( int index, Class type, Word value ) {
-			SetLocal( index, new StackValue( type, value ) );
+			SetLocal( index, UValue.Ref( type, value ) );
 		}
 
-		public StackValue GetArgument( int index ) {
+		public UValue GetArgument( int index ) {
 			index = frameBoundary + index;
 			if (index > basePointer - ARGUMENT_OFFSET)
 				throw new ArgumentOutOfRangeException( "No such argument.", "index" );
@@ -127,36 +128,38 @@ namespace VM {
 			return stack[index];
 		}
 
+		public void PushTry( int index ) {
+			Push( (Class) TYPE_TRY, index );
+		}
+
+		public int? PopTry() {
+			var i = 0;
+			while (stackPointer - i > basePointer && this[i].Type != TYPE_TRY)
+				i++;
+			if (stackPointer - i <= basePointer)
+				return null;
+			stackPointer -= i + 1;
+			return this[-1].Value;
+		}
+
 		void Shrink() {
-			var temp = new StackValue[stack.Length / 2];
+			var temp = new UValue[stack.Length / 2];
 			System.Array.Copy( stack, temp, stackPointer );
 			stack = temp;
 		}
 
 		void Expand() {
-			var temp = new StackValue[stack.Length * 2];
+			var temp = new UValue[stack.Length * 2];
 			System.Array.Copy( stack, temp, stackPointer );
 			stack = temp;
 		}
 
-		#region StackValue
-		public struct StackValue {
-			public readonly Class Type;
-			public readonly Word Value;
-
-			public StackValue( Class type, Word value ) {
-				this.Type = type;
-				this.Value = value;
-			}
-		}
-		#endregion
-
 		#region ReturnAddress
 		public struct ReturnAddress {
-			public readonly Handle<VMILMessageHandler> Handler;
+			public readonly VMILMessageHandler Handler;
 			public readonly int InstructionOffset;
 
-			public ReturnAddress( Handle<VMILMessageHandler> handler, int instructionOffset ) {
+			public ReturnAddress( VMILMessageHandler handler, int instructionOffset ) {
 				this.Handler = handler;
 				this.InstructionOffset = instructionOffset;
 			}

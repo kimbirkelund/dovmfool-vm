@@ -15,32 +15,35 @@ namespace VM {
 		public static Handle<Class> SystemReflectionClass { get; private set; }
 		public static Handle<Class> SystemReflectionMessageHandler { get; private set; }
 		public static Handle<Class> SystemReflectionVisibility { get; private set; }
+		public static Handle<Class> SystemException { get; private set; }
 
 		static KnownClasses() {
-			Object = new Handle<Class>( new Class( -1 ) );
-			ObjectSet = new Handle<Class>( new Class( -2 ) );
-			System = new Handle<Class>( new Class( -3 ) );
-			SystemArray = new Handle<Class>( new Class( -4 ) );
-			SystemInteger = new Handle<Class>( new Class( -5 ) );
-			SystemString = new Handle<Class>( new Class( -6 ) );
-			SystemReflectionClass = new Handle<Class>( new Class( -7 ) );
-			SystemReflectionMessageHandler = new Handle<Class>( new Class( -8 ) );
-			SystemReflectionVisibility = new Handle<Class>( new Class( -9 ) );
+			Object = new DummyClassHandle( -1 );
+			ObjectSet = new DummyClassHandle( -2 );
+			System = new DummyClassHandle( -3 );
+			SystemArray = new DummyClassHandle( -4 );
+			SystemInteger = new DummyClassHandle( -5 );
+			SystemString = new DummyClassHandle( -6 );
+			SystemReflectionClass = new DummyClassHandle( -7 );
+			SystemReflectionMessageHandler = new DummyClassHandle( -8 );
+			SystemReflectionVisibility = new DummyClassHandle( -9 );
+			SystemException = new DummyClassHandle( -10 );
 		}
 
 		internal static void Update() {
-			Object = VirtualMachine.ResolveClass( null, "Object".ToVMString() );
-			ObjectSet = VirtualMachine.ResolveClass( null, "ObjectSet".ToVMString() );
-			System = VirtualMachine.ResolveClass( null, "System".ToVMString() );
-			SystemArray = VirtualMachine.ResolveClass( null, "System.Array".ToVMString() );
-			SystemInteger = VirtualMachine.ResolveClass( null, "System.Integer".ToVMString() );
-			SystemString = VirtualMachine.ResolveClass( null, "System.String".ToVMString() );
-			SystemReflectionClass = VirtualMachine.ResolveClass( null, "System.Reflection.Class".ToVMString() );
-			SystemReflectionMessageHandler = VirtualMachine.ResolveClass( null, "System.Reflection.MessageHandler".ToVMString() );
-			SystemReflectionVisibility = VirtualMachine.ResolveClass( null, "System.Reflection.Visibility".ToVMString() );
+			Object = VirtualMachine.ResolveClass( null, "Object".ToVMString() ).ToHandle();
+			ObjectSet = VirtualMachine.ResolveClass( null, "ObjectSet".ToVMString() ).ToHandle();
+			System = VirtualMachine.ResolveClass( null, "System".ToVMString() ).ToHandle();
+			SystemArray = VirtualMachine.ResolveClass( null, "System.Array".ToVMString() ).ToHandle();
+			SystemInteger = VirtualMachine.ResolveClass( null, "System.Integer".ToVMString() ).ToHandle();
+			SystemString = VirtualMachine.ResolveClass( null, "System.String".ToVMString() ).ToHandle();
+			SystemReflectionClass = VirtualMachine.ResolveClass( null, "System.Reflection.Class".ToVMString() ).ToHandle();
+			SystemReflectionMessageHandler = VirtualMachine.ResolveClass( null, "System.Reflection.MessageHandler".ToVMString() ).ToHandle();
+			SystemReflectionVisibility = VirtualMachine.ResolveClass( null, "System.Reflection.Visibility".ToVMString() ).ToHandle();
+			SystemException = VirtualMachine.ResolveClass( null, "System.Exception".ToVMString() ).ToHandle();
 		}
 
-		public static Handle<Class> Resolve( int start ) {
+		public static Class Resolve( int start ) {
 			if (start > 0)
 				return (Class) start;
 

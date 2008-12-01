@@ -19,6 +19,10 @@ namespace VM.VMObjects {
 		int start;
 		public int Start { get { return start; } }
 		public Handle<Class> VMClass { get { return KnownClasses.SystemString; } }
+		public Word this[int index] {
+			get { return VirtualMachine.MemoryManager[Start + index]; }
+			set { VirtualMachine.MemoryManager[Start + index] = value; }
+		}
 
 		static Handle<String> empty;
 		public static Handle<String> Empty {
@@ -76,17 +80,21 @@ namespace VM.VMObjects {
 			return false;
 		}
 
+		public bool Equals( Handle<String> obj1, Handle<String> obj2 ) {
+			return ExtString.Equals( obj1, obj2 );
+		}
+
 		public override int GetHashCode() {
-			return ExtString.GetHashCode( this );
+			return ExtString.GetHashCode( this.ToHandle() );
 		}
 
 		public override string ToString() {
-			return ExtString.ToString( this );
+			return ExtString.ToString( this.ToHandle() );
 		}
 		#endregion
 
 		#region Static methods
-		public static Handle<String> CreateInstance( int length ) {
+		public static String CreateInstance( int length ) {
 			var str = VirtualMachine.MemoryManager.Allocate<String>( FIRST_CHAR_OFFSET - 1 + (length + 1) / 2 );
 			str[String.LENGTH_INTERNED_OFFSET] = length & LENGTH_MASK;
 			return str;
@@ -156,7 +164,7 @@ namespace VM.VMObjects {
 			return new Character( b1, b2 );
 		}
 
-		public static Handle<Array> Split( this Handle<String> obj, Handle<String> splitAt ) {
+		public static Array Split( this Handle<String> obj, Handle<String> splitAt ) {
 			var list = new List<Handle<String>>();
 
 			if (splitAt.Length() > obj.Length())
@@ -171,23 +179,26 @@ namespace VM.VMObjects {
 						goto top;
 					}
 
-				list.Add( obj.Substring( lastMatch, i - lastMatch ) );
+				list.Add( obj.Substring( lastMatch, i - lastMatch ).ToHandle() );
 				lastMatch = i + splitAt.Length();
 				i += splitAt.Length();
 			}
 
-			var arr = Array.CreateInstance( list.Count );
+			var arr = Array.CreateInstance( list.Count ).ToHandle();
 			list.ForEach( ( e, i ) => arr.Set( i, e ) );
 
 			return arr;
 		}
 
 		public static int IndexOf( this Handle<String> obj, Handle<String> str, int startIndex ) {
+			if (startIndex < 0 || obj.Length() <= startIndex)
+				throw new ArgumentOutOfRangeException( "startIndex" );
+
 			int i = 0;
 		top:
 			if (i >= obj.Length())
 				return -1;
-			for (int j = 0; j < str.Length(); j++)
+			for (int j = startIndex; j < str.Length(); j++)
 				if (obj.CharAt( i ) != str.CharAt( j )) {
 					i += j + 1;
 					goto top;
@@ -200,28 +211,35 @@ namespace VM.VMObjects {
 			return obj.IndexOf( str, 0 );
 		}
 
-		public static int LastIndexOf( this Handle<String> obj, Handle<String> str ) {
-			int last = -1;
-			last = obj.IndexOf( str, 0 );
+		public static int LastIndexOf( this Handle<String> obj, Handle<String> str, int startIndex ) {
+			if (startIndex < 0 || obj.Length() <= startIndex)
+				throw new ArgumentOutOfRangeException( "startIndex" );
+
+			int i = startIndex;
 		top:
-			if (last != -1) {
-				int next = obj.IndexOf( str, last + 1 );
-				if (next != -1) {
-					last = next;
+			if (i < 0)
+				return -1;
+			for (int j = str.Length() - 1; j >= 0; j--)
+				if (obj.CharAt( i ) != str.CharAt( j )) {
+					i -= j + 1;
 					goto top;
 				}
-			}
-			return last;
+
+			return i;
 		}
 
-		public static Handle<String> Substring( this Handle<String> obj, int start, int count ) {
+		public static int LastIndexOf( this Handle<String> obj, Handle<String> str ) {
+			return obj.LastIndexOf( str, obj.Length() - 1 );
+		}
+
+		public static String Substring( this Handle<String> obj, int start, int count ) {
 			if (start < 0)
-				throw new ArgumentOutOfBoundsException( "start" );
+				throw new ArgumentOutOfRangeException( "start" );
 			if (count < 0 || start + count > obj.Length())
-				throw new ArgumentOutOfBoundsException( "count" );
+				throw new ArgumentOutOfRangeException( "count" );
 
 			var wordCount = (count + 1) / 2;
-			var newStr = String.CreateInstance( count );
+			var newStr = String.CreateInstance( count ).ToHandle();
 
 			for (int cur = start, w = String.FIRST_CHAR_OFFSET; cur < count + start; cur += 2, w++) {
 				if (cur % 2 == 0)
@@ -237,7 +255,7 @@ namespace VM.VMObjects {
 			return newStr;
 		}
 
-		public static Handle<String> Substring( this Handle<String> obj, int start ) {
+		public static String Substring( this Handle<String> obj, int start ) {
 			return obj.Substring( start, obj.Length() - start );
 		}
 
@@ -271,8 +289,8 @@ namespace VM.VMObjects {
 			return 0;
 		}
 
-		public static Handle<String> Concat( this Handle<String> str1, Handle<VM.VMObjects.String> str2 ) {
-			var str = String.CreateInstance( str1.Length() + str2.Length() );
+		public static String Concat( this Handle<String> str1, Handle<VM.VMObjects.String> str2 ) {
+			var str = String.CreateInstance( str1.Length() + str2.Length() ).ToHandle();
 
 			var s1Len = str1.Length();
 			var s1WC = (s1Len + 1) / 2;
@@ -318,7 +336,7 @@ namespace VM.VMObjects {
 			}
 			var ints = bytes.ToUIntStream();
 
-			var vmStr = VMObjects.String.CreateInstance( str.Length );
+			var vmStr = VMObjects.String.CreateInstance( str.Length ).ToHandle();
 			ints.ForEach( ( b, i ) => vmStr[i + VMObjects.String.FIRST_CHAR_OFFSET] = b );
 
 			return vmStr;
@@ -329,7 +347,7 @@ namespace VM.VMObjects {
 				return str;
 
 			foreach (var istr in strings)
-				if (istr.Equals( str ))
+				if (Equals( istr, str ))
 					return istr;
 
 			strings.Add( str );
@@ -348,7 +366,7 @@ namespace VM.VMObjects {
 		public static int GetInternIndex( this Handle<VMObjects.String> str ) {
 			if (!str.IsInterned())
 				throw new ArgumentException( "Specified string must be interned.", "str" );
-			return strings.FindIndex( s => s.Value.Equals( str.Value ) );
+			return strings.FindIndex( s => Equals( s, str ) );
 		}
 	}
 }

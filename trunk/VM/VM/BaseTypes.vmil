@@ -50,12 +50,66 @@
 			load-field message
 			return
 		}
+		
+		.handler public message() {
+			load-field message
+			return
+		}
+	}
+	
+	.class public InvalidOperationException extends System.Exception {
+		.fields { operation }
+	
+		.handler public initialize(operation) {
+			load-this
+			push-literal "The specified operation could not be executed."
+			push-literal "System.Exception.initialize:1"
+			send-message
+			
+			load-argument operation
+			store-field operation
+		}		
+		
+		.handler public operation() {
+			load-field operation
+			return
+		}
 	}
 	
 	.class public NotImplementedException extends System.Exception {
 		.handler public initialize() {
+			load-this
 			push-literal "The message handler has not been implemented."
 			push-literal "initialize:1"
+			send-message
+		}
+	}
+	
+	.class public ArgumentException extends System.Exception {
+		.fields { argument }
+		
+		.handler public initialize(message, argument) {
+			load-this
+			load-argument message
+			push-literal "System.Exception.initialize:1"
+			send-message
+			
+			load-argument argument
+			store-field argument
+		}
+		
+		.handler public argument() {
+			load-field argument
+			return
+		}
+	}
+	
+	.class public ArgumentOutOfRangeException extends System.ArgumentException {
+		.handler public initialize(argument) {
+			load-this
+			push-literal "The specified argument was out of range for the specified operation."
+			load-argument argument
+			push-literal "System.Exception.initialize:2"
 			send-message
 		}
 	}
@@ -350,6 +404,30 @@
 			.handler public inner-classes .external System.Reflection.Class.inner-classes()
 			
 			.handler public equals .external System.Reflection.Class.equals(other)
+			
+			.handler public full-name() {
+				load-this
+				push-literal "parent-class:0"
+				send-message
+				dup
+				jump-if-false noParent
+				
+				push-literal "name:0"
+				send-message
+				load-this
+				push-literal "name:0"
+				send-message
+				push-literal "concat:1"
+				send-message
+				return
+				
+				noParent:
+					pop
+					load-this
+					push-literal "name:0"
+					send-message
+					return
+			}
 			
 			.handler public to-string() {
 				.locals { arr, i, length }

@@ -32,10 +32,10 @@ namespace VMILLib {
 	}
 
 	public enum VisibilityModifier {
-		Public = 0,
-		Protected = 1,
-		Private = 2,
-		None = 3
+		None = 0,
+		Public = 1,
+		Protected = 2,
+		Private = 3
 	}
 
 	public enum TypeId : int {

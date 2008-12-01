@@ -16,8 +16,7 @@ namespace VM {
 
 		public ClassLoader( vml.SourceReader reader ) {
 			this.reader = reader;
-			this.reader.Logger = new Sekhmet.Logging.Logger();
-			this.reader.Logger.Handlers.Add( new Sekhmet.Logging.ConsoleLogHandler() );
+			this.reader.Logger = VirtualMachine.Logger;
 		}
 
 		public ClassLoader( Stream input ) : this( new vml.SourceReader( input ) ) { }
@@ -28,13 +27,16 @@ namespace VM {
 		/// </summary>
 		/// <returns>The entrypoint specified in the input if any.</returns>
 		public Handle<vmo.VMILMessageHandler> Read() {
+			var assembly = reader.Read();
+			if (assembly == null)
+				throw new ClassLoaderException();
 			reader.Read().Classes.ForEach( c => VirtualMachine.RegisterClass( ReadClass( null, c ) ) );
 
 			return entrypoint;
 		}
 
 		Handle<vmo.Class> ReadClass( Handle<Class> parentClass, vml.Class lc ) {
-			var oc = vmo.Class.CreateInstance( lc.SuperClasses.Count, lc.Handlers.Count, lc.InnerClasses.Count );
+			var oc = vmo.Class.CreateInstance( lc.SuperClasses.Count, lc.Handlers.Count, lc.InnerClasses.Count ).ToHandle();
 
 			var handlers = new List<Handle<vmo.MessageHandlerBase>>();
 			lc.Handlers.ForEach( h => handlers.Add( ReadMessageHandler( oc, h ) ) );
@@ -42,7 +44,7 @@ namespace VM {
 			var innerClasses = new List<Handle<vmo.Class>>();
 			lc.InnerClasses.ForEach( c => innerClasses.Add( ReadClass( oc, c ) ) );
 
-			oc.InitInstance( lc.Visibility, lc.Name.ToVMString().Intern(), parentClass, lc.SuperClasses.Select( sc => sc.ToVMString().Intern() ).ToList(), 
+			oc.InitInstance( lc.Visibility, lc.Name.ToVMString().Intern(), parentClass, lc.SuperClasses.Select( sc => sc.ToVMString().Intern() ).ToList(),
 				lc.Fields.Count, lc.DefaultHandler != null ? ReadMessageHandler( oc, lc.DefaultHandler ) : null, handlers, innerClasses );
 
 			return oc;
@@ -52,14 +54,15 @@ namespace VM {
 			Handle<vmo.MessageHandlerBase> h;
 			if (lh.IsExternal) {
 				var leh = (vml.ExternalMessageHandler) lh;
-				var oh = vmo.DelegateMessageHandler.CreateInstance();
+				var oh = vmo.DelegateMessageHandler.CreateInstance().ToHandle();
 				oh.InitInstance( lh.Name.ToVMString().Intern(), lh.Visibility, cls, lh.IsEntrypoint, lh.Arguments.Count, leh.ExternalName.ToVMString().Intern() );
 				h = oh.To<MessageHandlerBase>();
 			} else {
 				var lvh = (vml.VMILMessageHandler) lh;
-				var vh = vmo.VMILMessageHandler.CreateInstance( lvh.Instructions.Count );
+				var vh = vmo.VMILMessageHandler.CreateInstance( lvh.Instructions.Count ).ToHandle();
 
-				vh.InitInstance( lvh.Name.ToVMString().Intern(), lvh.Visibility, cls, lvh.IsEntrypoint, lvh.Arguments.Count, lvh.Locals.Count, ReadInstructions( lvh.Instructions ) );
+				vh.InitInstance( lvh.Visibility != vml.VisibilityModifier.None ? lvh.Name.ToVMString().Intern() : null, lvh.Visibility, cls, lvh.IsEntrypoint,
+					lvh.Arguments.Count, lvh.Locals.Count, ReadInstructions( lvh.Instructions ) );
 
 				if (vh.IsEntrypoint())
 					entrypoint = vh;
@@ -83,16 +86,28 @@ namespace VM {
 				Word eins = (uint) ins.OpCode << 27;
 				switch (ins.OpCode) {
 					case vml.OpCode.StoreField:
-					case vml.OpCode.LoadField:
-						eins |= (uint) ins.MessageHandler.Class.Fields.IndexOf( (string) ins.Operand );
-						break;
+					case vml.OpCode.LoadField: {
+							var idx = ins.MessageHandler.Class.Fields.IndexOf( (string) ins.Operand );
+							if (idx < 0)
+								throw new ClassLoaderException( "No such field: '" + ins.Operand + "'." );
+							eins |= (uint) idx;
+							break;
+						}
 					case vml.OpCode.StoreLocal:
-					case vml.OpCode.LoadLocal:
-						eins |= (uint) ins.MessageHandler.Locals.IndexOf( (string) ins.Operand );
-						break;
-					case vml.OpCode.LoadArgument:
-						eins |= (uint) ins.MessageHandler.Arguments.IndexOf( (string) ins.Operand ) + 1;
-						break;
+					case vml.OpCode.LoadLocal: {
+							var idx = ins.MessageHandler.Locals.IndexOf( (string) ins.Operand );
+							if (idx < 0)
+								throw new ClassLoaderException( "No such local variable: '" + ins.Operand + "'." );
+							eins |= (uint) idx;
+							break;
+						}
+					case vml.OpCode.LoadArgument: {
+							var idx = ins.MessageHandler.Arguments.IndexOf( (string) ins.Operand ) + 1;
+							if (idx < 0)
+								throw new ClassLoaderException( "No such argument: '" + ins.Operand + "'." );
+							eins |= (uint) idx;
+							break;
+						}
 					case vml.OpCode.LoadThis:
 						eins = (uint) vml.OpCode.LoadArgument << 27;
 						break;
@@ -133,10 +148,10 @@ namespace VM {
 					case vml.OpCode.Try:
 						var tryrecord = trycatchMap[index];
 						trycatchStack.Push( tryrecord );
-						eins |= (uint) (tryrecord.CatchIndex + 1 - index);
+						eins |= (uint) tryrecord.CatchIndex;
 						break;
 					case vml.OpCode.Catch:
-						eins |= (uint) (trycatchStack.Peek().EndTryCatch + 1 - index);
+						eins |= (uint) trycatchStack.Peek().EndTryCatch;
 						break;
 					case vml.OpCode.EndTryCatch:
 						trycatchStack.Pop();

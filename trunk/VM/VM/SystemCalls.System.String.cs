@@ -12,60 +12,63 @@ namespace VM {
 				static Handle<VMObjects.String> toStringStr = "to-string:0".ToVMString().Intern();
 
 				[SystemCallMethod( "get-hashcode:0" )]
-				public static Handle<VMObjects.AppObject> GetHashcode( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-					return new IntHandle( receiver.To<VMObjects.String>().GetHashCode() );
+				public static UValue GetHashcode( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+					return ((VMObjects.String) receiver.Value).ToHandle().GetHashCode();
 				}
 
 				[SystemCallMethod( "equals:1" )]
-				public static Handle<VMObjects.AppObject> Equals( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-					if (arguments[0].Class() != KnownClasses.SystemString)
-						return new IntHandle( 0 );
-					return new IntHandle( receiver.To<VMObjects.String>().Equals( arguments[0].To<VMObjects.String>() ) ? 1 : 0 );
+				public static UValue Equals( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+					var arg = ((VMObjects.String) arguments[0].Value).ToHandle();
+					if (arg.Class().Start != KnownClasses.SystemString.Start)
+						return UValue.Null();
+					return ((VMObjects.String) receiver.Value).ToHandle().Equals( arg ) ? 1 : 0;
 				}
 
 				[SystemCallMethod( "compare-to:1" )]
-				public static Handle<VMObjects.AppObject> CompareTo( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-					var arr = arguments[0].To<VMObjects.String>();
-					return new IntHandle( receiver.To<VMObjects.String>().CompareTo( arr.Value ) );
+				public static UValue CompareTo( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+					if (arguments[0].Type != KnownClasses.SystemString.Start)
+						return 0;
 
+					var other = ((VMObjects.String) arguments[0].Value).ToHandle();
+					return ((VMObjects.String) receiver.Value).ToHandle().CompareTo( other );
 				}
 
 				[SystemCallMethod( "substring:2" )]
-				public static Handle<VMObjects.AppObject> Substring( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-					return receiver.To<VMObjects.String>().Substring( ((IntHandle) arguments[0]).Value, ((IntHandle) arguments[1]).Value ).To<AppObject>();
+				public static UValue Substring( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+					return UValue.Ref( KnownClasses.SystemString, ((VMObjects.String) receiver.Value).ToHandle().Substring( arguments[0].Value, arguments[1].Value ) );
 				}
 
 				[SystemCallMethod( "split:1" )]
-				public static Handle<VMObjects.AppObject> Split( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-					var arr = arguments[0].To<VMObjects.String>();
-					return receiver.To<VMObjects.String>().Split( arr ).To<VMObjects.AppObject>();
+				public static UValue Split( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+					var splitter = ((VMObjects.String) arguments[0].Value).ToHandle();
+					return UValue.Ref( KnownClasses.SystemArray, ((VMObjects.String) receiver.Value).ToHandle().Split( splitter ) );
 				}
 
 				[SystemCallMethod( "index-of:1" )]
-				public static Handle<VMObjects.AppObject> IndexOf( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-					var arr = arguments[0].To<VMObjects.String>();
+				public static UValue IndexOf( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+					var other = ((VMObjects.String) arguments[0].Value).ToHandle();
 
-					return new IntHandle( receiver.To<VMObjects.String>().IndexOf( arr ) );
+					return ((VMObjects.String) receiver.Value).ToHandle().IndexOf( other );
 				}
 
 				[SystemCallMethod( "last-index-of:1" )]
-				public static Handle<VMObjects.AppObject> LastIndexOf( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-					var arr = arguments[0].To<VMObjects.String>();
+				public static UValue LastIndexOf( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+					var arr = ((VMObjects.String) arguments[0].Value).ToHandle();
 
-					return new IntHandle( receiver.To<VMObjects.String>().LastIndexOf( arr ) );
+					return ((VMObjects.String) receiver.Value).ToHandle().LastIndexOf( arr );
 				}
 
 				[SystemCallMethod( "concat:1" )]
-				public static Handle<VMObjects.AppObject> Concat( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-					var str1 = receiver.To<VMObjects.String>();
-					var str2 = interpretor.Send( toStringStr, arguments[0] ).To<VMObjects.String>();
+				public static UValue Concat( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+					var str1 = ((VMObjects.String) receiver.Value).ToHandle();
+					var str2 = interpretor.Send( toStringStr, arguments[0].ToHandle() );
 
-					return str1.Concat( str2 ).To<VMObjects.AppObject>();
+					return UValue.Ref( KnownClasses.SystemString, str1.Concat( str2.ToHandle<VMObjects.String>() ) );
 				}
 
 				[SystemCallMethod( "length:0" )]
-				public static Handle<AppObject> Length( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-					return new IntHandle( receiver.To<VMObjects.String>().Length() );
+				public static UValue Length( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+					return ((VMObjects.String) receiver.Value).ToHandle().Length();
 				}
 			}
 		}

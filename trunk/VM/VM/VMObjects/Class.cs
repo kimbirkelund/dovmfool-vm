@@ -29,6 +29,10 @@ namespace VM.VMObjects {
 		int start;
 		public int Start { get { return start; } }
 		public Handle<Class> VMClass { get { return KnownClasses.SystemReflectionClass; } }
+		public Word this[int index] {
+			get { return VirtualMachine.MemoryManager[Start + index]; }
+			set { VirtualMachine.MemoryManager[Start + index] = value; }
+		}
 		#endregion
 
 		#region Cons
@@ -42,7 +46,7 @@ namespace VM.VMObjects {
 		#endregion
 
 		#region Static methods
-		public static Handle<Class> CreateInstance( int superClassCount, int handlerCount, int innerClassCount ) {
+		public static Class CreateInstance( int superClassCount, int handlerCount, int innerClassCount ) {
 			var cls = VirtualMachine.MemoryManager.Allocate<Class>( ClassConsts.SUPERCLASSES_OFFSET - 1 + superClassCount + 1 + 2 * handlerCount + 2 * innerClassCount );
 			cls[ClassConsts.INSTANCE_SIZE_OFFSET] = -1;
 			cls[ClassConsts.LINEARIZATION_OFFSET] = 0;
@@ -62,9 +66,13 @@ namespace VM.VMObjects {
 
 		#region Instance method
 		public override string ToString() {
-			return ExtClass.ToString( this );
+			return ExtClass.ToString( this.ToHandle() );
 		}
 		#endregion
+
+		public bool Equals( Handle<Class> obj1, Handle<Class> obj2 ) {
+			return obj1.Start == obj2.Start;
+		}
 	}
 
 	public static class ExtClass {
@@ -91,7 +99,7 @@ namespace VM.VMObjects {
 		public static int TotalFieldCount( this Handle<Class> obj ) {
 			if (obj[ClassConsts.INSTANCE_SIZE_OFFSET] == -1) {
 				int instanceSize = 0;
-				var lin = obj.Linearization();
+				var lin = obj.Linearization().ToHandle();
 				for (int i = 0; i < lin.Length(); i++) {
 					var superCls = lin.Get<Class>( i );
 					instanceSize += superCls.FieldCount();
@@ -101,63 +109,65 @@ namespace VM.VMObjects {
 			return obj[ClassConsts.INSTANCE_SIZE_OFFSET];
 		}
 
-		public static Handle<String> Name( this Handle<Class> obj ) {
+		public static String Name( this Handle<Class> obj ) {
 			return String.GetString( obj[ClassConsts.HEADER_OFFSET] >> ClassConsts.NAME_RSHIFT );
 		}
 
-		public static Handle<MessageHandlerBase> DefaultHandler( this Handle<Class> obj ) {
-			return (MessageHandlerBase) obj[ClassConsts.SUPERCLASSES_OFFSET + obj.SuperClassCount()];
+		public static MessageHandlerBase DefaultHandler( this Handle<Class> obj ) {
+			return ((MessageHandlerBase) obj[ClassConsts.SUPERCLASSES_OFFSET + obj.SuperClassCount()]);
 		}
 
-		public static Handle<Class> ParentClass( this Handle<Class> obj ) {
+		public static Class ParentClass( this Handle<Class> obj ) {
 			return (Class) obj[ClassConsts.PARENT_CLASS_OFFSET];
 		}
 
-		public static IEnumerable<Handle<String>> SuperClasses( this Handle<Class> obj ) {
+		public static IEnumerable<String> SuperClasses( this Handle<Class> obj ) {
 			for (var i = ClassConsts.SUPERCLASSES_OFFSET; i < ClassConsts.SUPERCLASSES_OFFSET + obj.SuperClassCount(); i++)
 				yield return (String) obj[i];
 		}
 
-		public static IEnumerable<Handle<MessageHandlerBase>> MessageHandlers( this Handle<Class> obj ) {
+		public static IEnumerable<MessageHandlerBase> MessageHandlers( this Handle<Class> obj ) {
 			var firstHandler = ClassConsts.SUPERCLASSES_OFFSET + obj.SuperClassCount() + 1;
 			var handlers = obj.MessageHandlerCount() * 2;
 			for (var i = 1; i < handlers; i += 2)
 				yield return (MessageHandlerBase) obj[firstHandler + i];
 		}
 
-		public static Handle<MessageHandlerBase> ResolveMessageHandler( this Handle<Class> obj, Handle<Class> caller, Handle<String> messageName ) {
-			var dotIndex = messageName.IndexOf( String.Dot );
+		public static MessageHandlerBase ResolveMessageHandler( this Handle<Class> obj, Handle<Class> caller, Handle<String> messageName ) {
+			var dotIndex = messageName.LastIndexOf( String.Dot );
 			if (dotIndex != -1) {
-				var clsName = messageName.Substring( 0, dotIndex );
-				messageName = messageName.Substring( dotIndex + 1 );
+				var clsName = messageName.Substring( 0, dotIndex ).ToHandle();
+				messageName = messageName.Substring( dotIndex + 1 ).ToHandle();
+				var cls = VirtualMachine.ResolveClass( obj, clsName ).ToHandle();
 
 				if (!obj.Is( caller ))
-					return null;
+					return (MessageHandlerBase) 0;
 
-				foreach (var superCls in caller.SuperClasses()) {
-					if (superCls == clsName)
-						return VirtualMachine.ResolveClass( caller, clsName ).InternNoDefaultResolveMessageHandler( caller, messageName );
+				foreach (var superCls in caller.Linearization().ToHandle().GetEnumerator<Class>()) {
+					if (superCls == cls)
+						return cls.InternNoDefaultResolveMessageHandler( caller, messageName );
 				}
 
-				return null;
-			} else
-				return obj.InternNoDefaultResolveMessageHandler( caller, messageName ) ?? obj.DefaultHandler();
-
+				return (MessageHandlerBase) 0;
+			} else {
+				var hand = obj.InternNoDefaultResolveMessageHandler( caller, messageName );
+				return hand.IsNull() ? obj.DefaultHandler() : hand;
+			}
 		}
 
-		static Handle<MessageHandlerBase> InternNoDefaultResolveMessageHandler( this Handle<Class> obj, Handle<Class> caller, Handle<String> messageName ) {
-			var lin = obj.Linearization();
+		static MessageHandlerBase InternNoDefaultResolveMessageHandler( this Handle<Class> obj, Handle<Class> caller, Handle<String> messageName ) {
+			var lin = obj.Linearization().ToHandle();
 			for (int i = 0; i < lin.Length(); i++) {
 				var cls = lin.Get<Class>( i );
 				var handler = cls.InternResolveMessageHandler( caller, messageName );
-				if (handler != null)
+				if (!handler.IsNull())
 					return handler;
 			}
 
-			return null;
+			return (MessageHandlerBase) 0;
 		}
 
-		static Handle<MessageHandlerBase> InternResolveMessageHandler( this Handle<Class> obj, Handle<Class> caller, Handle<String> messageName ) {
+		static MessageHandlerBase InternResolveMessageHandler( this Handle<Class> obj, Handle<Class> caller, Handle<String> messageName ) {
 			var firstHandler = ClassConsts.SUPERCLASSES_OFFSET + obj.SuperClassCount() + 1;
 			var handlers = obj.MessageHandlerCount() * 2;
 
@@ -176,17 +186,17 @@ namespace VM.VMObjects {
 				return (MessageHandlerBase) obj[firstHandler + i + 1];
 			}
 
-			return null;
+			return (MessageHandlerBase) 0;
 		}
 
-		public static IEnumerable<Handle<Class>> InnerClasses( this Handle<Class> obj ) {
+		public static IEnumerable<Class> InnerClasses( this Handle<Class> obj ) {
 			var firstClass = ClassConsts.SUPERCLASSES_OFFSET + obj.SuperClassCount() + obj.MessageHandlerCount() * 2 + 1;
 			var classes = obj.InnerClassCount() * 2;
 			for (var i = 1; i < classes; i += 2)
 				yield return (Class) obj[firstClass + i];
 		}
 
-		public static Handle<Class> ResolveInnerClass( this Handle<Class> obj, Handle<Class> referencer, Handle<String> className ) {
+		public static Class ResolveInnerClass( this Handle<Class> obj, Handle<Class> referencer, Handle<String> className ) {
 			var firstClass = ClassConsts.SUPERCLASSES_OFFSET + obj.SuperClassCount() + obj.MessageHandlerCount() * 2 + 1;
 			var classes = obj.InnerClassCount() * 2;
 
@@ -214,7 +224,7 @@ namespace VM.VMObjects {
 
 		public static bool Extends( this Handle<Class> obj, Handle<Class> testSuperCls ) {
 			foreach (var superClsName in obj.SuperClasses()) {
-				var superCls = VirtualMachine.ResolveClass( obj, superClsName );
+				var superCls = VirtualMachine.ResolveClass( obj, superClsName.ToHandle() ).ToHandle();
 
 				if (superCls == testSuperCls || superCls.Extends( testSuperCls ))
 					return true;
@@ -229,7 +239,7 @@ namespace VM.VMObjects {
 			return ".class " + obj.Visibility().ToString().ToLower() + " " + obj.Name() + (obj.SuperClassCount() > 0 ? " extends " + obj.SuperClasses().Join( ", " ) : "");
 		}
 
-		public static Handle<Array> Linearization( this Handle<Class> obj ) {
+		public static Array Linearization( this Handle<Class> obj ) {
 			if (obj[ClassConsts.LINEARIZATION_OFFSET] == -1)
 				obj.Linearize();
 			return (Array) obj[ClassConsts.LINEARIZATION_OFFSET];
@@ -238,20 +248,20 @@ namespace VM.VMObjects {
 		static void Linearize( this Handle<Class> obj ) {
 			Handle<Array> list = null;
 
-			foreach (var superClsName in obj.SuperClasses().Reverse()) {
-				var superCls = VirtualMachine.ResolveClass( obj, superClsName );
+			foreach (var superClsName in obj.SuperClasses().Reverse().Select( s => s.ToHandle() )) {
+				var superCls = VirtualMachine.ResolveClass( obj, superClsName ).ToHandle();
 				if (superCls == null)
 					throw new ClassNotFoundException( superClsName );
 				if (list == null)
-					list = superCls.Linearization();
+					list = superCls.Linearization().ToHandle();
 				else
-					list = MergeLinearizations( list, superCls.Linearization() );
+					list = MergeLinearizations( list, superCls.Linearization().ToHandle() );
 			}
 			Handle<Array> arr;
 			if (list == null)
-				arr = Array.CreateInstance( 1 );
+				arr = Array.CreateInstance( 1 ).ToHandle();
 			else {
-				arr = Array.CreateInstance( list.Length() + 1 );
+				arr = Array.CreateInstance( list.Length() + 1 ).ToHandle();
 				Array.Copy( list, 0, arr, 1, list.Length() );
 			}
 			arr.Set( 0, obj );
@@ -317,7 +327,7 @@ namespace VM.VMObjects {
 
 		checkingDone:
 			if (noneInOther) {
-				var l = Array.CreateInstance( l1.Length() + l2.Length() );
+				var l = Array.CreateInstance( l1.Length() + l2.Length() ).ToHandle();
 				int j = 0;
 				for (int i = 0; i < l1.Length(); i++)
 					l.Set( j++, l1.Get<Class>( i ) );
@@ -350,7 +360,7 @@ namespace VM.VMObjects {
 					for (int i2 = i + 1; i2 < l1.Length(); i2++)
 						l.Add( l1.Get<Class>( i2 ) );
 
-				return l.ToVMArray();
+				return l.ToVMArray().ToHandle();
 			}
 		}
 		#endregion

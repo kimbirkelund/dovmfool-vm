@@ -24,7 +24,7 @@ namespace VM {
 			memory = new Word[size];
 		}
 
-		internal override Handle<T> Allocate<T>( int size ) {
+		internal override T Allocate<T>( int size ) {
 			if (position + size >= memory.Length)
 				throw new OutOfMemoryException();
 
@@ -32,8 +32,8 @@ namespace VM {
 			size += 1;
 			position += size;
 
-			var obj = new Handle<T>( new T().New( pos ) );
-			memory[pos] = obj.Value.VMClass.Start;
+			var obj = new T().New( pos );
+			memory[pos] = obj.VMClass.Start;
 			return obj;
 		}
 	}

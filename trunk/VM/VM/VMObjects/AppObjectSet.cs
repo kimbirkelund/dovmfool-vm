@@ -15,6 +15,10 @@ namespace VM.VMObjects {
 		int start;
 		public int Start { get { return start; } }
 		public Handle<Class> VMClass { get { return KnownClasses.ObjectSet; } }
+		public Word this[int index] {
+			get { return VirtualMachine.MemoryManager[Start + index]; }
+			set { VirtualMachine.MemoryManager[Start + index] = value; }
+		}
 		#endregion
 
 		#region Cons
@@ -47,7 +51,11 @@ namespace VM.VMObjects {
 
 		#region Instance methods
 		public override string ToString() {
-			return ExtAppObjectSet.ToString( this );
+			return ExtAppObjectSet.ToString( this.ToHandle() );
+		}
+
+		public bool Equals( Handle<AppObjectSet> obj1, Handle<AppObjectSet> obj2 ) {
+			return obj1.Start == obj2.Start;
 		}
 		#endregion
 	}

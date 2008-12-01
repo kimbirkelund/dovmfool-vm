@@ -8,40 +8,28 @@ namespace VM {
 			[SystemCallClass( "Integer" )]
 			class Integer {
 				[SystemCallMethod( "to-string:0" )]
-				public static Handle<VMObjects.AppObject> ToString( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-					return ((IntHandle) receiver).Value.ToString().ToVMString().To<VMObjects.AppObject>();
+				public static UValue ToString( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+					return receiver.Value.ToString().ToVMString().ToUValue();
 				}
 
 				[SystemCallMethod( "subtract:1" )]
-				public static Handle<VMObjects.AppObject> subtract( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-					var other = ((IntHandle) arguments[0]).Value;
-					var value = ((IntHandle) receiver).Value - other;
-
-					return new IntHandle( value );
+				public static UValue subtract( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+					return receiver.Value - arguments[0].Value;
 				}
 
 				[SystemCallMethod( "add:1" )]
-				public static Handle<VMObjects.AppObject> add( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-					var other = ((IntHandle) arguments[0]).Value;
-					var value = ((IntHandle) receiver).Value + other;
-
-					return new IntHandle( value );
+				public static UValue add( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+					return receiver.Value + arguments[0].Value;
 				}
 
 				[SystemCallMethod( "multiply:1" )]
-				public static Handle<VMObjects.AppObject> multiply( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-					var other = ((IntHandle) arguments[0]).Value;
-					var value = ((IntHandle) receiver).Value * other;
-
-					return new IntHandle( value );
+				public static UValue multiply( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+					return receiver.Value * arguments[0].Value;
 				}
 
 				[SystemCallMethod( "divide:1" )]
-				public static Handle<VMObjects.AppObject> divide( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-					var other = ((IntHandle) arguments[0]).Value;
-					var value = ((IntHandle) receiver).Value / other;
-
-					return new IntHandle( value );
+				public static UValue divide( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+					return receiver.Value / arguments[0].Value;
 				}
 			}
 		}
