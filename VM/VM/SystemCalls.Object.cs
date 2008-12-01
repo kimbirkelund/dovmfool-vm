@@ -9,19 +9,19 @@ namespace VM {
 		[SystemCallClass( "Object" )]
 		class Object {
 			[SystemCallMethod( "get-type:0" )]
-			public static Handle<VMObjects.AppObject> GetType( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-				return (AppObject) receiver[0];
+			public static UValue GetType( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+				return UValue.Ref( KnownClasses.SystemReflectionClass, receiver.Type );
 			}
 
 			[SystemCallMethod( "to-string:0" )]
-			public static Handle<VMObjects.AppObject> ToString( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-				return receiver.Class().Name().To<VMObjects.AppObject>();
+			public static UValue ToString( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+				return UValue.Ref( KnownClasses.SystemReflectionClass, receiver.Type.ToHandle().Name() );
 			}
 
 
 			[SystemCallMethod( "equals:1" )]
-			public static Handle<VMObjects.AppObject> Equals( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-				return new IntHandle( receiver.Equals( arguments[0] ) ? 1 : 0 );
+			public static UValue Equals( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+				return receiver.Equals( arguments[0] ) ? 1 : 0;
 			}
 		}
 	}

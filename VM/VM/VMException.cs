@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using VM.VMObjects;
 
 namespace VM {
 	[global::System.Serializable]
@@ -10,6 +11,28 @@ namespace VM {
 		public VMException( string message ) : base( message ) { }
 		public VMException( string message, Exception inner ) : base( message, inner ) { }
 		protected VMException(
+		  System.Runtime.Serialization.SerializationInfo info,
+		  System.Runtime.Serialization.StreamingContext context )
+			: base( info, context ) { }
+
+		public static VMException MakeDotNetException( Handle<AppObject> obj ) {
+			return null;
+		}
+
+		internal virtual Handle<AppObject> ToVMException() {
+			var eCls = VirtualMachine.ResolveClass( null, "System.Exception".ToVMString(), false ).ToHandle();
+			var e = AppObject.CreateInstance( eCls ).ToHandle();
+			e.Send( "initialize:1", Message.ToVMString().To<AppObject>() );
+			return e;
+		}
+	}
+
+	[global::System.Serializable]
+	public class ClassLoaderException : VMException {
+		public ClassLoaderException() : base( "An exception occured while loading a class." ) { }
+		public ClassLoaderException( string message ) : base( message ) { }
+		public ClassLoaderException( string message, Exception inner ) : base( message, inner ) { }
+		protected ClassLoaderException(
 		  System.Runtime.Serialization.SerializationInfo info,
 		  System.Runtime.Serialization.StreamingContext context )
 			: base( info, context ) { }
@@ -71,6 +94,17 @@ namespace VM {
 	}
 
 	[global::System.Serializable]
+	public class InvalidCastException : VMAppException {
+		public InvalidCastException() : base( "Object can not be cast to specified type." ) { }
+		public InvalidCastException( string message ) : base( message ) { }
+		public InvalidCastException( string message, Exception inner ) : base( message, inner ) { }
+		protected InvalidCastException(
+		  System.Runtime.Serialization.SerializationInfo info,
+		  System.Runtime.Serialization.StreamingContext context )
+			: base( info, context ) { }
+	}
+
+	[global::System.Serializable]
 	public class ArgumentException : VMAppException {
 		public readonly string Argument;
 
@@ -85,12 +119,12 @@ namespace VM {
 	}
 
 	[global::System.Serializable]
-	public class ArgumentOutOfBoundsException : ArgumentException {
-		public ArgumentOutOfBoundsException() { }
-		public ArgumentOutOfBoundsException( string message, string argument ) : base( message, argument ) { }
-		public ArgumentOutOfBoundsException( string argument ) : this( "The argument was out of bounds for the specified operation.", argument ) { }
-		public ArgumentOutOfBoundsException( string message, Exception inner ) : base( message, inner ) { }
-		protected ArgumentOutOfBoundsException(
+	public class ArgumentOutOfRangeException : ArgumentException {
+		public ArgumentOutOfRangeException() { }
+		public ArgumentOutOfRangeException( string message, string argument ) : base( message, argument ) { }
+		public ArgumentOutOfRangeException( string argument ) : this( "The argument was out of bounds for the specified operation.", argument ) { }
+		public ArgumentOutOfRangeException( string message, Exception inner ) : base( message, inner ) { }
+		protected ArgumentOutOfRangeException(
 		  System.Runtime.Serialization.SerializationInfo info,
 		  System.Runtime.Serialization.StreamingContext context )
 			: base( info, context ) { }

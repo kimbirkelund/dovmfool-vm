@@ -1,76 +1,103 @@
-.class public Foo extends Foo1, Foo2 {
-  .fields { console, bar2, initialized }
-  
-  .default {
-      .locals { args }
-      
-      load-field initialized
-      jump-if-true alreadyInitialized
+.class public Foo {
+       .fields { console, bar2, initialized }
+       
+       .default {
+       		.locals { args }
 
-      store-local args
+		load-field initialized
+		jump-if-true alreadyInitialized
 
-      load-local args
-      push-literal "argument-count:0"
-      send-message
-      push-literal 2
-      push-literal "are-equal:1"
-      send-message
-      jump-if-false invalidArgCount
+		store-local args
+		load-local args
+      		push-literal "length:0"
+      		send-message
+      		push-literal 2
+      		push-literal "equals:1"
+      		send-message
+      		jump-if-false invalidArgCount
 
-      load-local args
-      push-literal 0
-      push-literal "get-argument:1"
-      send-message
-      store-field console
+      		load-local args
+      		push-literal 0
+      		push-literal "get:1"
+      		send-message
+      		store-field console
 
-      load-local args
-      push-literal 1
-      push-literal "get-argument:1"
-      send-message
-      store-field bar2
+      		load-local args
+      		push-literal 1
+      		push-literal "get:1"
+      		send-message
+      		store-field bar2
 
-      push-literal 1
-      store-field initialized
-      return-void
+      		push-literal 1
+      		store-field initialized
+      		return-void
 
-      push-literal 10
-      push-literal "Bob er sej"
-      push-literal -10
-      push-literal 1073741824
-      push-literal -1073741824
+	    invalidArgCount: 
+		push-literal "System.ArgumentOutOfRangeException"
+		new-instance
+        	dup
+      		push-literal "The expected number of arguments was two."
+      		push-literal "initialize:1"
+      		send-message
+      		throw
 
-    invalidArgCount: 
-      .try {
-        push-literal "System.ArgumentOutOfRange"
-      	new-instance
-        dup
-      	push-literal "The expected number of arguments was two"
-      	push-literal "initialize:1"
-      	send-message
-      	throw
-      } catch {
-        load-field console
-        push-literal "jsdlkfjl"
-        push-literal "write-line:1"
-	send-message
-      }
-    alreadyInitialized: 
-      push-literal "System.InvalidOperationException"
-      new-instance
-      dup
-      push-literal "The object has already been initialized"
-      push-literal "initialize:1"
-      send-message
-      throw
-  }
-  
-  .class public InnerClass extends Foo {
-    .handler public WriteHelloWorld(console) {
-    	.entrypoint
-        load-argument console
-        push-literal "Hello World!"
-        push-literal "write-line:1"
-        send-message
-    }
-  }
+    	    alreadyInitialized: 
+     		push-literal "System.InvalidOperationException"
+      		new-instance
+      		dup
+      		push-literal "The object has already been initialized"
+      		push-literal "initialize:1"
+      		send-message
+      		throw
+  	}
+
+	.handler public WriteHelloWorld(sys) {
+  		 .entrypoint
+		 .locals { e }
+	   	 load-this
+           	 load-argument sys
+	   	 push-literal "get-console:0"
+	   	 send-message
+           	 push-literal "Hello World!"
+           	 push-literal "init:2"
+           	 send-message
+
+	   	 load-field console
+	   	 load-field bar2
+	   	 push-literal "write-line:1"
+	   	 send-message
+
+		 .try {
+	 		load-this
+	 		push-literal "init:0"
+			send-message
+		} catch {
+		  	store-local e
+			load-argument sys
+			push-literal "get-console:0"
+			send-message
+			load-local e
+		  	push-literal "message:0"
+			send-message
+			push-literal "write-line:1"
+			send-message
+		}
+
+		.try {
+			push-literal "Object"
+			new-instance
+			push-literal "bobHope:0"
+			send-message
+		} catch {
+		  	store-local e
+			load-argument sys
+			push-literal "get-console:0"
+			send-message
+			load-local e
+		  	push-literal "message:0"
+			send-message
+			push-literal "write-line:1"
+			send-message
+		}
+	}
 }

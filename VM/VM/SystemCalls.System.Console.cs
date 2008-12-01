@@ -13,26 +13,26 @@ namespace VM {
 				static Handle<VMObjects.String> toStringStr = "to-string:0".ToVMString().Intern();
 
 				[SystemCallMethod( "write-line:1" )]
-				public static Handle<VMObjects.AppObject> WriteLine( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-					global::System.Console.WriteLine( arguments[0].Send( toStringStr ).To<VMObjects.String>().Value.ToString() );
-					return null;
+				public static UValue WriteLine( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+					global::System.Console.WriteLine( arguments[0].ToHandle().Send( toStringStr ).ToHandle<VMObjects.String>().Value.ToString() );
+					return UValue.Void();
 				}
 
 				[SystemCallMethod( "write-line:0" )]
-				public static Handle<VMObjects.AppObject> WriteEmptyLine( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
+				public static UValue WriteEmptyLine( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
 					global::System.Console.WriteLine();
-					return null;
+					return UValue.Void();
 				}
 
 				[SystemCallMethod( "write:1" )]
-				public static Handle<VMObjects.AppObject> Write( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-					global::System.Console.Write( arguments[0].Send( toStringStr ).To<VMObjects.String>().Value.ToString() );
-					return null;
+				public static UValue Write( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+					global::System.Console.Write( arguments[0].ToHandle<VMObjects.AppObject>().Send( toStringStr ).ToHandle<VMObjects.String>().Value.ToString() );
+					return UValue.Void();
 				}
 
 				[SystemCallMethod( "read-line:0" )]
-				public static Handle<AppObject> ReadLine( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-					return global::System.Console.ReadLine().ToVMString().To<AppObject>();
+				public static UValue ReadLine( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+					return UValue.Ref( KnownClasses.SystemString, global::System.Console.ReadLine().ToVMString() );
 				}
 			}
 		}

@@ -14,6 +14,10 @@ namespace VM.VMObjects {
 		int start;
 		public int Start { get { return start; } }
 		public Handle<Class> VMClass { get { return KnownClasses.Object; } }
+		public Word this[int index] {
+			get { return VirtualMachine.MemoryManager[Start + index]; }
+			set { VirtualMachine.MemoryManager[Start + index] = value; }
+		}
 		#endregion
 
 		#region Cons
@@ -28,7 +32,11 @@ namespace VM.VMObjects {
 
 		#region Instance methods
 		public override string ToString() {
-			return ExtObjectBase.ToString( this );
+			return ExtObjectBase.ToString( this.ToHandle() );
+		}
+
+		public bool Equals( Handle<ObjectBase> obj1, Handle<ObjectBase> obj2 ) {
+			return obj1.Start == obj2.Start;
 		}
 		#endregion
 
@@ -107,10 +115,12 @@ namespace VM.VMObjects {
 		public static string ToString( this Handle<ObjectBase> obj ) {
 			if (obj.IsNull())
 				return "{NULL}";
-			return "{" + obj.Class().Name().Value.ToString() + "}";
+			return "{" + obj.Class().ToHandle().Name().ToString() + "}";
 		}
 
 		public static Handle<T> ToHandle<T>( this T obj ) where T : struct, IVMObject<T> {
+			if (obj.Start == 984)
+				Math.Pow( 2, 2 );
 			if (obj.Start == 0)
 				return null;
 			return (Handle<T>) obj;
@@ -124,12 +134,12 @@ namespace VM.VMObjects {
 			return new IntHandle( obj );
 		}
 
-		public static Handle<Class> Class<T>( this Handle<T> obj ) where T : struct, IVMObject<T> {
+		public static Class Class<T>( this Handle<T> obj ) where T : struct, IVMObject<T> {
 			if (obj is IntHandle)
 				return KnownClasses.SystemInteger;
 			if (((int) obj[ObjectBase.CLASS_POINTER_OFFSET]) < 0)
 				obj[ObjectBase.CLASS_POINTER_OFFSET] = KnownClasses.Resolve( obj[ObjectBase.CLASS_POINTER_OFFSET] );
-				return (Class) obj[ObjectBase.CLASS_POINTER_OFFSET];
+			return (Class) obj[ObjectBase.CLASS_POINTER_OFFSET];
 		}
 
 		public static void Class<T>( this Handle<T> obj, Handle<Class> cls ) where T : struct, IVMObject<T> {
@@ -140,6 +150,10 @@ namespace VM.VMObjects {
 			if (obj is IntHandle)
 				return false;
 			return (object.ReferenceEquals( obj, null ) ? true : obj.Start == 0);
+		}
+
+		public static bool IsNull<T>( this T obj ) where T : struct, IVMObject<T> {
+			return obj.Start == 0;
 		}
 	}
 }

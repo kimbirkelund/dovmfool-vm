@@ -19,6 +19,10 @@ namespace VM.VMObjects {
 		int start;
 		public int Start { get { return start; } }
 		public Handle<Class> VMClass { get { return KnownClasses.SystemReflectionMessageHandler; } }
+		public Word this[int index] {
+			get { return VirtualMachine.MemoryManager[Start + index]; }
+			set { VirtualMachine.MemoryManager[Start + index] = value; }
+		}
 		#endregion
 
 		#region Cons
@@ -33,7 +37,11 @@ namespace VM.VMObjects {
 
 		#region Instance methods
 		public override string ToString() {
-			return ExtMessageHandlerBase.ToString( this );
+			return ExtMessageHandlerBase.ToString( this.ToHandle() );
+		}
+
+		public bool Equals( Handle<MessageHandlerBase> obj1, Handle<MessageHandlerBase> obj2 ) {
+			return obj1.Start == obj2.Start;
 		}
 		#endregion
 
@@ -73,11 +81,13 @@ namespace VM.VMObjects {
 			return (obj[MessageHandlerBaseConsts.HEADER_OFFSET] & MessageHandlerBaseConsts.IS_EXTERNAL_MASK) != 0;
 		}
 
-		public static Handle<String> Name( this Handle<MessageHandlerBase> obj ) {
+		public static String Name( this Handle<MessageHandlerBase> obj ) {
+			if (obj[MessageHandlerBaseConsts.HEADER_OFFSET] == 0)
+				return (String) 0;
 			return String.GetString( obj[MessageHandlerBaseConsts.HEADER_OFFSET] >> MessageHandlerBaseConsts.NAME_RSHIFT );
 		}
 
-		public static Handle<Class> Class( this Handle<MessageHandlerBase> obj ) {
+		public static Class Class( this Handle<MessageHandlerBase> obj ) {
 			return (Class) obj[MessageHandlerBaseConsts.CLASS_POINTER_OFFSET];
 		}
 

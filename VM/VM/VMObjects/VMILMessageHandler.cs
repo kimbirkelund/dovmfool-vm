@@ -20,6 +20,10 @@ namespace VM.VMObjects {
 		int start;
 		public int Start { get { return start; } }
 		public Handle<Class> VMClass { get { return KnownClasses.SystemReflectionMessageHandler; } }
+		public Word this[int index] {
+			get { return VirtualMachine.MemoryManager[Start + index]; }
+			set { VirtualMachine.MemoryManager[Start + index] = value; }
+		}
 		#endregion
 
 		#region Cons
@@ -33,7 +37,7 @@ namespace VM.VMObjects {
 		#endregion
 
 		#region Static methods
-		public static Handle<VMILMessageHandler> CreateInstance( int instructionCount ) {
+		public static VMILMessageHandler CreateInstance( int instructionCount ) {
 			return VirtualMachine.MemoryManager.Allocate<VMILMessageHandler>( VMILMessageHandlerConsts.INSTRUCTIONS_OFFSET + instructionCount );
 		}
 		#endregion
@@ -50,7 +54,11 @@ namespace VM.VMObjects {
 
 		#region Instance methods
 		public override string ToString() {
-			return ExtVMILMessageHandler.ToString( this );
+			return ExtVMILMessageHandler.ToString( this.ToHandle() );
+		}
+
+		public bool Equals( Handle<VMILMessageHandler> obj1, Handle<VMILMessageHandler> obj2 ) {
+			return obj1.Start == obj2.Start;
 		}
 		#endregion
 	}
@@ -62,7 +70,9 @@ namespace VM.VMObjects {
 			return (VisibilityModifier) (obj[MessageHandlerBaseConsts.HEADER_OFFSET] & MessageHandlerBaseConsts.VISIBILITY_MASK);
 		}
 
-		public static Handle<String> Name( this Handle<VMILMessageHandler> obj ) {
+		public static String Name( this Handle<VMILMessageHandler> obj ) {
+			if (obj[MessageHandlerBaseConsts.HEADER_OFFSET] == 0)
+				return (String) 0;
 			return String.GetString( obj[MessageHandlerBaseConsts.HEADER_OFFSET] >> MessageHandlerBaseConsts.NAME_RSHIFT );
 		}
 
@@ -78,12 +88,16 @@ namespace VM.VMObjects {
 			return obj[VMILMessageHandlerConsts.COUNTS_OFFSET] >> VMILMessageHandlerConsts.INSTRUCTION_COUNT_RSHIFT;
 		}
 
-		public static Handle<Class> Class( this Handle<VMILMessageHandler> obj ) {
+		public static Class Class( this Handle<VMILMessageHandler> obj ) {
 			return (Class) obj[MessageHandlerBaseConsts.CLASS_POINTER_OFFSET];
 		}
 
 		public static bool IsEntrypoint( this Handle<VMILMessageHandler> obj ) {
 			return (obj[MessageHandlerBaseConsts.HEADER_OFFSET] & MessageHandlerBaseConsts.IS_ENTRYPOINT_MASK) != 0;
+		}
+
+		public static bool IsDefault( this Handle<VMILMessageHandler> obj ) {
+			return obj.Visibility() == VisibilityModifier.None;
 		}
 
 		public static Word GetInstruction( this Handle<VMILMessageHandler> obj, int instruction ) {
@@ -93,6 +107,8 @@ namespace VM.VMObjects {
 		public static string ToString( this Handle<VMILMessageHandler> obj ) {
 			if (obj == null)
 				return "{NULL}";
+			if (obj.IsDefault())
+				return ".default";
 			return ".handler " + obj.Visibility().ToString().ToLower() + " " + obj.Name() + "(" + obj.ArgumentCount() + ")";
 		}
 
@@ -117,7 +133,10 @@ namespace VM.VMObjects {
 			if (isEntrypoint && visibility == VisibilityModifier.None)
 				throw new InvalidVMProgramException( "Default message handler can not be entrypoint." );
 
-			obj[MessageHandlerBaseConsts.HEADER_OFFSET] = (name.GetInternIndex() << MessageHandlerBaseConsts.NAME_RSHIFT) | (isEntrypoint ? MessageHandlerBaseConsts.IS_ENTRYPOINT_MASK : (Word) 0) | (int) visibility;
+			if (name != null)
+				obj[MessageHandlerBaseConsts.HEADER_OFFSET] = (name.GetInternIndex() << MessageHandlerBaseConsts.NAME_RSHIFT) | (isEntrypoint ? MessageHandlerBaseConsts.IS_ENTRYPOINT_MASK : (Word) 0) | (int) visibility;
+			else
+				obj[MessageHandlerBaseConsts.HEADER_OFFSET] = 0;
 		}
 
 		internal static void InitInstance( this Handle<VMILMessageHandler> obj, Handle<String> name, VisibilityModifier visibility, Handle<Class> cls, bool isEntrypoint, int argumentsCount, int localCount, IList<Word> instructions ) {

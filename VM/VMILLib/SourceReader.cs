@@ -30,7 +30,7 @@ namespace VMILLib {
 			var scanner = new Parser.Scanner( input ) { Logger = Logger ?? new Logger() };
 			var parser = new Parser.Parser() { scanner = scanner };
 			if (!parser.Parse())
-				throw new ArgumentException( "Input is not a valid VMIL source file." );
+				return null;
 
 			var classes = new ClassList( parser.Classes.Select( c => ReadClass( c ) ) );
 

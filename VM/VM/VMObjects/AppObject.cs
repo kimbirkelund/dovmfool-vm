@@ -15,6 +15,10 @@ namespace VM.VMObjects {
 		int start;
 		public int Start { get { return start; } }
 		public Handle<Class> VMClass { get { return KnownClasses.Object; } }
+		public Word this[int index] {
+			get { return VirtualMachine.MemoryManager[Start + index]; }
+			set { VirtualMachine.MemoryManager[Start + index] = value; }
+		}
 		#endregion
 
 		#region Cons
@@ -38,10 +42,10 @@ namespace VM.VMObjects {
 		#endregion
 
 		#region Static methods
-		public static Handle<AppObject> CreateInstance( Handle<Class> cls ) {
-			var linearization = cls.Linearization();
+		public static AppObject CreateInstance( Handle<Class> cls ) {
+			var linearization = cls.Linearization().ToHandle();
 			var obj = VirtualMachine.MemoryManager.Allocate<AppObject>( cls.TotalFieldCount() * 2 + linearization.Length() + AppObjectConsts.FIRST_SUPERCLASS_FIELDS_OFFSET_OFFSET - 1 );
-			obj.Class( cls );
+			obj[ObjectBase.CLASS_POINTER_OFFSET] = cls;
 			obj[AppObjectConsts.FIELDS_OFFSET_OFFSET] = linearization.Length() + AppObjectConsts.FIRST_SUPERCLASS_FIELDS_OFFSET_OFFSET;
 
 			int fieldOffset = 0;
@@ -52,60 +56,68 @@ namespace VM.VMObjects {
 			return obj;
 		}
 
-		public static Handle<AppObject> CreateInstance( Handle<String> clsName ) {
-			var cls = VirtualMachine.ResolveClass( null, clsName );
+		public static AppObject CreateInstance( Handle<String> clsName ) {
+			var cls = VirtualMachine.ResolveClass( null, clsName ).ToHandle();
 			if (cls != null)
 				throw new ClassNotFoundException( clsName );
 
 			return CreateInstance( cls );
 		}
 
-		public static Handle<AppObject> CreateInstance( string clsName ) {
+		public static AppObject CreateInstance( string clsName ) {
 			return CreateInstance( clsName.ToVMString() );
 		}
 		#endregion
 
 		#region Instance methods
 		public override string ToString() {
-			return ExtAppObject.ToString( this );
+			return ExtAppObject.ToString( this.ToHandle() );
+		}
+
+		public bool Equals( Handle<AppObject> obj1, Handle<AppObject> obj2 ) {
+			return obj1.Start == obj2.Start;
 		}
 		#endregion
 	}
 
 	public static class ExtAppObject {
 		public static bool Extends( this Handle<AppObject> obj, Handle<Class> cls ) {
-			return obj.Class().Extends( cls );
+			return obj.Class().ToHandle().Extends( cls );
 		}
 
-		public static Handle<Class> GetFieldType( this Handle<AppObject> obj, int index ) {
-			if (index < 0 || obj.Class().TotalFieldCount() <= index)
+		internal static UValue GetField( this Handle<AppObject> obj, int index ) {
+			if (index < 0 || obj.Class().ToHandle().TotalFieldCount() <= index)
 				throw new ArgumentOutOfRangeException( "Index must be less than the number of fields." );
 
-			return (Class) obj[obj[AppObjectConsts.FIELDS_OFFSET_OFFSET] + index * 2];
-		}
-
-		public static Handle<T> GetFieldValue<T>( this Handle<AppObject> obj, int index ) where T : struct, IVMObject<T> {
-			if (index < 0 || obj.Class().TotalFieldCount() <= index)
-				throw new ArgumentOutOfRangeException( "Index must be less than the number of fields." );
-
-			return new T().New( obj[obj[AppObjectConsts.FIELDS_OFFSET_OFFSET] + index * 2 + 1] );
+			var type = (Class) obj[obj[AppObjectConsts.FIELDS_OFFSET_OFFSET] + index * 2];
+			var value = obj[obj[AppObjectConsts.FIELDS_OFFSET_OFFSET] + index * 2 + 1];
+			if (type == KnownClasses.SystemInteger.Start)
+				return UValue.Int( value );
+			return UValue.Ref( type, value );
 		}
 
 		public static void SetField<T>( this Handle<AppObject> obj, int index, Handle<T> value ) where T : struct, IVMObject<T> {
-			if (index < 0 || obj.Class().TotalFieldCount() <= index)
-				throw new ArgumentOutOfRangeException( "Index must be less than the number of fields." );
+			if (value == null) {
+				obj[obj[AppObjectConsts.FIELDS_OFFSET_OFFSET] + index * 2] = 0;
+				obj[obj[AppObjectConsts.FIELDS_OFFSET_OFFSET] + index * 2 + 1] = 0;
+			} else {
+				obj[obj[AppObjectConsts.FIELDS_OFFSET_OFFSET] + index * 2] = value.Class().Start;
+				obj[obj[AppObjectConsts.FIELDS_OFFSET_OFFSET] + index * 2 + 1] = value.Start;
+			}
+		}
 
-			obj[obj[AppObjectConsts.FIELDS_OFFSET_OFFSET] + index * 2] = value.Class().Start;
-			obj[obj[AppObjectConsts.FIELDS_OFFSET_OFFSET] + index * 2 + 1] = value.Start;
+		internal static void SetField( this Handle<AppObject> obj, int index, UValue value ) {
+			obj[obj[AppObjectConsts.FIELDS_OFFSET_OFFSET] + index * 2] = value.Type;
+			obj[obj[AppObjectConsts.FIELDS_OFFSET_OFFSET] + index * 2 + 1] = value.Value;
 		}
 
 		public static int GetFieldOffset( this Handle<AppObject> obj, Handle<Class> superClass ) {
-			var lin = obj.Class().Linearization();
+			var lin = obj.Class().ToHandle().Linearization().ToHandle();
 			for (int i = 0; i < lin.Length(); i++)
 				if (lin.Get<Class>( i ) == superClass)
 					return obj[AppObjectConsts.FIRST_SUPERCLASS_FIELDS_OFFSET_OFFSET + i];
 
-			throw new ClassNotFoundException( "Specified class is not in the inheritance hierachy.", superClass.Name() );
+			throw new ClassNotFoundException( "Specified class is not in the inheritance hierachy.", superClass.Name().ToHandle() );
 		}
 
 		public static string ToString( this Handle<AppObject> obj ) {
@@ -114,11 +126,11 @@ namespace VM.VMObjects {
 			return "Instance of " + obj.Class();
 		}
 
-		public static Handle<AppObject> Send( this Handle<AppObject> obj, Handle<String> message, params Handle<AppObject>[] args ) {
+		internal static UValue Send( this Handle<AppObject> obj, Handle<String> message, params Handle<AppObject>[] args ) {
 			return VirtualMachine.Send( message, obj, args );
 		}
 
-		public static Handle<AppObject> Send( this Handle<AppObject> obj, string message, params Handle<AppObject>[] args ) {
+		internal static UValue Send( this Handle<AppObject> obj, string message, params Handle<AppObject>[] args ) {
 			return Send( obj, message.ToVMString(), args );
 		}
 	}

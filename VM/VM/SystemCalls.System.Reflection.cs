@@ -15,56 +15,57 @@ namespace VM {
 				[SystemCallClass( "MessageHandler" )]
 				public static partial class MessageHandler {
 					[SystemCallMethod( "class:0" )]
-					public static Handle<AppObject> Class( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-						var handler = receiver.To<MessageHandlerBase>();
+					public static UValue Class( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+						var handler = ((MessageHandlerBase) receiver.Value).ToHandle();
 
-						return handler.Class().To<AppObject>();
+						return UValue.Ref( KnownClasses.SystemReflectionClass, handler.Class() );
 					}
 
 					[SystemCallMethod( "name:0" )]
-					public static Handle<VMObjects.AppObject> Name( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-						var handler = receiver.To<MessageHandlerBase>();
+					public static UValue Name( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+						var handler = ((MessageHandlerBase) receiver.Value).ToHandle();
 
-						return handler.Name().To<VMObjects.AppObject>();
+						return UValue.Ref( KnownClasses.SystemString, handler.Name() );
 					}
 
 					[SystemCallMethod( "argument-count:0" )]
-					public static Handle<VMObjects.AppObject> ArgumentCount( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-						var handler = receiver.To<MessageHandlerBase>();
+					public static UValue ArgumentCount( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+						var handler = ((MessageHandlerBase) receiver.Value).ToHandle();
 
-						return new IntHandle( handler.ArgumentCount() );
+						return handler.ArgumentCount();
 					}
 
 					[SystemCallMethod( "visibility:0" )]
-					public static Handle<VMObjects.AppObject> Visibility( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-						var handler = receiver.To<MessageHandlerBase>();
-						var vis = AppObject.CreateInstance( KnownClasses.SystemReflectionVisibility );
-						vis.SetField( 0, new IntHandle( (int) handler.Visibility() ) );
-						return vis;
+					public static UValue Visibility( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+						var handler = ((MessageHandlerBase) receiver.Value).ToHandle();
+
+						var vis = AppObject.CreateInstance( KnownClasses.SystemReflectionVisibility ).ToHandle();
+						vis.SetField( 0, (int) handler.Visibility() );
+						return vis.ToUValue();
 					}
 
 					[SystemCallMethod( "is-external:0" )]
-					public static Handle<VMObjects.AppObject> IsExternal( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-						var handler = receiver.To<MessageHandlerBase>();
-						return new IntHandle( handler.IsExternal() ? 1 : 0 );
+					public static UValue IsExternal( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+						var handler = ((MessageHandlerBase) receiver.Value).ToHandle();
+
+						return handler.IsExternal() ? 1 : 0;
 					}
 
 					[SystemCallMethod( "is-default:0" )]
-					public static Handle<VMObjects.AppObject> IsDefault( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-						var handler = receiver.To<MessageHandlerBase>();
-						return new IntHandle( handler.Visibility() == VMILLib.VisibilityModifier.None ? 1 : 0 );
+					public static UValue IsDefault( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+						var handler = ((MessageHandlerBase) receiver.Value).ToHandle();
+
+						return handler.Visibility() == VMILLib.VisibilityModifier.None ? 1 : 0;
 					}
 
 					[SystemCallMethod( "equals:1" )]
-					public static Handle<AppObject> Equals( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-						var handler1 = receiver.To<MessageHandlerBase>();
+					public static UValue Equals( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+						var handler1 = ((MessageHandlerBase) receiver.Value).ToHandle();
+						var handler2 = ((MessageHandlerBase) receiver.Value).ToHandle();
+						if (handler2.Class() != KnownClasses.SystemReflectionMessageHandler.Start)
+							return 0;
 
-						if (arguments[0].Class() != KnownClasses.SystemReflectionMessageHandler)
-							return new IntHandle( 0 );
-
-						var handler2 = arguments[0].To<MessageHandlerBase>();
-
-						return new IntHandle( handler1 == handler2 ? 1 : 0 );
+						return handler1 == handler2 ? 1 : 0;
 					}
 				}
 				#endregion
@@ -73,90 +74,91 @@ namespace VM {
 				[SystemCallClass( "Class" )]
 				public static partial class Class {
 					[SystemCallMethod( "name:0" )]
-					public static Handle<AppObject> Name( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-						var cls = receiver.To<VMObjects.Class>();
-						return cls.Name().To<VMObjects.AppObject>();
+					public static UValue Name( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+						var cls = ((VMObjects.Class) receiver.Value).ToHandle();
+
+						return UValue.Ref( KnownClasses.SystemString, cls.Name() );
 					}
 
 					[SystemCallMethod( "visibility:0" )]
-					public static Handle<AppObject> Visibility( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-						var cls = receiver.To<VMObjects.Class>();
-						var vis = AppObject.CreateInstance( KnownClasses.SystemReflectionVisibility );
-						vis.SetField( 0, new IntHandle( (int) cls.Visibility() ) );
-						return vis;
+					public static UValue Visibility( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+						var cls = ((VMObjects.Class) receiver.Value).ToHandle();
+
+						var vis = AppObject.CreateInstance( KnownClasses.SystemReflectionVisibility ).ToHandle();
+						vis.SetField( 0, (int) cls.Visibility() );
+						return vis.ToUValue();
 					}
 
 					[SystemCallMethod( "default-message-handler:0" )]
-					public static Handle<AppObject> DefaultMessageHandler( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-						var cls = receiver.To<VMObjects.Class>();
-						var def = cls.DefaultHandler();
-						if (def == null)
-							return new IntHandle( 0 );
+					public static UValue DefaultMessageHandler( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+						var cls = ((VMObjects.Class) receiver.Value).ToHandle();
 
-						return def.To<AppObject>();
+						var def = cls.DefaultHandler();
+						if (def.IsNull())
+							return UValue.Null();
+
+						return UValue.Ref( KnownClasses.SystemReflectionMessageHandler, def );
 					}
 
 					[SystemCallMethod( "parent-class:0" )]
-					public static Handle<AppObject> ParentClass( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-						var cls = receiver.To<VMObjects.Class>();
+					public static UValue ParentClass( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+						var cls = ((VMObjects.Class) receiver.Value).ToHandle();
 
-						return cls.ParentClass().To<AppObject>();
+						return UValue.Ref( KnownClasses.SystemReflectionClass, cls.ParentClass() );
 					}
 
 					[SystemCallMethod( "super-class-names:0" )]
-					public static Handle<AppObject> SuperClassNames( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-						var cls = receiver.To<VMObjects.Class>();
+					public static UValue SuperClassNames( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+						var cls = ((VMObjects.Class) receiver.Value).ToHandle();
 
-						var arr = VMObjects.Array.CreateInstance( cls.SuperClassCount() );
+						var arr = VMObjects.Array.CreateInstance( cls.SuperClassCount() ).ToHandle();
 
-						cls.SuperClasses().ForEach( ( c, i ) => arr.Set( i, c ) );
+						cls.SuperClasses().ForEach( ( c, i ) => arr.Set( i, UValue.Ref( KnownClasses.SystemString.Value, c ) ) );
 
-						return arr.To<AppObject>();
+						return UValue.Ref( KnownClasses.SystemArray, arr );
 					}
 
 					[SystemCallMethod( "super-classes:0" )]
-					public static Handle<AppObject> SuperClasses( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-						var cls = receiver.To<VMObjects.Class>();
+					public static UValue SuperClasses( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+						var cls = ((VMObjects.Class) receiver.Value).ToHandle();
 
-						var arr = VMObjects.Array.CreateInstance( cls.SuperClassCount() );
+						var arr = VMObjects.Array.CreateInstance( cls.SuperClassCount() ).ToHandle();
 
-						cls.SuperClasses().ForEach( ( c, i ) => arr.Set( i, c ) );
+						cls.SuperClasses().ForEach( ( c, i ) => arr.Set( i, UValue.Ref( KnownClasses.SystemReflectionClass, VirtualMachine.ResolveClass( null, c.ToHandle() ) ) ) );
 
-						return arr.To<AppObject>();
+						return UValue.Ref( KnownClasses.SystemArray, arr );
 					}
 
 					[SystemCallMethod( "message-handlers:0" )]
-					public static Handle<AppObject> MessageHandlers( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-						var cls = receiver.To<VMObjects.Class>();
+					public static UValue MessageHandlers( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+						var cls = ((VMObjects.Class) receiver.Value).ToHandle();
 
-						var arr = VMObjects.Array.CreateInstance( cls.MessageHandlerCount() );
+						var arr = VMObjects.Array.CreateInstance( cls.MessageHandlerCount() ).ToHandle();
 
-						cls.MessageHandlers().ForEach( ( h, i ) => arr.Set( i, h ) );
+						cls.MessageHandlers().ForEach( ( h, i ) => arr.Set( i, UValue.Ref( KnownClasses.SystemReflectionMessageHandler.Value, h ) ) );
 
-						return arr.To<AppObject>();
+						return UValue.Ref( KnownClasses.SystemArray, arr );
 					}
 
 					[SystemCallMethod( "inner-classes:0" )]
-					public static Handle<AppObject> InnerClasses( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-						var cls = receiver.To<VMObjects.Class>();
+					public static UValue InnerClasses( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+						var cls = ((VMObjects.Class) receiver.Value).ToHandle();
 
-						var arr = VMObjects.Array.CreateInstance( cls.InnerClassCount() );
+						var arr = VMObjects.Array.CreateInstance( cls.InnerClassCount() ).ToHandle();
 
-						cls.InnerClasses().ForEach( ( c, i ) => arr.Set( i, c ) );
+						cls.InnerClasses().ForEach( ( c, i ) => arr.Set( i, UValue.Ref( KnownClasses.SystemReflectionClass.Value, c ) ) );
 
-						return arr.To<AppObject>();
+						return UValue.Ref( KnownClasses.SystemArray, arr );
 					}
 
 					[SystemCallMethod( "equals:1" )]
-					public static Handle<AppObject> Equals( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-						var cls1 = receiver.To<VMObjects.Class>();
+					public static UValue Equals( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+						var cls1 = ((VMObjects.Class) receiver.Value).ToHandle();
+						var cls2 = ((VMObjects.Class) arguments[0].Value).ToHandle();
+						if (cls2.Class() != KnownClasses.SystemReflectionClass.Value)
+							return 0;
 
-						if (arguments[0].Class() != KnownClasses.SystemReflectionClass)
-							return new IntHandle( 0 );
-
-						var cls2 = arguments[0].To<VMObjects.Class>();
-
-						return new IntHandle( cls1 == cls2 ? 1 : 0 );
+						return cls1 == cls2 ? 1 : 0;
 					}
 				}
 				#endregion
@@ -165,22 +167,23 @@ namespace VM {
 				[SystemCallClass( "Reflector" )]
 				public static partial class Reflector {
 					[SystemCallMethod( "classes:0" )]
-					public static Handle<AppObject> Classes( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
+					public static UValue Classes( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
 						var classes = VirtualMachine.Classes;
 
-						var arr = VMObjects.Array.CreateInstance( classes.Count() );
+						var arr = VMObjects.Array.CreateInstance( classes.Count() ).ToHandle();
 						classes.ForEach( ( c, i ) => arr.Set( i, c ) );
 
-						return arr.To<AppObject>();
+						return UValue.Ref( KnownClasses.SystemArray, arr );
 					}
 
 					[SystemCallMethod( "find-class:1" )]
-					public static Handle<AppObject> FindClass( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-						if (arguments[0].Class() != KnownClasses.SystemString)
+					public static UValue FindClass( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+						var arg = arguments[0].ToHandle();
+						if (arg.Class() != KnownClasses.SystemString.Value)
 							throw new ArgumentException( "Argument must be of type System.String.", "className" );
 
-						var cls = VirtualMachine.ResolveClass( null, arguments[0].To<VMObjects.String>() );
-						return cls.To<AppObject>();
+						var cls = VirtualMachine.ResolveClass( null, arg.To<VMObjects.String>() );
+						return UValue.Ref( KnownClasses.SystemReflectionClass, cls );
 					}
 				}
 				#endregion

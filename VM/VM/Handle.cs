@@ -7,6 +7,7 @@ using VM.VMObjects;
 namespace VM {
 	partial class MemoryManagerBase {
 		public abstract class HandleBase {
+			static int createdHandles, disposedHandles;
 			Container container;
 			public virtual bool IsValid { get; private set; }
 			public virtual int Start { get { return container.Start; } }
@@ -20,6 +21,7 @@ namespace VM {
 			protected virtual void InternalUnregister() {
 				IsValid = false;
 				MemoryManagerBase.Unregister( this );
+				disposedHandles++;
 			}
 
 			protected HandleBase( int start ) {
@@ -29,6 +31,7 @@ namespace VM {
 			protected virtual void Init( int start ) {
 				container = new Container( start );
 				IsValid = true;
+				createdHandles++;
 			}
 
 			~HandleBase() {
@@ -60,7 +63,7 @@ namespace VM {
 
 		public Handle( T value ) : base( value.Start ) { }
 
-		public static implicit operator Handle<T>( T obj ) {
+		public static explicit operator Handle<T>( T obj ) {
 			return MemoryManagerBase.CreateHandle( obj );
 		}
 
@@ -86,7 +89,7 @@ namespace VM {
 
 		#region Equals
 		public virtual bool Equals( Handle<T> value ) {
-			return this.IsNull() || value.IsNull() ? this.IsNull() && value.IsNull() : Value.Equals( value.Value );
+			return this.IsNull() || value.IsNull() ? this.IsNull() && value.IsNull() : new T().Equals( this, value );
 		}
 
 		public override bool Equals( object value ) {
@@ -144,6 +147,14 @@ namespace VM {
 			if (!(value is IntHandle))
 				return false;
 			return Value == ((IntHandle) value).Value;
+		}
+
+		public override string ToString() {
+			return "inthandle[" + Value + "]";
+		}
+
+		public override int GetHashCode() {
+			return Value.GetHashCode();
 		}
 	}
 }

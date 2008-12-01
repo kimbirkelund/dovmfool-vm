@@ -10,34 +10,33 @@ namespace VM {
 			[SystemCallClass( "Array" )]
 			public static partial class Array {
 				[SystemCallMethod( "new-array:1" )]
-				public static Handle<VMObjects.AppObject> New( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-					if (arguments[0].Class() != KnownClasses.SystemInteger)
+				public static UValue New( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+					if (arguments[0].Type != KnownClasses.SystemInteger.Start)
 						throw new ArgumentException( "Argument should be an integer.", "initialSize" );
 
-					var initialSize = (arguments[0] as IntHandle).Value;
+					var initialSize = arguments[0].Value;
 					var arr = VMObjects.Array.CreateInstance( initialSize );
 
-					return arr.To<VMObjects.AppObject>();
+					return UValue.Ref( KnownClasses.SystemArray, arr );
 				}
 
 				[SystemCallMethod( "set:2" )]
-				public static Handle<AppObject> Set( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-					var arr = receiver.To<VMObjects.Array>();
-					arr.Set( arguments[0].Start, arguments[1] );
-					return null;
+				public static UValue Set( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+					var arr = receiver.ToHandle<VMObjects.Array>();
+					arr.Set( arguments[0].Value, arguments[1] );
+					return UValue.Void();
 				}
 
 				[SystemCallMethod( "get:1" )]
-				public static Handle<AppObject> Get( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-					var arr = receiver.To<VMObjects.Array>();
-					var index = ((IntHandle) arguments[0]).Value;
-					return arr.Get( index );
+				public static UValue Get( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+					var arr = receiver.ToHandle<VMObjects.Array>();
+					return arr.Get( arguments[0].Value );
 				}
 
 				[SystemCallMethod( "length:0" )]
-				public static Handle<AppObject> Length( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments ) {
-					var arr = receiver.To<VMObjects.Array>();
-					return new IntHandle( arr.Length() );
+				public static UValue Length( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
+					var arr = receiver.ToHandle<VMObjects.Array>();
+					return arr.Length();
 				}
 			}
 		}

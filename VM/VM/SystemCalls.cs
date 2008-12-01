@@ -6,7 +6,7 @@ using System.Reflection;
 using VM.VMObjects;
 
 namespace VM {
-	delegate Handle<VMObjects.AppObject> SystemCall( IInterpretor interpretor, Handle<VMObjects.AppObject> receiver, Handle<VMObjects.AppObject>[] arguments );
+	delegate UValue SystemCall( IInterpretor interpretor, UValue receiver, UValue[] arguments );
 
 	internal static partial class SystemCalls {
 		static SCCls root;
@@ -46,8 +46,8 @@ namespace VM {
 				if (dotIndex == -1)
 					dotIndex = name.Length();
 
-				var curName = name.Substring( 0, dotIndex );
-				var restName = dotIndex < name.Length() ? name.Substring( dotIndex + 1 ) : VMObjects.String.Empty; ;
+				var curName = name.Substring( 0, dotIndex ).ToHandle();
+				var restName = dotIndex < name.Length() ? name.Substring( dotIndex + 1 ).ToHandle() : VMObjects.String.Empty;
 
 				if (restName.Length() == 0) {
 					if (methods.ContainsKey( curName ))
