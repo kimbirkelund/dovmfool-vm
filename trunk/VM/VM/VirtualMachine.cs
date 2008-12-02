@@ -9,6 +9,9 @@ using Sekhmet.Logging;
 
 namespace VM {
 	public static class VirtualMachine {
+		static int nextInterpretorId = 0;
+		static Dictionary<int, IInterpretor> interpretors = new Dictionary<int, IInterpretor>();
+
 		internal static MemoryManagerBase MemoryManager { get; private set; }
 		internal static Handle<AppObject> SystemInstance { get; private set; }
 		static IInterpretorFactory InterpretorFactory { get; set; }
@@ -23,7 +26,7 @@ namespace VM {
 			Logger.Handlers.Add( new ConsoleLogHandler() );
 
 			MemoryManager = new NoncollectingMemoryManager( 20000 );
-			InterpretorFactory = new BasicInterpretor.Factory();
+			InterpretorFactory = new Interpretor.Factory();
 
 			using (var loader = new ClassLoader( new MemoryStream( Resources.BaseTypes ) ))
 				loader.Read();
@@ -73,17 +76,29 @@ namespace VM {
 
 			if (SystemInstance == null) {
 				SystemInstance = AppObject.CreateInstance( KnownClasses.System ).ToHandle();
-				Send( KnownStrings.initialize_0, SystemInstance );
+				var interp = Fork( KnownClasses.System.ResolveMessageHandler( null, KnownStrings.initialize_0 ).ToHandle(), SystemInstance );
+				interp.Start();
+				interp.Join();
 			}
 
-			var intp = InterpretorFactory.CreateInstance( obj, entrypoint, SystemInstance );
+			var intp = Fork( entrypoint, obj, SystemInstance );
 			intp.Start();
 			intp.Join();
 		}
 
-		internal static UValue Send( Handle<VMObjects.String> message, Handle<VMObjects.AppObject> to, params Handle<AppObject>[] arguments ) {
-			var interp = InterpretorFactory.CreateInstance();
-			return interp.Send( message, to, arguments );
+		internal static IInterpretor Fork( Handle<VMObjects.MessageHandlerBase> messageHandler, Handle<VMObjects.AppObject> obj, params Handle<AppObject>[] arguments ) {
+			lock (typeof( VirtualMachine )) {
+				var interp = InterpretorFactory.CreateInstance( nextInterpretorId++, obj, messageHandler, arguments );
+				interpretors.Add( interp.Id, interp );
+				return interp;
+			}
+		}
+
+		internal static IInterpretor GetInterpretor( int id ) {
+			IInterpretor interp;
+			if (interpretors.TryGetValue( id, out interp ))
+				return interp;
+			throw new InvalidThreadIdException();
 		}
 	}
 }

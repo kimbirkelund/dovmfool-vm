@@ -16,6 +16,7 @@ namespace VM {
 		public static Handle<Class> SystemReflectionMessageHandler { get; private set; }
 		public static Handle<Class> SystemReflectionVisibility { get; private set; }
 		public static Handle<Class> SystemException { get; private set; }
+		public static Handle<Class> SystemThreadingThread { get; private set; }
 
 		static KnownClasses() {
 			Object = new DummyClassHandle( -1 );
@@ -28,6 +29,7 @@ namespace VM {
 			SystemReflectionMessageHandler = new DummyClassHandle( -8 );
 			SystemReflectionVisibility = new DummyClassHandle( -9 );
 			SystemException = new DummyClassHandle( -10 );
+			SystemThreadingThread = new DummyClassHandle( -11 );
 		}
 
 		internal static void Update() {
@@ -41,6 +43,7 @@ namespace VM {
 			SystemReflectionMessageHandler = VirtualMachine.ResolveClass( null, "System.Reflection.MessageHandler".ToVMString() ).ToHandle();
 			SystemReflectionVisibility = VirtualMachine.ResolveClass( null, "System.Reflection.Visibility".ToVMString() ).ToHandle();
 			SystemException = VirtualMachine.ResolveClass( null, "System.Exception".ToVMString() ).ToHandle();
+			SystemThreadingThread = VirtualMachine.ResolveClass( null, "System.Threading.Thread".ToVMString() ).ToHandle();
 		}
 
 		public static Class Resolve( int start ) {

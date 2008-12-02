@@ -21,10 +21,24 @@ namespace VM {
 
 		internal virtual Handle<AppObject> ToVMException() {
 			var eCls = VirtualMachine.ResolveClass( null, "System.Exception".ToVMString(), false ).ToHandle();
+			var eInit = eCls.ResolveMessageHandler( null, KnownStrings.initialize_1 ).ToHandle();
 			var e = AppObject.CreateInstance( eCls ).ToHandle();
-			e.Send( "initialize:1", Message.ToVMString().To<AppObject>() );
+			var interp = VirtualMachine.Fork( eInit, e, Message.ToVMString().To<AppObject>() );
+			interp.Start();
+			interp.Join();
 			return e;
 		}
+	}
+
+	[global::System.Serializable]
+	public class InvalidThreadIdException : VMException {
+		public InvalidThreadIdException() : base( "Specified thread id is invalid." ) { }
+		public InvalidThreadIdException( string message ) : base( message ) { }
+		public InvalidThreadIdException( string message, Exception inner ) : base( message, inner ) { }
+		protected InvalidThreadIdException(
+		  System.Runtime.Serialization.SerializationInfo info,
+		  System.Runtime.Serialization.StreamingContext context )
+			: base( info, context ) { }
 	}
 
 	[global::System.Serializable]

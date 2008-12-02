@@ -15,7 +15,7 @@
 }
 .class public ObjectSet extends Object { }
 
-.class public System {
+.class private System {
 	.fields { console }
 	
 	.handler public initialize() {
@@ -696,5 +696,20 @@
 	
 	.class public Threading {
 		.handler public sleep .external System.Threading.sleep(milis)
+		.class public Thread {
+			.fields { interpretor }
+			
+			.handler public start .external System.Threading.Thread.start(obj)
+			.handler public join .external System.Threading.Thread.join()
+			
+			.handler public start() {
+				load-this
+				dup
+				push-literal "start:1"
+				send-message
+			}
+			
+			.handler public run() {}
+		}
 	}
 }

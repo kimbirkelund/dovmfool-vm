@@ -65,21 +65,21 @@ namespace VM {
 			if (IsNull)
 				return "NULL";
 			if (Type.Start < 0) {
-				var typeName = "";
 				switch (Type.Start) {
-					case -1: typeName = "BASE POINTER"; break;
-					case -2: typeName = "RETURN HANDLER"; break;
-					case -3: typeName = "OLD PC"; break;
-					case -4: typeName = "FRAME BOUNDARY"; break;
-					case -5: typeName = "TRY MARKER"; break;
+					case -1: return "BASE POINTER: " + Value;
+					case -2: return "RETURN HANDLER: " + ((MessageHandlerBase) Value);
+					case -3: return "OLD PC: " + Value;
+					case -4: return "FRAME BOUNDARY: " + Value;
+					case -5: return "TRY MARKER: " + Value;
+					case -6: return "RETURN HERE: " + Value;
 					default:
 						throw new ArgumentException( "Invalid stack value type: " + Type.Start );
 				}
-				return "[" + typeName + "] " + Value;
 			}
 			if (Type == KnownClasses.SystemInteger.Start)
 				return Value.ToString();
-
+			if (Type == KnownClasses.SystemString.Start)
+				return "\"" + ((VM.VMObjects.String) Value).ToString() + "\"";
 			return "[" + Type + "]" + ((AppObject) Value).ToString();
 		}
 	}
