@@ -1,0 +1,73 @@
+.class public Program {
+	.handler public Main(sys) {
+		.entrypoint
+		.locals { t1, t2, console }
+		
+		load-argument sys
+		push-literal "get-console:0"
+		send-message
+		store-local console
+		
+		push-literal "Program.Foo"
+		new-instance
+		dup
+		store-local t1
+		dup
+		load-local console
+		push-literal "1"
+		push-literal "initialize:2"
+		send-message
+		push-literal "start:0"
+		send-message
+		
+		push-literal "Program.Foo"
+		new-instance
+		dup
+		store-local t2
+		dup
+		load-local console
+		push-literal "2"
+		push-literal "initialize:2"
+		send-message
+		push-literal "start:0"
+		send-message
+
+		load-local t1
+		push-literal "join:0"
+		send-message
+		
+		load-local t2
+		push-literal "join:0"
+		send-message
+	}
+
+	.class public Foo extends System.Threading.Thread {
+		.fields { threading, console, text }
+
+		.handler public initialize(console, text) {
+			load-argument console
+			store-field console
+			load-argument text
+			store-field text
+			
+			push-literal "System.Threading"
+			new-instance
+			store-field threading
+		}
+
+		.handler public run() {
+			start:
+				load-field console
+				load-field text
+				push-literal "write-line:1"
+				send-message
+				
+				load-field threading
+				push-literal 100
+				push-literal "sleep:1"
+				send-message
+				
+				jump start
+		}	       
+	}
+}

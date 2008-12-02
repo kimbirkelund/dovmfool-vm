@@ -125,13 +125,5 @@ namespace VM.VMObjects {
 				return "{NULL}";
 			return "Instance of " + obj.Class();
 		}
-
-		internal static UValue Send( this Handle<AppObject> obj, Handle<String> message, params Handle<AppObject>[] args ) {
-			return VirtualMachine.Send( message, obj, args );
-		}
-
-		internal static UValue Send( this Handle<AppObject> obj, string message, params Handle<AppObject>[] args ) {
-			return Send( obj, message.ToVMString(), args );
-		}
 	}
 }

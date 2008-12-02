@@ -12,7 +12,7 @@ namespace VM {
 	class ClassLoader : IDisposable {
 		bool disposed;
 		vml.SourceReader reader;
-		Handle<vmo.VMILMessageHandler> entrypoint;
+		Handle<vmo.MessageHandlerBase> entrypoint;
 
 		public ClassLoader( vml.SourceReader reader ) {
 			this.reader = reader;
@@ -26,7 +26,7 @@ namespace VM {
 		/// Reads the classes stored in input into the virtual machine.
 		/// </summary>
 		/// <returns>The entrypoint specified in the input if any.</returns>
-		public Handle<vmo.VMILMessageHandler> Read() {
+		public Handle<vmo.MessageHandlerBase> Read() {
 			var assembly = reader.Read();
 			if (assembly == null)
 				throw new ClassLoaderException();
@@ -64,11 +64,10 @@ namespace VM {
 				vh.InitInstance( lvh.Visibility != vml.VisibilityModifier.None ? lvh.Name.ToVMString().Intern() : null, lvh.Visibility, cls, lvh.IsEntrypoint,
 					lvh.Arguments.Count, lvh.Locals.Count, ReadInstructions( lvh.Instructions ) );
 
-				if (vh.IsEntrypoint())
-					entrypoint = vh;
 				h = vh.To<MessageHandlerBase>();
 			}
-
+			if (h.IsEntrypoint())
+				entrypoint = h;
 			return h;
 		}
 

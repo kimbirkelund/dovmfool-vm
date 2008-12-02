@@ -14,7 +14,7 @@ namespace VM {
 
 				[SystemCallMethod( "write-line:1" )]
 				public static UValue WriteLine( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
-					global::System.Console.WriteLine( arguments[0].ToHandle().Send( toStringStr ).ToHandle<VMObjects.String>().Value.ToString() );
+					global::System.Console.WriteLine( interpretor.Send( toStringStr, arguments[0].ToHandle() ).ToHandle<VMObjects.String>().Value.ToString() );
 					return UValue.Void();
 				}
 
@@ -26,7 +26,7 @@ namespace VM {
 
 				[SystemCallMethod( "write:1" )]
 				public static UValue Write( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
-					global::System.Console.Write( arguments[0].ToHandle<VMObjects.AppObject>().Send( toStringStr ).ToHandle<VMObjects.String>().Value.ToString() );
+					global::System.Console.Write( interpretor.Send( toStringStr, arguments[0].ToHandle() ).ToHandle<VMObjects.String>().Value.ToString() );
 					return UValue.Void();
 				}
 

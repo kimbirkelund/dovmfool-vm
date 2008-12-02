@@ -46,7 +46,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BasicInterpretor.cs" />
+    <Compile Include="Interpretor.cs" />
     <Compile Include="ClassLoader.cs" />
     <Compile Include="ExecutionStack.cs" />
     <Compile Include="HandleCache.cs" />
@@ -77,6 +77,7 @@
     <Compile Include="VMObjects\DelegateMessageHandler.cs" />
     <Compile Include="VMObjects\Integer.cs" />
     <Compile Include="IVMObject.cs" />
+    <Compile Include="InterpretorData.cs" />
     <Compile Include="VMObjects\MessageHandlerBase.cs" />
     <Compile Include="VMObjects\ObjectBase.cs" />
     <Compile Include="VMObjects\String.cs" />

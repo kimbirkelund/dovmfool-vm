@@ -5,7 +5,8 @@ using System.Text;
 using VM.VMObjects;
 
 namespace VM {
-	interface IInterpretor {
+	interface IInterpretor : IDisposable {
+		int Id { get; }
 		InterpretorState State { get; }
 		void Start();
 		void Pause();

@@ -11,10 +11,12 @@ namespace VM {
 		const int TYPE_RETURN_INSTRUCTION_OFFSET = -3;
 		const int TYPE_FRAME_BOUNDARY = -4;
 		const int TYPE_TRY = -5;
+		const int TYPE_ACTUAL_RETURN_HERE = -6;
 
-		const int ARGUMENT_OFFSET = 5;
-		const int RETURN_ADDRESS_OFFSET = 4;
-		const int RETURN_ADDRESS_INSTRUCTION_OFFSET = 3;
+		const int ARGUMENT_OFFSET = 6;
+		const int RETURN_ADDRESS_OFFSET = 5;
+		const int RETURN_ADDRESS_INSTRUCTION_OFFSET = 4;
+		const int ACTUAL_RETURN_HERE_OFFSET = 3;
 		const int OLD_BASE_POINTER_OFFSET = 2;
 		const int OLD_FRAME_BOUNDARY_OFFSET = 1;
 
@@ -75,22 +77,22 @@ namespace VM {
 			return stack[stackPointer - 1];
 		}
 
-		public void PushFrame( ReturnAddress returnAddress, Handle<VMILMessageHandler> callee ) {
+		public void PushFrame( ReturnAddress returnAddress, Handle<MessageHandlerBase> callee ) {
 			Push( (Class) TYPE_RETURN_HANDLER, returnAddress.Handler );
 			Push( (Class) TYPE_RETURN_INSTRUCTION_OFFSET, returnAddress.InstructionOffset );
+			Push( (Class) TYPE_ACTUAL_RETURN_HERE, returnAddress.DoActualReturnHere );
 			Push( (Class) TYPE_BASE_POINTER, basePointer );
 			Push( (Class) TYPE_FRAME_BOUNDARY, frameBoundary );
 			frameBoundary = stackPointer - ARGUMENT_OFFSET - callee.ArgumentCount();
 			basePointer = stackPointer;
 
-			for (var i = 0; i < callee.LocalCount(); i++)
-				Push( new UValue() );
+			(!callee.IsExternal() ? callee.To<VMILMessageHandler>().LocalCount() : 0).ForEach( () => Push( new UValue() ) );
 		}
 
 		public ReturnAddress PopFrame( bool withReturnValue ) {
 			UValue ret = withReturnValue ? Pop() : new UValue();
 
-			var retAdr = new ReturnAddress( (VMILMessageHandler) stack[basePointer - RETURN_ADDRESS_OFFSET].Value, stack[basePointer - RETURN_ADDRESS_INSTRUCTION_OFFSET].Value );
+			var retAdr = new ReturnAddress( (VMILMessageHandler) stack[basePointer - RETURN_ADDRESS_OFFSET].Value, stack[basePointer - RETURN_ADDRESS_INSTRUCTION_OFFSET].Value, stack[basePointer - ACTUAL_RETURN_HERE_OFFSET].Value );
 			stackPointer = frameBoundary;
 			frameBoundary = stack[basePointer - OLD_FRAME_BOUNDARY_OFFSET].Value;
 			basePointer = stack[basePointer - OLD_BASE_POINTER_OFFSET].Value;
@@ -156,12 +158,14 @@ namespace VM {
 
 		#region ReturnAddress
 		public struct ReturnAddress {
-			public readonly VMILMessageHandler Handler;
+			public readonly MessageHandlerBase Handler;
 			public readonly int InstructionOffset;
+			public readonly bool DoActualReturnHere;
 
-			public ReturnAddress( VMILMessageHandler handler, int instructionOffset ) {
+			public ReturnAddress( MessageHandlerBase handler, int instructionOffset, bool doActualReturnHere ) {
 				this.Handler = handler;
 				this.InstructionOffset = instructionOffset;
+				this.DoActualReturnHere = doActualReturnHere;
 			}
 		}
 		#endregion
