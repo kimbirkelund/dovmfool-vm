@@ -34,7 +34,7 @@
 		
 	.class private Array {
 		.handler public get .external System.Array.get(index)
-		.handler public set .external System.Array.set(index)
+		.handler public set .external System.Array.set(index, object)		
 		.handler public length .external System.Array.length()
 	}
 	
@@ -331,8 +331,40 @@
 			.fields { arr, count, capacity }
 			
 			.handler public initialize(initialSize) {
-				
+				push-literal "System"
+				new-instance								
+				load-argument initialSize					
+				push-literal "new-array:1"
+				send-message
+				store-field arr
+				push-literal 0
+				store-field count
+				load-argument initialSize								
+				store-field capacity								
 			}			
+			
+			.handler public add(object) {
+				load-field arr
+				load-field count
+				load-argument object
+				push-literal "set:2"
+				send-message				
+			}
+			
+			.handler public length() {
+				load-field count
+				return 
+			}
+			
+			.handler public get(id) {
+				load-field arr
+				load-argument id
+				push-literal "get:1"
+				send-message
+				return
+			}
+
+
 		}
 	}
 	
