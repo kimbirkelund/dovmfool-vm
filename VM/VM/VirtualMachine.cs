@@ -32,6 +32,9 @@ namespace VM {
 			MemoryManager = new NoncollectingMemoryManager( 20000 );
 			InterpretorFactory = new Interpretor.Factory();
 
+			KnownClasses.Initialize();
+			KnownStrings.Initialize();
+
 			var cb = typeof( VirtualMachine ).Assembly.CodeBase;
 			var baseTypesFilename = cb.Substring( 0, cb.ToLower().LastIndexOf( "vm.dll" ) ) + "BaseTypes.vmil";
 
