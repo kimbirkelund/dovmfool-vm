@@ -55,6 +55,7 @@
     <Compile Include="Parser\ExternalMessageHandler.cs" />
     <Compile Include="Parser\Label.cs" />
     <Compile Include="Parser\MessageHandlerBase.cs" />
+    <Compile Include="SourcePosition.cs" />
     <Compile Include="SourceReader.cs" />
     <Compile Include="NameList.cs" />
     <Compile Include="MessageHandlerBase.cs" />
