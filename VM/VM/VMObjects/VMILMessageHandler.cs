@@ -19,7 +19,7 @@ namespace VM.VMObjects {
 		#region Properties
 		int start;
 		public int Start { get { return start; } }
-		public Handle<Class> VMClass { get { return KnownClasses.System_Reflection_Message_Handler; } }
+		public Handle<Class> VMClass { get { return KnownClasses.System_Reflection_MessageHandler; } }
 		public Word this[int index] {
 			get { return VirtualMachine.MemoryManager[Start + index]; }
 			set { VirtualMachine.MemoryManager[Start + index] = value; }

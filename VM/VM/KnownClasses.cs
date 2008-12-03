@@ -14,7 +14,7 @@ namespace VM {
 		public static Handle<Class> System_Integer { get; private set; }
 		public static Handle<Class> System_String { get; private set; }
 		public static Handle<Class> System_Reflection_Class { get; private set; }
-		public static Handle<Class> System_Reflection_Message_Handler { get; private set; }
+		public static Handle<Class> System_Reflection_MessageHandler { get; private set; }
 		public static Handle<Class> System_Reflection_Visibility { get; private set; }
 		public static Handle<Class> System_Threading { get; private set; }
 		public static Handle<Class> System_Threading_Thread { get; private set; }
@@ -29,7 +29,8 @@ namespace VM {
 		public static Handle<Class> System_InvalidCastException { get; private set; }
 		public static Handle<Class> System_ArgumentException { get; private set; }
 		public static Handle<Class> System_ArgumentOutOfRangeException { get; private set; }
-		public static Handle<Class> System_MessageNotUnderStoodException { get; private set; }
+		public static Handle<Class> System_ArgumentNullException { get; private set; }
+		public static Handle<Class> System_MessageNotUnderstoodException { get; private set; }
 		public static Handle<Class> System_ClassNotFoundException { get; private set; }
 		public static Handle<Class> System_UnknownExternalCallException { get; private set; }
 
@@ -38,8 +39,7 @@ namespace VM {
 		static KnownClasses() {
 			var dummyId = -1;
 			var props = typeof( KnownClasses ).GetProperties( BindingFlags.Static | BindingFlags.Public );
-			global::System.Diagnostics.Debugger.Break();
-			handles = new Handle<Class>[props.Count()];
+			handles = new Handle<Class>[props.Count() + 1];
 			props.ForEach( p => {
 				var h = new DummyClassHandle( p.Name, dummyId-- );
 				handles[h.Start * -1] = h;
@@ -48,7 +48,13 @@ namespace VM {
 		}
 
 		internal static void Update() {
-			handles.ForEach( ( h, i ) => handles[i] = VirtualMachine.ResolveClass( null, ((DummyClassHandle) h).Name.ToVMString() ).ToHandle() );
+			var props = typeof( KnownClasses ).GetProperties( BindingFlags.Static | BindingFlags.Public );
+
+			foreach (var prop in props) {
+				var h = (DummyClassHandle) prop.GetValue( null, null );
+				handles[h.Value * -1] = VirtualMachine.ResolveClass( null, h.Name.ToVMString() ).ToHandle();
+				prop.SetValue( null, handles[h.Value * -1], null );
+			}
 		}
 
 		public static Class Resolve( int start ) {
@@ -78,6 +84,10 @@ namespace VM {
 
 			protected override void InternalUnregister() { }
 			internal override void Unregister() { }
+
+			public override string ToString() {
+				return Value + ": " + Name;
+			}
 		}
 		#endregion
 	}

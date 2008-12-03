@@ -112,6 +112,9 @@ namespace VM.VMObjects {
 		}
 
 		public static int GetFieldOffset( this Handle<AppObject> obj, Handle<Class> superClass ) {
+			if (superClass == null)
+				new ArgumentNullException( "superClass" );
+
 			var lin = obj.Class().ToHandle().Linearization().ToHandle();
 			for (int i = 0; i < lin.Length(); i++)
 				if (lin.Get<Class>( i ) == superClass)

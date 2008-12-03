@@ -76,6 +76,24 @@
 		}
 	}
 	
+	.class public InvalidVMProgramException extends System.Exception {
+		.handler public initialize() {
+			load-this
+			push-literal "The executing program is invalid."
+			push-literal "initialize:1"
+			send-message
+		}
+	}
+
+	.class public OutOfMemoryException extends System.Exception {
+		.handler public initialize() {
+			load-this
+			push-literal "Heap space has been exhausted."
+			push-literal "initialize:1"
+			send-message
+		}
+	}
+
 	.class public ClassLoaderException extends System.Exception {
 		.handler public initialize() {
 			load-this
@@ -103,7 +121,34 @@
 		}
 	}
 	
-	.class public ArgumentException extends System.Exception {
+	.class public InterpretorException extends System.Exception {
+		.handler public initialize() {
+			load-this
+			push-literal "An unknown error occured in the interpretor."
+			push-literal "initialize:1"
+			send-message
+		}
+	}
+	
+	.class public InterpretorFailedToStopException extends System.Exception {
+		.handler public initialize() {
+			load-this
+			push-literal "Interpretor failed to stop."
+			push-literal "initialize:1"
+			send-message
+		}
+	}
+
+	.class public ApplicationException extends System.Exception {
+		.handler public initialize() {
+			load-this
+			push-literal "Unknown application exception occured."
+			push-literal "initialize:1"
+			send-message
+		}
+	}
+
+	.class public ArgumentException extends System.ApplicationException {
 		.fields { argument }
 		
 		.handler public initialize(message, argument) {
@@ -132,6 +177,81 @@
 		}
 	}
 	
+	.class public ArgumentNullException extends System.ArgumentException {
+		.handler public initialize(argument) {
+			load-this
+			push-literal "The specified argument was null."
+			load-argument argument
+			push-literal "System.Exception.initialize:2"
+			send-message
+		}
+	}
+	
+	.class public InvalidCastException extends System.ApplicationException {
+		.handler public initialize() {
+			load-this
+			push-literal "Object can not be cast to specified type."
+			push-literal "initialize:1"
+			send-message
+		}
+	}
+
+	.class public MessageNotUnderstoodException extends System.ApplicationException {
+		.fields { invalidMessage, object }
+	
+		.handler public initialize(message, invalidMessage, object) {
+			load-this
+			load-argument message
+			push-literal "initialize:1"
+			send-message
+			
+			load-argument invalidMessage
+			store-field invalidMessage
+			
+			load-argument object
+			store-field object
+		}
+		
+		.handler public invalid-message() {
+			load-field invalidMessage
+			return
+		}
+		
+		.handler public object() {
+			load-field object
+			return
+		}
+	}
+
+	.class public ClassNotFoundException extends System.ApplicationException {
+		.fields { className }
+		.handler public initialize(message, className) {
+			load-this
+			push-literal "Object can not be cast to specified type."
+			push-literal "initialize:1"
+			send-message
+		}
+	}
+
+	.class public UnknownExternalCallException extends System.ApplicationException {
+		.fields { externalCall }
+	
+		.handler public initialize(message, externalCall) {
+			load-this
+			push-literal "Object can not be cast to specified type."
+			push-literal "initialize:1"
+			send-message
+			
+			load-argument externalCall
+			store-field externalCall
+		}
+		
+		.handler public external-call() {
+			load-field externalCall
+			return
+		}
+	}
+
 	.class public Hashable extends Object {
 		.handler public get-hashcode() {
 			push-literal "System.NotImplementedException"
