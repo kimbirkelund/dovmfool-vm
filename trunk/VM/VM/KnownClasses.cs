@@ -6,7 +6,7 @@ using VM.VMObjects;
 using System.Reflection;
 
 namespace VM {
-	public static class KnownClasses {
+	internal static class KnownClasses {
 		public static Handle<Class> Object { get; private set; }
 		public static Handle<Class> ObjectSet { get; private set; }
 		public static Handle<Class> System { get; private set; }
@@ -36,7 +36,7 @@ namespace VM {
 
 		static Handle<Class>[] handles;
 
-		static KnownClasses() {
+		public static void Initialize() {
 			var dummyId = -1;
 			var props = typeof( KnownClasses ).GetProperties( BindingFlags.Static | BindingFlags.Public );
 			handles = new Handle<Class>[props.Count() + 1];
