@@ -77,6 +77,19 @@
 			push-literal "get-console:0"
 			send-message
 			load-local e
+			push-literal "get-type:0"
+			send-message
+			push-literal "name:0"
+			send-message
+			push-literal ": "
+			push-literal "concat:1"
+			send-message
+			push-literal "write:1"
+			send-message
+			load-argument sys
+			push-literal "get-console:0"
+			send-message
+			load-local e
 		  	push-literal "message:0"
 			send-message
 			push-literal "write-line:1"
@@ -90,6 +103,19 @@
 			send-message
 		} catch {
 		  	store-local e
+			load-argument sys
+			push-literal "get-console:0"
+			send-message
+			load-local e
+			push-literal "get-type:0"
+			send-message
+			push-literal "name:0"
+			send-message
+			push-literal ": "
+			push-literal "concat:1"
+			send-message
+			push-literal "write:1"
+			send-message
 			load-argument sys
 			push-literal "get-console:0"
 			send-message

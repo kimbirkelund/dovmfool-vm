@@ -43,7 +43,7 @@ namespace VM {
 		public ExecutionStack( int initialSize ) {
 			this.initialSize = initialSize;
 			if (initialSize < 0)
-				throw new ArgumentOutOfRangeException( "Argument must be greater than zero.", "initialSize" );
+				throw new ArgumentOutOfRangeException( "Argument must be greater than zero.".ToVMString(), "initialSize".ToVMString() );
 
 			stack = new UValue[initialSize];
 		}
@@ -105,7 +105,7 @@ namespace VM {
 
 		public UValue GetLocal( int index ) {
 			if (index + basePointer >= stackPointer)
-				throw new ArgumentOutOfRangeException( "Index plus base pointer must be less than the stack pointer.", "index" );
+				throw new ArgumentOutOfRangeException( "Index plus base pointer must be less than the stack pointer.".ToVMString(), "index".ToVMString() );
 
 			return stack[basePointer + index];
 		}
@@ -113,7 +113,7 @@ namespace VM {
 		public void SetLocal( int index, UValue value ) {
 			index = basePointer + index;
 			if (index >= stackPointer)
-				throw new ArgumentOutOfRangeException( "Index plus base pointer must be less than the stack pointer.", "index" );
+				throw new ArgumentOutOfRangeException( "Index plus base pointer must be less than the stack pointer.".ToVMString(), "index".ToVMString() );
 
 			stack[index] = value;
 		}
@@ -125,7 +125,7 @@ namespace VM {
 		public UValue GetArgument( int index ) {
 			index = frameBoundary + index;
 			if (index > basePointer - ARGUMENT_OFFSET)
-				throw new ArgumentOutOfRangeException( "No such argument.", "index" );
+				throw new ArgumentOutOfRangeException( "No such argument.".ToVMString(), "index".ToVMString() );
 
 			return stack[index];
 		}

@@ -10,12 +10,12 @@ namespace VM {
 		class Object {
 			[SystemCallMethod( "get-type:0" )]
 			public static UValue GetType( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
-				return UValue.Ref( KnownClasses.SystemReflectionClass, receiver.Type );
+				return UValue.Ref( KnownClasses.System_Reflection_Class, receiver.Type );
 			}
 
 			[SystemCallMethod( "to-string:0" )]
 			public static UValue ToString( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
-				return UValue.Ref( KnownClasses.SystemReflectionClass, receiver.Type.ToHandle().Name() );
+				return UValue.Ref( KnownClasses.System_Reflection_Class, receiver.Type.ToHandle().Name() );
 			}
 
 

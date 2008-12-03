@@ -7,141 +7,217 @@ using VM.VMObjects;
 namespace VM {
 	[global::System.Serializable]
 	public class VMException : ApplicationException {
+		public new Handle<VM.VMObjects.String> Message { get; private set; }
+
 		public VMException() { }
-		public VMException( string message ) : base( message ) { }
-		public VMException( string message, Exception inner ) : base( message, inner ) { }
+		public VMException( Handle<VM.VMObjects.String> message ) : this( message, null ) { }
+		public VMException( Handle<VM.VMObjects.String> message, Exception inner ) : base( message.Value.ToString(), inner ) { this.Message = message; }
 		protected VMException(
 		  System.Runtime.Serialization.SerializationInfo info,
 		  System.Runtime.Serialization.StreamingContext context )
 			: base( info, context ) { }
 
 		public static VMException MakeDotNetException( Handle<AppObject> obj ) {
-			return null;
+			var cls = obj.Class().ToHandle();
+			var name = cls.Name().ToString();
+			var eType = Type.GetType( "VM." + name, false );
+
+			if (eType != null && typeof( VMException ).IsAssignableFrom( eType )) {
+				var e = (VMException) eType.GetConstructor( Type.EmptyTypes ).Invoke( null );
+				e.InitializeFromVMException( obj );
+				return e;
+			}
+
+			return new VMException( obj.Send( KnownStrings.to_string_0 ).To<VM.VMObjects.String>() );
 		}
 
 		internal virtual Handle<AppObject> ToVMException() {
-			var eCls = VirtualMachine.ResolveClass( null, "System.Exception".ToVMString(), false ).ToHandle();
-			var eInit = eCls.ResolveMessageHandler( null, KnownStrings.initialize_1 ).ToHandle();
-			var e = AppObject.CreateInstance( eCls ).ToHandle();
-			var interp = VirtualMachine.Fork( eInit, e, Message.ToVMString().To<AppObject>() );
-			interp.Start();
-			interp.Join();
+			var e = AppObject.CreateInstance( KnownClasses.System_Exception ).ToHandle();
+			e.Send( KnownStrings.initialize_1, Message.To<AppObject>() );
 			return e;
+		}
+
+		protected virtual void InitializeFromVMException( Handle<AppObject> ex ) {
+			this.Message = ex.Send( KnownStrings.message_0 ).To<VMObjects.String>();
+		}
+
+		public override string ToString() {
+			return Message.Value.ToString();
 		}
 	}
 
 	[global::System.Serializable]
 	public class InvalidThreadIdException : VMException {
-		public InvalidThreadIdException() : base( "Specified thread id is invalid." ) { }
-		public InvalidThreadIdException( string message ) : base( message ) { }
-		public InvalidThreadIdException( string message, Exception inner ) : base( message, inner ) { }
+		public InvalidThreadIdException() : base( "Specified thread id is invalid.".ToVMString() ) { }
+		public InvalidThreadIdException( Handle<VM.VMObjects.String> message ) : base( message ) { }
+		public InvalidThreadIdException( Handle<VM.VMObjects.String> message, Exception inner ) : base( message, inner ) { }
 		protected InvalidThreadIdException(
 		  System.Runtime.Serialization.SerializationInfo info,
 		  System.Runtime.Serialization.StreamingContext context )
 			: base( info, context ) { }
+
+		internal override Handle<AppObject> ToVMException() {
+			var e = AppObject.CreateInstance( KnownClasses.System_InvalidThreadIdException ).ToHandle();
+			e.Send( KnownStrings.initialize_1, Message.To<AppObject>() );
+			return e;
+		}
 	}
 
 	[global::System.Serializable]
 	public class ClassLoaderException : VMException {
-		public ClassLoaderException() : base( "An exception occured while loading a class." ) { }
-		public ClassLoaderException( string message ) : base( message ) { }
-		public ClassLoaderException( string message, Exception inner ) : base( message, inner ) { }
+		public ClassLoaderException() : base( "An exception occured while loading a class.".ToVMString() ) { }
+		public ClassLoaderException( Handle<VM.VMObjects.String> message ) : base( message ) { }
+		public ClassLoaderException( Handle<VM.VMObjects.String> message, Exception inner ) : base( message, inner ) { }
 		protected ClassLoaderException(
 		  System.Runtime.Serialization.SerializationInfo info,
 		  System.Runtime.Serialization.StreamingContext context )
 			: base( info, context ) { }
+
+		internal override Handle<AppObject> ToVMException() {
+			var e = AppObject.CreateInstance( KnownClasses.System_ClassLoaderException ).ToHandle();
+			e.Send( KnownStrings.initialize_1, Message.To<AppObject>() );
+			return e;
+		}
 	}
 
 	[global::System.Serializable]
 	public class InvalidVMProgramException : VMException {
-		public InvalidVMProgramException() : base( "The executing program is invalid." ) { }
-		public InvalidVMProgramException( string message ) : base( message ) { }
-		public InvalidVMProgramException( string message, Exception inner ) : base( message, inner ) { }
+		public InvalidVMProgramException() : base( "The executing program is invalid.".ToVMString() ) { }
+		public InvalidVMProgramException( Handle<VM.VMObjects.String> message ) : base( message ) { }
+		public InvalidVMProgramException( Handle<VM.VMObjects.String> message, Exception inner ) : base( message, inner ) { }
 		protected InvalidVMProgramException(
 		  System.Runtime.Serialization.SerializationInfo info,
 		  System.Runtime.Serialization.StreamingContext context )
 			: base( info, context ) { }
+
+		internal override Handle<AppObject> ToVMException() {
+			var e = AppObject.CreateInstance( KnownClasses.System_InvalidVMProgramException ).ToHandle();
+			e.Send( KnownStrings.initialize_1, Message.To<AppObject>() );
+			return e;
+		}
 	}
 
 	[global::System.Serializable]
 	public class OutOfMemoryException : VMException {
-		public OutOfMemoryException() : base( "Heap memory has been exhausted." ) { }
-		public OutOfMemoryException( string message ) : base( message ) { }
-		public OutOfMemoryException( string message, Exception inner ) : base( message, inner ) { }
+		public OutOfMemoryException() : base( "Heap memory has been exhausted.".ToVMString() ) { }
+		public OutOfMemoryException( Handle<VM.VMObjects.String> message ) : base( message ) { }
+		public OutOfMemoryException( Handle<VM.VMObjects.String> message, Exception inner ) : base( message, inner ) { }
 		protected OutOfMemoryException(
 		  System.Runtime.Serialization.SerializationInfo info,
 		  System.Runtime.Serialization.StreamingContext context )
 			: base( info, context ) { }
+
+		internal override Handle<AppObject> ToVMException() {
+			var e = AppObject.CreateInstance( KnownClasses.System_OutOfMemoryException ).ToHandle();
+			e.Send( KnownStrings.initialize_1, Message.To<AppObject>() );
+			return e;
+		}
 	}
 
 	[global::System.Serializable]
 	public class InterpretorException : VMException {
 		public InterpretorException() { }
-		public InterpretorException( string message ) : base( message ) { }
-		public InterpretorException( string message, Exception inner ) : base( message, inner ) { }
+		public InterpretorException( Handle<VM.VMObjects.String> message ) : base( message ) { }
+		public InterpretorException( Handle<VM.VMObjects.String> message, Exception inner ) : base( message, inner ) { }
 		protected InterpretorException(
 		  System.Runtime.Serialization.SerializationInfo info,
 		  System.Runtime.Serialization.StreamingContext context )
 			: base( info, context ) { }
+
+		internal override Handle<AppObject> ToVMException() {
+			var e = AppObject.CreateInstance( KnownClasses.System_InterpretorException ).ToHandle();
+			e.Send( KnownStrings.initialize_1, Message.To<AppObject>() );
+			return e;
+		}
 	}
 
 	[global::System.Serializable]
 	public class InterpretorFailedToStopException : InterpretorException {
-		public InterpretorFailedToStopException() : base( "Interpretor failed to stop." ) { }
-		public InterpretorFailedToStopException( string message ) : base( message ) { }
-		public InterpretorFailedToStopException( string message, Exception inner ) : base( message, inner ) { }
+		public InterpretorFailedToStopException() : base( "Interpretor failed to stop.".ToVMString() ) { }
+		public InterpretorFailedToStopException( Handle<VM.VMObjects.String> message ) : base( message ) { }
+		public InterpretorFailedToStopException( Handle<VM.VMObjects.String> message, Exception inner ) : base( message, inner ) { }
 		protected InterpretorFailedToStopException(
 		  System.Runtime.Serialization.SerializationInfo info,
 		  System.Runtime.Serialization.StreamingContext context )
 			: base( info, context ) { }
+
+		internal override Handle<AppObject> ToVMException() {
+			var e = AppObject.CreateInstance( KnownClasses.System_InterpretorFailedToStopException ).ToHandle();
+			e.Send( KnownStrings.initialize_1, Message.To<AppObject>() );
+			return e;
+		}
 	}
 
 	[global::System.Serializable]
 	public class VMAppException : VMException {
 		public VMAppException() { }
-		public VMAppException( string message ) : base( message ) { }
-		public VMAppException( string message, Exception inner ) : base( message, inner ) { }
+		public VMAppException( Handle<VM.VMObjects.String> message ) : base( message ) { }
+		public VMAppException( Handle<VM.VMObjects.String> message, Exception inner ) : base( message, inner ) { }
 		protected VMAppException(
 		  System.Runtime.Serialization.SerializationInfo info,
 		  System.Runtime.Serialization.StreamingContext context )
 			: base( info, context ) { }
+
+		internal override Handle<AppObject> ToVMException() {
+			var e = AppObject.CreateInstance( KnownClasses.System_ApplicationException ).ToHandle();
+			e.Send( KnownStrings.initialize_1, Message.To<AppObject>() );
+			return e;
+		}
 	}
 
 	[global::System.Serializable]
 	public class InvalidCastException : VMAppException {
-		public InvalidCastException() : base( "Object can not be cast to specified type." ) { }
-		public InvalidCastException( string message ) : base( message ) { }
-		public InvalidCastException( string message, Exception inner ) : base( message, inner ) { }
+		public InvalidCastException() : base( "Object can not be cast to specified type.".ToVMString() ) { }
+		public InvalidCastException( Handle<VM.VMObjects.String> message ) : base( message ) { }
+		public InvalidCastException( Handle<VM.VMObjects.String> message, Exception inner ) : base( message, inner ) { }
 		protected InvalidCastException(
 		  System.Runtime.Serialization.SerializationInfo info,
 		  System.Runtime.Serialization.StreamingContext context )
 			: base( info, context ) { }
+
+		internal override Handle<AppObject> ToVMException() {
+			var e = AppObject.CreateInstance( KnownClasses.System_InvalidCastException ).ToHandle();
+			e.Send( KnownStrings.initialize_1, Message.To<AppObject>() );
+			return e;
+		}
 	}
 
 	[global::System.Serializable]
 	public class ArgumentException : VMAppException {
-		public readonly string Argument;
+		public readonly Handle<VMObjects.String> Argument;
 
 		public ArgumentException() { }
-		public ArgumentException( string message ) : base( message ) { }
-		public ArgumentException( string message, string argument ) : base( message ) { this.Argument = argument; }
-		public ArgumentException( string message, Exception inner ) : base( message, inner ) { }
+		public ArgumentException( Handle<VM.VMObjects.String> message ) : base( message ) { }
+		public ArgumentException( Handle<VM.VMObjects.String> message, Handle<VM.VMObjects.String> argument ) : base( message ) { this.Argument = argument; }
+		public ArgumentException( Handle<VM.VMObjects.String> message, Exception inner ) : base( message, inner ) { }
 		protected ArgumentException(
 		  System.Runtime.Serialization.SerializationInfo info,
 		  System.Runtime.Serialization.StreamingContext context )
 			: base( info, context ) { }
+
+		internal override Handle<AppObject> ToVMException() {
+			var e = AppObject.CreateInstance( KnownClasses.System_ArgumentException ).ToHandle();
+			e.Send( KnownStrings.initialize_2, Message.To<AppObject>(), Argument.To<AppObject>() );
+			return e;
+		}
 	}
 
 	[global::System.Serializable]
 	public class ArgumentOutOfRangeException : ArgumentException {
 		public ArgumentOutOfRangeException() { }
-		public ArgumentOutOfRangeException( string message, string argument ) : base( message, argument ) { }
-		public ArgumentOutOfRangeException( string argument ) : this( "The argument was out of bounds for the specified operation.", argument ) { }
-		public ArgumentOutOfRangeException( string message, Exception inner ) : base( message, inner ) { }
+		public ArgumentOutOfRangeException( Handle<VM.VMObjects.String> message, Handle<VM.VMObjects.String> argument ) : base( message, argument ) { }
+		public ArgumentOutOfRangeException( Handle<VM.VMObjects.String> argument ) : this( "The argument was out of bounds for the specified operation.".ToVMString(), argument ) { }
+		public ArgumentOutOfRangeException( Handle<VM.VMObjects.String> message, Exception inner ) : base( message, inner ) { }
 		protected ArgumentOutOfRangeException(
 		  System.Runtime.Serialization.SerializationInfo info,
 		  System.Runtime.Serialization.StreamingContext context )
 			: base( info, context ) { }
+
+		internal override Handle<AppObject> ToVMException() {
+			var e = AppObject.CreateInstance( KnownClasses.System_ArgumentOutOfRangeException ).ToHandle();
+			e.Send( KnownStrings.initialize_2, Message.To<AppObject>(), Argument.To<AppObject>() );
+			return e;
+		}
 	}
 
 	[global::System.Serializable]
@@ -155,50 +231,69 @@ namespace VM {
 		/// </summary>
 		public Handle<VMObjects.AppObject> Object { get; private set; }
 
-		public MessageNotUnderstoodException() : base( "Message not understood." ) { }
-		public MessageNotUnderstoodException( string message ) : base( message ) { }
-		public MessageNotUnderstoodException( string message, Exception inner ) : base( message, inner ) { }
+		public MessageNotUnderstoodException() : base( "Message not understood.".ToVMString() ) { }
+		public MessageNotUnderstoodException( Handle<VM.VMObjects.String> errorMessage ) : base( errorMessage ) { }
+		public MessageNotUnderstoodException( Handle<VM.VMObjects.String> errorMessage, Exception inner ) : base( errorMessage, inner ) { }
 		protected MessageNotUnderstoodException(
 		  System.Runtime.Serialization.SerializationInfo info,
 		  System.Runtime.Serialization.StreamingContext context )
 			: base( info, context ) { }
 
 		public MessageNotUnderstoodException( Handle<VMObjects.String> invalidMessage, Handle<VMObjects.AppObject> obj )
-			: base( "Message '" + invalidMessage.ToString() + "' not understood." ) {
+			: base( ("Message '" + invalidMessage.ToString() + "' not understood.").ToVMString() ) {
 			this.InvalidMessage = invalidMessage;
 			this.Object = obj;
 		}
 
-		public MessageNotUnderstoodException( Handle<VMObjects.String> invalidMessage )
-			: this( invalidMessage, null ) {
+		public MessageNotUnderstoodException( Handle<VMObjects.String> errorMessage, Handle<VMObjects.String> invalidMessage )
+			: this( errorMessage ) {
+			this.InvalidMessage = invalidMessage;
+		}
+
+		internal override Handle<AppObject> ToVMException() {
+			var e = AppObject.CreateInstance( KnownClasses.System_MessageNotUnderStoodException ).ToHandle();
+			e.Send( KnownStrings.initialize_3, Message.To<AppObject>(), InvalidMessage.To<AppObject>(), Object );
+			return e;
 		}
 	}
 
 	[global::System.Serializable]
 	public class ClassNotFoundException : VMAppException {
 		public readonly Handle<VMObjects.String> ClassName;
+
 		public ClassNotFoundException() { }
-		public ClassNotFoundException( Handle<VMObjects.String> className ) : base( "Class '" + className.ToString() + "' not found" ) { ClassName = className; }
-		public ClassNotFoundException( string message, Handle<VMObjects.String> className ) : base( message ) { ClassName = className; }
-		public ClassNotFoundException( string message ) : base( message ) { }
-		public ClassNotFoundException( string message, Exception inner ) : base( message, inner ) { }
+		public ClassNotFoundException( Handle<VMObjects.String> className ) : base( ("Class '" + className.ToString() + "' not found").ToVMString() ) { ClassName = className; }
+		public ClassNotFoundException( Handle<VM.VMObjects.String> message, Handle<VMObjects.String> className ) : base( message ) { ClassName = className; }
+		public ClassNotFoundException( Handle<VM.VMObjects.String> message, Exception inner ) : base( message, inner ) { }
 		protected ClassNotFoundException(
 		  System.Runtime.Serialization.SerializationInfo info,
 		  System.Runtime.Serialization.StreamingContext context )
 			: base( info, context ) { }
+
+		internal override Handle<AppObject> ToVMException() {
+			var e = AppObject.CreateInstance( KnownClasses.System_ClassNotFoundException ).ToHandle();
+			e.Send( KnownStrings.initialize_2, Message.To<AppObject>(), ClassName.To<AppObject>() );
+			return e;
+		}
 	}
 
 	[global::System.Serializable]
-	public class UnknownSystemCallException : VMAppException {
-		public Handle<VMObjects.String> SystemCallName { get; private set; }
+	public class UnknownExternalCallException : VMAppException {
+		public Handle<VMObjects.String> ExternalCallName { get; private set; }
 
-		public UnknownSystemCallException() : base( "Unknown system call." ) { }
-		public UnknownSystemCallException( Handle<VMObjects.String> systemCall ) : this( systemCall, "Unknown system call: '" + systemCall.ToString() + "'." ) { }
-		public UnknownSystemCallException( Handle<VMObjects.String> systemCall, string message ) : base( message ) { SystemCallName = systemCall; }
-		public UnknownSystemCallException( string message, Exception inner ) : base( message, inner ) { }
-		protected UnknownSystemCallException(
+		public UnknownExternalCallException() : base( "Unknown external call.".ToVMString() ) { }
+		public UnknownExternalCallException( Handle<VMObjects.String> externalCall ) : this( externalCall, ("Unknown external call: '" + externalCall.ToString() + "'.").ToVMString() ) { }
+		public UnknownExternalCallException( Handle<VMObjects.String> externalCall, Handle<VM.VMObjects.String> message ) : base( message ) { ExternalCallName = externalCall; }
+		public UnknownExternalCallException( Handle<VM.VMObjects.String> message, Exception inner ) : base( message, inner ) { }
+		protected UnknownExternalCallException(
 		  System.Runtime.Serialization.SerializationInfo info,
 		  System.Runtime.Serialization.StreamingContext context )
 			: base( info, context ) { }
+
+		internal override Handle<AppObject> ToVMException() {
+			var e = AppObject.CreateInstance( KnownClasses.System_UnknownExternalCallException ).ToHandle();
+			e.Send( KnownStrings.initialize_2, Message.To<AppObject>(), ExternalCallName.To<AppObject>() );
+			return e;
+		}
 	}
 }

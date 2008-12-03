@@ -14,7 +14,7 @@ namespace VM.VMObjects {
 		#region Properties
 		int start;
 		public int Start { get { return start; } }
-		public Handle<Class> VMClass { get { return KnownClasses.SystemReflectionMessageHandler; } }
+		public Handle<Class> VMClass { get { return KnownClasses.System_Reflection_Message_Handler; } }
 		public Word this[int index] {
 			get { return VirtualMachine.MemoryManager[Start + index]; }
 			set { VirtualMachine.MemoryManager[Start + index] = value; }
@@ -93,11 +93,11 @@ namespace VM.VMObjects {
 
 		static void SetHeader( this Handle<DelegateMessageHandler> obj, Handle<String> name, bool isEntrypoint, VisibilityModifier visibility ) {
 			if (name == null && visibility != VisibilityModifier.None)
-				throw new InvalidVMProgramException( "Non-default message handler specified with no name." );
+				throw new InvalidVMProgramException( "Non-default message handler specified with no name.".ToVMString() );
 			if (name != null && visibility == VisibilityModifier.None)
-				throw new InvalidVMProgramException( "Default message handler specified with name." );
+				throw new InvalidVMProgramException( "Default message handler specified with name.".ToVMString() );
 			if (isEntrypoint && visibility == VisibilityModifier.None)
-				throw new InvalidVMProgramException( "Default message handler can not be entrypoint." );
+				throw new InvalidVMProgramException( "Default message handler can not be entrypoint.".ToVMString() );
 
 			obj[MessageHandlerBaseConsts.HEADER_OFFSET] = (name.GetInternIndex() << MessageHandlerBaseConsts.NAME_RSHIFT) | (isEntrypoint ? MessageHandlerBaseConsts.IS_ENTRYPOINT_MASK : (Word) 0) | MessageHandlerBaseConsts.IS_EXTERNAL_MASK | (int) visibility;
 		}

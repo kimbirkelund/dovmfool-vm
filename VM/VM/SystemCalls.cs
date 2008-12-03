@@ -22,7 +22,7 @@ namespace VM {
 
 			var method = root.FindMethod( name );
 			if (method == null)
-				throw new UnknownSystemCallException( name );
+				throw new UnknownExternalCallException( name );
 			cache.Add( name, method );
 			return method;
 		}

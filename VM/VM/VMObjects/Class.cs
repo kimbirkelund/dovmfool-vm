@@ -28,7 +28,7 @@ namespace VM.VMObjects {
 		#region Properties
 		int start;
 		public int Start { get { return start; } }
-		public Handle<Class> VMClass { get { return KnownClasses.SystemReflectionClass; } }
+		public Handle<Class> VMClass { get { return KnownClasses.System_Reflection_Class; } }
 		public Word this[int index] {
 			get { return VirtualMachine.MemoryManager[Start + index]; }
 			set { VirtualMachine.MemoryManager[Start + index] = value; }
@@ -367,15 +367,15 @@ namespace VM.VMObjects {
 
 		public static void InitInstance( this Handle<Class> obj, VisibilityModifier visibility, Handle<String> name, Handle<Class> parentClass, IList<Handle<String>> superClasses, int fieldCount, Handle<MessageHandlerBase> defaultHandler, IList<Handle<MessageHandlerBase>> messageHandlers, IList<Handle<Class>> innerClasses ) {
 			if (name == null)
-				throw new InvalidVMProgramException( "Class with no name specified." );
+				throw new InvalidVMProgramException( "Class with no name specified.".ToVMString() );
 			if (fieldCount > 0x0000FFFF)
-				throw new InvalidVMProgramException( "Class with more than 65535 fields specified" );
+				throw new InvalidVMProgramException( "Class with more than 65535 fields specified".ToVMString() );
 			if (messageHandlers.Count > 0x0000FFFF)
-				throw new InvalidVMProgramException( "Class with more than 65535 message handlers specified" );
+				throw new InvalidVMProgramException( "Class with more than 65535 message handlers specified".ToVMString() );
 			if (superClasses.Count > 0x0000FFFF)
-				throw new InvalidVMProgramException( "Class with more than 65535 super classes specified" );
+				throw new InvalidVMProgramException( "Class with more than 65535 super classes specified".ToVMString() );
 			if (innerClasses.Count > 0x0000FFFF)
-				throw new InvalidVMProgramException( "Class with more than 65535 inner classes specified" );
+				throw new InvalidVMProgramException( "Class with more than 65535 inner classes specified".ToVMString() );
 
 			obj[ClassConsts.HEADER_OFFSET] = (name.GetInternIndex() << ClassConsts.NAME_RSHIFT) | (int) visibility;
 			obj[ClassConsts.PARENT_CLASS_OFFSET] = parentClass;

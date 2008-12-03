@@ -14,7 +14,7 @@ namespace VM.VMObjects {
 		#region Properties
 		int start;
 		public int Start { get { return start; } }
-		public Handle<Class> VMClass { get { return KnownClasses.SystemArray; } }
+		public Handle<Class> VMClass { get { return KnownClasses.System_Array; } }
 		public Word this[int index] {
 			get { return VirtualMachine.MemoryManager[Start + index]; }
 			set { VirtualMachine.MemoryManager[Start + index] = value; }
@@ -61,13 +61,13 @@ namespace VM.VMObjects {
 
 		public static void Copy( Handle<Array> sourceArray, int sourceIndex, Handle<Array> destinationArray, int destinationIndex, int count ) {
 			if (sourceIndex < 0)
-				throw new ArgumentOutOfRangeException( "sourceIndex" );
+				throw new ArgumentOutOfRangeException( "sourceIndex".ToVMString() );
 			if (sourceArray.Length() < sourceIndex + count)
-				throw new ArgumentOutOfRangeException( "count" );
+				throw new ArgumentOutOfRangeException( "count".ToVMString() );
 			if (destinationIndex < 0)
-				throw new ArgumentOutOfRangeException( "sourceIndex" );
+				throw new ArgumentOutOfRangeException( "sourceIndex".ToVMString() );
 			if (destinationArray.Length() < destinationIndex + count)
-				throw new ArgumentOutOfRangeException( "count" );
+				throw new ArgumentOutOfRangeException( "count".ToVMString() );
 
 			var sourceOffset = ArrayConsts.FIRST_ELEMENT_OFFSET + sourceIndex * 2;
 			var destOffset = ArrayConsts.FIRST_ELEMENT_OFFSET + destinationIndex * 2;
@@ -79,13 +79,13 @@ namespace VM.VMObjects {
 
 		public static void CopyDescending( Handle<Array> sourceArray, int sourceIndex, Handle<Array> destinationArray, int destinationIndex, int count ) {
 			if (sourceIndex < 0)
-				throw new ArgumentOutOfRangeException( "sourceIndex" );
+				throw new ArgumentOutOfRangeException( "sourceIndex".ToVMString() );
 			if (sourceArray.Length() <= sourceIndex + count)
-				throw new ArgumentOutOfRangeException( "count" );
+				throw new ArgumentOutOfRangeException( "count".ToVMString() );
 			if (destinationIndex < 0)
-				throw new ArgumentOutOfRangeException( "sourceIndex" );
+				throw new ArgumentOutOfRangeException( "sourceIndex".ToVMString() );
 			if (destinationArray.Length() < destinationIndex + count)
-				throw new ArgumentOutOfRangeException( "count" );
+				throw new ArgumentOutOfRangeException( "count".ToVMString() );
 
 			var sourceOffset = ArrayConsts.FIRST_ELEMENT_OFFSET + sourceIndex * 2;
 			var destOffset = ArrayConsts.FIRST_ELEMENT_OFFSET + destinationIndex * 2;
@@ -104,9 +104,9 @@ namespace VM.VMObjects {
 
 		internal static UValue Get( this Handle<Array> obj, int arrayIndex ) {
 			if (arrayIndex < 0 || obj.Length() <= arrayIndex)
-				throw new ArgumentOutOfRangeException( "arrayIndex" );
+				throw new ArgumentOutOfRangeException( "arrayIndex".ToVMString() );
 
-			if (obj[ArrayConsts.FIRST_ELEMENT_OFFSET + arrayIndex * 2] == KnownClasses.SystemInteger.Start)
+			if (obj[ArrayConsts.FIRST_ELEMENT_OFFSET + arrayIndex * 2] == KnownClasses.System_Integer.Start)
 				return UValue.Int( obj[ArrayConsts.FIRST_ELEMENT_OFFSET + arrayIndex * 2 + 1] );
 			if (obj[ArrayConsts.FIRST_ELEMENT_OFFSET + arrayIndex * 2] == 0 && obj[ArrayConsts.FIRST_ELEMENT_OFFSET + arrayIndex * 2 + 1] == 0)
 				return UValue.Null();
@@ -115,7 +115,7 @@ namespace VM.VMObjects {
 
 		public static Handle<T> Get<T>( this Handle<Array> obj, int arrayIndex ) where T : struct, IVMObject<T> {
 			if (arrayIndex < 0 || obj.Length() <= arrayIndex)
-				throw new ArgumentOutOfRangeException( "arrayIndex" );
+				throw new ArgumentOutOfRangeException( "arrayIndex".ToVMString() );
 
 			if (obj[ArrayConsts.FIRST_ELEMENT_OFFSET + arrayIndex * 2] == 0 && obj[ArrayConsts.FIRST_ELEMENT_OFFSET + arrayIndex * 2 + 1] == 0)
 				return null;
@@ -124,14 +124,14 @@ namespace VM.VMObjects {
 
 		public static Class GetType( this Handle<Array> obj, int arrayIndex ) {
 			if (arrayIndex < 0 || obj.Length() <= arrayIndex)
-				throw new ArgumentOutOfRangeException( "arrayIndex" );
+				throw new ArgumentOutOfRangeException( "arrayIndex".ToVMString() );
 
 			return (Class) obj[ArrayConsts.FIRST_ELEMENT_OFFSET + arrayIndex * 2];
 		}
 
 		public static void Set<T>( this Handle<Array> obj, int arrayIndex, Handle<T> value ) where T : struct, IVMObject<T> {
 			if (arrayIndex < 0 || obj.Length() <= arrayIndex)
-				throw new ArgumentOutOfRangeException( "arrayIndex" );
+				throw new ArgumentOutOfRangeException( "arrayIndex".ToVMString() );
 
 			if (value == null) {
 				obj[ArrayConsts.FIRST_ELEMENT_OFFSET + arrayIndex * 2] = 0;
@@ -144,7 +144,7 @@ namespace VM.VMObjects {
 
 		internal static void Set( this Handle<Array> obj, int arrayIndex, UValue value ) {
 			if (arrayIndex < 0 || obj.Length() <= arrayIndex)
-				throw new ArgumentOutOfRangeException( "arrayIndex" );
+				throw new ArgumentOutOfRangeException( "arrayIndex".ToVMString() );
 
 			obj[ArrayConsts.FIRST_ELEMENT_OFFSET + arrayIndex * 2] = value.Type;
 			obj[ArrayConsts.FIRST_ELEMENT_OFFSET + arrayIndex * 2 + 1] = value.Value;

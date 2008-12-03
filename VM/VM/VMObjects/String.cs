@@ -18,7 +18,7 @@ namespace VM.VMObjects {
 		#region Properties
 		int start;
 		public int Start { get { return start; } }
-		public Handle<Class> VMClass { get { return KnownClasses.SystemString; } }
+		public Handle<Class> VMClass { get { return KnownClasses.System_String; } }
 		public Word this[int index] {
 			get { return VirtualMachine.MemoryManager[Start + index]; }
 			set { VirtualMachine.MemoryManager[Start + index] = value; }
@@ -192,7 +192,7 @@ namespace VM.VMObjects {
 
 		public static int IndexOf( this Handle<String> obj, Handle<String> str, int startIndex ) {
 			if (startIndex < 0 || obj.Length() <= startIndex)
-				throw new ArgumentOutOfRangeException( "startIndex" );
+				throw new ArgumentOutOfRangeException( "startIndex".ToVMString() );
 
 			int i = 0;
 		top:
@@ -213,7 +213,7 @@ namespace VM.VMObjects {
 
 		public static int LastIndexOf( this Handle<String> obj, Handle<String> str, int startIndex ) {
 			if (startIndex < 0 || obj.Length() <= startIndex)
-				throw new ArgumentOutOfRangeException( "startIndex" );
+				throw new ArgumentOutOfRangeException( "startIndex".ToVMString() );
 
 			int i = startIndex;
 		top:
@@ -234,9 +234,9 @@ namespace VM.VMObjects {
 
 		public static String Substring( this Handle<String> obj, int start, int count ) {
 			if (start < 0)
-				throw new ArgumentOutOfRangeException( "start" );
+				throw new ArgumentOutOfRangeException( "start".ToVMString() );
 			if (count < 0 || start + count > obj.Length())
-				throw new ArgumentOutOfRangeException( "count" );
+				throw new ArgumentOutOfRangeException( "count".ToVMString() );
 
 			var wordCount = (count + 1) / 2;
 			var newStr = String.CreateInstance( count ).ToHandle();
@@ -365,7 +365,7 @@ namespace VM.VMObjects {
 
 		public static int GetInternIndex( this Handle<VMObjects.String> str ) {
 			if (!str.IsInterned())
-				throw new ArgumentException( "Specified string must be interned.", "str" );
+				throw new ArgumentException( "Specified string must be interned.".ToVMString(), "str".ToVMString() );
 			return strings.FindIndex( s => Equals( s, str ) );
 		}
 	}
