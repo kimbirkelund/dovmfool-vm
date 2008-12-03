@@ -54,6 +54,7 @@ namespace VM {
 		}
 	}
 
+	[System.Diagnostics.DebuggerDisplay( "handle[{ToString()}]" )]
 	public class Handle<T> : MemoryManagerBase.HandleBase where T : struct, IVMObject<T> {
 		public T Value { get { return new T().New( Start ); } }
 		internal Word this[int index] {
@@ -80,7 +81,7 @@ namespace VM {
 		}
 
 		public override string ToString() {
-			return "handle[" + Value.ToString() + "]";
+			return Value.ToString();
 		}
 
 		public Handle<TTo> To<TTo>() where TTo : struct, IVMObject<TTo> {

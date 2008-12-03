@@ -62,7 +62,7 @@ namespace VM {
 					public static UValue Equals( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
 						var handler1 = ((MessageHandlerBase) receiver.Value).ToHandle();
 						var handler2 = ((MessageHandlerBase) receiver.Value).ToHandle();
-						if (handler2.Class() != KnownClasses.System_Reflection_Message_Handler.Start)
+						if (handler2.Class() != KnownClasses.System_Reflection_MessageHandler.Start)
 							return 0;
 
 						return handler1 == handler2 ? 1 : 0;
@@ -97,7 +97,7 @@ namespace VM {
 						if (def.IsNull())
 							return UValue.Null();
 
-						return UValue.Ref( KnownClasses.System_Reflection_Message_Handler, def );
+						return UValue.Ref( KnownClasses.System_Reflection_MessageHandler, def );
 					}
 
 					[SystemCallMethod( "parent-class:0" )]
@@ -135,7 +135,7 @@ namespace VM {
 
 						var arr = VMObjects.Array.CreateInstance( cls.MessageHandlerCount() ).ToHandle();
 
-						cls.MessageHandlers().ForEach( ( h, i ) => arr.Set( i, UValue.Ref( KnownClasses.System_Reflection_Message_Handler.Value, h ) ) );
+						cls.MessageHandlers().ForEach( ( h, i ) => arr.Set( i, UValue.Ref( KnownClasses.System_Reflection_MessageHandler.Value, h ) ) );
 
 						return UValue.Ref( KnownClasses.System_Array, arr );
 					}

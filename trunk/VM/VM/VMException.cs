@@ -116,7 +116,7 @@ namespace VM {
 
 	[global::System.Serializable]
 	public class InterpretorException : VMException {
-		public InterpretorException() { }
+		public InterpretorException() : base( "An unknown error occured in the interpretor.".ToVMString() ) { }
 		public InterpretorException( Handle<VM.VMObjects.String> message ) : base( message ) { }
 		public InterpretorException( Handle<VM.VMObjects.String> message, Exception inner ) : base( message, inner ) { }
 		protected InterpretorException(
@@ -251,7 +251,7 @@ namespace VM {
 		}
 
 		internal override Handle<AppObject> ToVMException() {
-			var e = AppObject.CreateInstance( KnownClasses.System_MessageNotUnderStoodException ).ToHandle();
+			var e = AppObject.CreateInstance( KnownClasses.System_MessageNotUnderstoodException ).ToHandle();
 			e.Send( KnownStrings.initialize_3, Message.To<AppObject>(), InvalidMessage.To<AppObject>(), Object );
 			return e;
 		}
