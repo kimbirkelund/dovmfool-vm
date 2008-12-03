@@ -19,14 +19,14 @@ namespace VM {
 				[SystemCallMethod( "equals:1" )]
 				public static UValue Equals( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
 					var arg = ((VMObjects.String) arguments[0].Value).ToHandle();
-					if (arg.Class().Start != KnownClasses.SystemString.Start)
+					if (arg.Class().Start != KnownClasses.System_String.Start)
 						return UValue.Null();
 					return ((VMObjects.String) receiver.Value).ToHandle().Equals( arg ) ? 1 : 0;
 				}
 
 				[SystemCallMethod( "compare-to:1" )]
 				public static UValue CompareTo( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
-					if (arguments[0].Type != KnownClasses.SystemString.Start)
+					if (arguments[0].Type != KnownClasses.System_String.Start)
 						return 0;
 
 					var other = ((VMObjects.String) arguments[0].Value).ToHandle();
@@ -35,13 +35,13 @@ namespace VM {
 
 				[SystemCallMethod( "substring:2" )]
 				public static UValue Substring( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
-					return UValue.Ref( KnownClasses.SystemString, ((VMObjects.String) receiver.Value).ToHandle().Substring( arguments[0].Value, arguments[1].Value ) );
+					return UValue.Ref( KnownClasses.System_String, ((VMObjects.String) receiver.Value).ToHandle().Substring( arguments[0].Value, arguments[1].Value ) );
 				}
 
 				[SystemCallMethod( "split:1" )]
 				public static UValue Split( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
 					var splitter = ((VMObjects.String) arguments[0].Value).ToHandle();
-					return UValue.Ref( KnownClasses.SystemArray, ((VMObjects.String) receiver.Value).ToHandle().Split( splitter ) );
+					return UValue.Ref( KnownClasses.System_Array, ((VMObjects.String) receiver.Value).ToHandle().Split( splitter ) );
 				}
 
 				[SystemCallMethod( "index-of:1" )]
@@ -63,7 +63,7 @@ namespace VM {
 					var str1 = ((VMObjects.String) receiver.Value).ToHandle();
 					var str2 = interpretor.Send( toStringStr, arguments[0].ToHandle() );
 
-					return UValue.Ref( KnownClasses.SystemString, str1.Concat( str2.ToHandle<VMObjects.String>() ) );
+					return UValue.Ref( KnownClasses.System_String, str1.Concat( str2.ToHandle<VMObjects.String>() ) );
 				}
 
 				[SystemCallMethod( "length:0" )]

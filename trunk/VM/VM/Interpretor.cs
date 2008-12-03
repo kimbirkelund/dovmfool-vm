@@ -10,9 +10,11 @@ namespace VM {
 	class Interpretor : IInterpretor {
 		public readonly InterpretorData Data = new InterpretorData();
 
+		Handle<AppObject> finalResult = null;
+
 		static Action<Interpretor> handleException = ( _this ) => {
 			var excep = _this.Data.Stack.Pop();
-			if (!excep.Type.ToHandle().Is( KnownClasses.SystemException ))
+			if (!excep.Type.ToHandle().Is( KnownClasses.System_Exception ))
 				throw new InvalidCastException();
 			var _catch = _this.Data.Stack.PopTry();
 			ExecutionStack.ReturnAddress? ra = null;
@@ -56,7 +58,7 @@ namespace VM {
 			: this( id ) {
 			Data.Stack.Push( entrypointObject.Class(), entrypointObject.Value );
 			if (args.Length != entrypoint.ArgumentCount())
-				throw new VMAppException( "Entrypoint takes " + entrypoint.ArgumentCount() + " arguments, but " + args.Length + " was supplied." );
+				throw new VMAppException( ("Entrypoint takes " + entrypoint.ArgumentCount() + " arguments, but " + args.Length + " was supplied.").ToVMString() );
 
 			foreach (var arg in args)
 				Data.Stack.Push( arg.Class(), arg.Value );
@@ -88,7 +90,7 @@ namespace VM {
 					waitToPause.Set();
 				}
 
-				//try {
+				try {
 					var ins = handler.GetInstruction( Data.PC );
 					var opcode = (VMILLib.OpCode) (ins >> 27);
 					int operand = (int) (0x07FFFFFF & ins);
@@ -121,7 +123,7 @@ namespace VM {
 							Data.PC++;
 							break;
 						case VMILLib.OpCode.PushLiteralString:
-							Data.Stack.Push( KnownClasses.SystemString, VMObjects.String.GetString( operand ).Value );
+							Data.Stack.Push( KnownClasses.System_String, VMObjects.String.GetString( operand ).Value );
 							Data.PC++;
 							break;
 						case VMILLib.OpCode.PushLiteralIntExtend:
@@ -140,7 +142,7 @@ namespace VM {
 							break;
 						case VMILLib.OpCode.NewInstance: {
 								var v = Data.Stack.Pop();
-								if (v.Type != KnownClasses.SystemString.Start)
+								if (v.Type != KnownClasses.System_String.Start)
 									throw new InvalidCastException();
 								var clsName = cacheString[v.Value];
 								var cls = VirtualMachine.ResolveClass( cacheClass[receiver.Class()], clsName );
@@ -151,7 +153,7 @@ namespace VM {
 							}
 						case VMILLib.OpCode.SendMessage: {
 								var messageVal = Data.Stack.Pop();
-								if (messageVal.Type != KnownClasses.SystemString.Value)
+								if (messageVal.Type != KnownClasses.System_String.Value)
 									throw new InvalidOperationException( "Value on top of stack is not a message." );
 								var message = cacheString[messageVal.Value];
 								var argCount = ParseArgumentCount( message );
@@ -171,7 +173,7 @@ namespace VM {
 										var v = Data.Stack[argCount - k - 1];
 										if (v.IsNull)
 											args[k] = UValue.Null();
-										else if (v.Type == KnownClasses.SystemInteger.Value)
+										else if (v.Type == KnownClasses.System_Integer.Value)
 											args[k] = UValue.Int( v.Value );
 										else
 											args[k] = UValue.Ref( v.Type, v.Value ); ((AppObject) v.Value).ToHandle();
@@ -222,7 +224,7 @@ namespace VM {
 								if (v.IsNull)
 									Data.PC++;
 								else {
-									var res = v.Type == KnownClasses.SystemInteger.Value ? v.Value : Send( KnownStrings.is_true_0, ((AppObject) v.Value).ToHandle() ).Value;
+									var res = v.Type == KnownClasses.System_Integer.Value ? v.Value : Send( KnownStrings.is_true_0, ((AppObject) v.Value).ToHandle() ).Value;
 									if (res > 0)
 										Data.PC += (int) (((operand & 0x04000000) != 0 ? -1 : 1) * (operand & 0x03FFFFFF));
 									else
@@ -235,7 +237,7 @@ namespace VM {
 								if (v.IsNull)
 									Data.PC += (int) (((operand & 0x04000000) != 0 ? -1 : 1) * (operand & 0x03FFFFFF));
 								else {
-									var res = v.Type == KnownClasses.SystemInteger.Value ? v.Value : Send( KnownStrings.is_false_0, ((AppObject) v.Value).ToHandle() ).Value;
+									var res = v.Type == KnownClasses.System_Integer.Value ? v.Value : Send( KnownStrings.is_false_0, ((AppObject) v.Value).ToHandle() ).Value;
 									if (res <= 0)
 										Data.PC += (int) (((operand & 0x04000000) != 0 ? -1 : 1) * (operand & 0x03FFFFFF));
 									else
@@ -258,16 +260,16 @@ namespace VM {
 							Data.PC++;
 							break;
 						default:
-							throw new InvalidVMProgramException( "Unknown VMILLib.OpCode encountered: " + opcode );
+							throw new InvalidVMProgramException( ("Unknown VMILLib.OpCode encountered: " + opcode).ToVMString() );
 					}
-				//} catch (VMException ex) {
-				//    var vmex = ex.ToVMException();
-				//    Data.Stack.Push( vmex.Class(), vmex );
-				//    handleException( this );
-				//}
+				} catch (VMException ex) {
+					var vmex = ex.ToVMException();
+					Data.Stack.Push( vmex.Class(), vmex );
+					handleException( this );
+				}
 			}
 
-			throw new InvalidVMProgramException( "Reach end of message handler without returning." );
+			throw new InvalidVMProgramException( "Reach end of message handler without returning.".ToVMString() );
 		}
 
 		int ParseArgumentCount( Handle<VM.VMObjects.String> message ) {
@@ -315,12 +317,12 @@ namespace VM {
 
 		public void Start() {
 			if (state == InterpretorState.Stopped)
-				throw new InterpretorException( "Interpretor has been stopped." );
+				throw new InterpretorException( "Interpretor has been stopped.".ToVMString() );
 			lock (externalWaitObject) {
 				if (state != InterpretorState.NotStarted)
-					throw new InterpretorException( "Interpretor already started." );
+					throw new InterpretorException( "Interpretor already started.".ToVMString() );
 
-				thread = new Thread( () => Invoke() );
+				thread = new Thread( () => finalResult = Invoke() );
 				thread.IsBackground = true;
 				state = InterpretorState.Running;
 				thread.Start();
@@ -329,10 +331,10 @@ namespace VM {
 
 		public void Pause() {
 			if (state == InterpretorState.Stopped)
-				throw new InterpretorException( "Interpretor has been stopped." );
+				throw new InterpretorException( "Interpretor has been stopped.".ToVMString() );
 			lock (externalWaitObject) {
 				if (state != InterpretorState.Paused && state != InterpretorState.Running && state != InterpretorState.Blocked)
-					throw new InterpretorException( "Interpretor not in either of the states Paused, Running or Blocked." );
+					throw new InterpretorException( "Interpretor not in either of the states Paused, Running or Blocked.".ToVMString() );
 
 				state = InterpretorState.Paused;
 				if (state == InterpretorState.Running)
@@ -342,7 +344,7 @@ namespace VM {
 
 		public void Resume() {
 			if (state == InterpretorState.Stopped)
-				throw new InterpretorException( "Interpretor has been stopped." );
+				throw new InterpretorException( "Interpretor has been stopped.".ToVMString() );
 			lock (externalWaitObject) {
 				state = isBlocked ? InterpretorState.Blocked : InterpretorState.Running;
 				if (!isBlocked)
@@ -352,7 +354,7 @@ namespace VM {
 
 		public void Kill() {
 			if (state == InterpretorState.Stopped)
-				throw new InterpretorException( "Interpretor has been stopped." );
+				throw new InterpretorException( "Interpretor has been stopped.".ToVMString() );
 			lock (externalWaitObject) {
 				state = InterpretorState.Stopped;
 				if (thread.Join( 5000 ))
@@ -364,9 +366,11 @@ namespace VM {
 			}
 		}
 
-		public void Join() {
+		public Handle<AppObject> Join() {
 			if (thread != null && thread.ThreadState != ThreadState.Unstarted)
 				thread.Join();
+
+			return finalResult;
 		}
 
 		public void Dispose() {

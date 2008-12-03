@@ -28,7 +28,7 @@ namespace VM {
 
 						var interp = VirtualMachine.Fork( entrypointHandler, entrypointObj );
 						var rech = receiver.ToHandle();
-						rech.SetField( rech.GetFieldOffset( KnownClasses.SystemThreadingThread ) + 0, interp.Id );
+						rech.SetField( rech.GetFieldOffset( KnownClasses.System_Threading_Thread ) + 0, interp.Id );
 						interp.Start();
 
 						return UValue.Void();
@@ -37,7 +37,7 @@ namespace VM {
 					[SystemCallMethod( "join:0" )]
 					public static UValue Join( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
 						var thread = receiver.ToHandle();
-						var interp = VirtualMachine.GetInterpretor( thread.GetField( thread.GetFieldOffset( KnownClasses.SystemThreadingThread ) + 0 ).Value );
+						var interp = VirtualMachine.GetInterpretor( thread.GetField( thread.GetFieldOffset( KnownClasses.System_Threading_Thread ) + 0 ).Value );
 						interp.Join();
 
 						return UValue.Void();

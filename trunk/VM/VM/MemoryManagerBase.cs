@@ -63,7 +63,7 @@ namespace VM {
 				if (!handles.ContainsKey( fromPosition ))
 					return;
 				if (!ignoreExistingLists && handles.ContainsKey( toPosition ))
-					throw new ArgumentException( "Target position already contains a handles list. Those must be moved first.", "toPosition" );
+					throw new ArgumentException( "Target position already contains a handles list. Those must be moved first.".ToVMString(), "toPosition".ToVMString() );
 
 				var l = handles[fromPosition];
 				handles.Remove( fromPosition );
@@ -80,7 +80,7 @@ namespace VM {
 			handles.OrderBy( p => p.Value.Count ).Select( p => {
 				var cls = ((VMObjects.AppObject) p.Key).ToHandle().Class();
 				total += p.Value.Count;
-				if (cls == KnownClasses.SystemString.Start)
+				if (cls == KnownClasses.System_String.Start)
 					return p.Value.Count + " => " + p.Key + " (" + ((VM.VMObjects.String) p.Key).ToString() + ")";
 				return p.Value.Count + " => " + p.Key + " (" + ((VMObjects.AppObject) p.Key).ToHandle().Class() + ")";
 			} ).ForEach( s => VirtualMachine.Logger.PostLine( "DEBUG", s ) );

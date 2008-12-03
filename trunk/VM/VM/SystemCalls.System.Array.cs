@@ -11,13 +11,13 @@ namespace VM {
 			public static partial class Array {
 				[SystemCallMethod( "new-array:1" )]
 				public static UValue New( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
-					if (arguments[0].Type != KnownClasses.SystemInteger.Start)
-						throw new ArgumentException( "Argument should be an integer.", "initialSize" );
+					if (arguments[0].Type != KnownClasses.System_Integer.Start)
+						throw new ArgumentException( "Argument should be an integer.".ToVMString(), "initialSize".ToVMString() );
 
 					var initialSize = arguments[0].Value;
 					var arr = VMObjects.Array.CreateInstance( initialSize );
 
-					return UValue.Ref( KnownClasses.SystemArray, arr );
+					return UValue.Ref( KnownClasses.System_Array, arr );
 				}
 
 				[SystemCallMethod( "set:2" )]

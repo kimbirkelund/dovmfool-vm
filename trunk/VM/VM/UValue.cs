@@ -22,9 +22,9 @@ namespace VM {
 
 		public static UValue Void() { return new UValue( true, false, (Class) 0, 0 ); }
 		public static UValue Null() { return new UValue( false, true, (Class) 0, 0 ); }
-		public static UValue Int( int i ) { return new UValue( false, false, KnownClasses.SystemInteger.Value, i ); }
+		public static UValue Int( int i ) { return new UValue( false, false, KnownClasses.System_Integer.Value, i ); }
 		public static UValue Ref( Class type, Word value ) {
-			if (type == KnownClasses.SystemInteger.Start)
+			if (type == KnownClasses.System_Integer.Start)
 				return Int( value );
 			return new UValue( false, true, type, value );
 		}
@@ -73,12 +73,12 @@ namespace VM {
 					case -5: return "TRY MARKER: " + Value;
 					case -6: return "RETURN HERE: " + Value;
 					default:
-						throw new ArgumentException( "Invalid stack value type: " + Type.Start );
+						throw new ArgumentException( ("Invalid stack value type: " + Type.Start).ToVMString() );
 				}
 			}
-			if (Type == KnownClasses.SystemInteger.Start)
+			if (Type == KnownClasses.System_Integer.Start)
 				return Value.ToString();
-			if (Type == KnownClasses.SystemString.Start)
+			if (Type == KnownClasses.System_String.Start)
 				return "\"" + ((VM.VMObjects.String) Value).ToString() + "\"";
 			return "[" + Type + "]" + ((AppObject) Value).ToString();
 		}

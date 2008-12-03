@@ -76,6 +76,24 @@
 		}
 	}
 	
+	.class public ClassLoaderException extends System.Exception {
+		.handler public initialize() {
+			load-this
+			push-literal "An exception occured while loading a class."
+			push-literal "initialize:1"
+			send-message
+		}
+	}
+
+	.class public InvalidThreadIdException extends System.Exception {
+		.handler public initialize() {
+			load-this
+			push-literal "Specified thread id is invalid."
+			push-literal "initialize:1"
+			send-message
+		}
+	}
+
 	.class public NotImplementedException extends System.Exception {
 		.handler public initialize() {
 			load-this

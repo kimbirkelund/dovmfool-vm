@@ -87,11 +87,11 @@ namespace VM.VMObjects {
 
 		internal static UValue GetField( this Handle<AppObject> obj, int index ) {
 			if (index < 0 || obj.Class().ToHandle().TotalFieldCount() <= index)
-				throw new ArgumentOutOfRangeException( "Index must be less than the number of fields." );
+				throw new ArgumentOutOfRangeException( "Index must be less than the number of fields.".ToVMString() );
 
 			var type = (Class) obj[obj[AppObjectConsts.FIELDS_OFFSET_OFFSET] + index * 2];
 			var value = obj[obj[AppObjectConsts.FIELDS_OFFSET_OFFSET] + index * 2 + 1];
-			if (type == KnownClasses.SystemInteger.Start)
+			if (type == KnownClasses.System_Integer.Start)
 				return UValue.Int( value );
 			return UValue.Ref( type, value );
 		}
@@ -117,13 +117,24 @@ namespace VM.VMObjects {
 				if (lin.Get<Class>( i ) == superClass)
 					return obj[AppObjectConsts.FIRST_SUPERCLASS_FIELDS_OFFSET_OFFSET + i];
 
-			throw new ClassNotFoundException( "Specified class is not in the inheritance hierachy.", superClass.Name().ToHandle() );
+			throw new ClassNotFoundException( "Specified class is not in the inheritance hierachy.".ToVMString(), superClass.Name().ToHandle() );
 		}
 
 		public static string ToString( this Handle<AppObject> obj ) {
 			if (obj.IsNull())
 				return "{NULL}";
 			return "Instance of " + obj.Class();
+		}
+
+		public static Handle<AppObject> Send( this Handle<AppObject> obj, Handle<String> message, params Handle<AppObject>[] arguments ) {
+			var cls = obj.Class().ToHandle();
+			var handler = cls.ResolveMessageHandler( null, message ).ToHandle();
+			if (handler == null)
+				throw new MessageNotUnderstoodException( message );
+
+			var interp = VirtualMachine.Fork( handler, obj, arguments );
+			interp.Start();
+			return interp.Join();
 		}
 	}
 }

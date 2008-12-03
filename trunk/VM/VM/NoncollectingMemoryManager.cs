@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using VM.VMObjects;
 
 namespace VM {
 	partial class NoncollectingMemoryManager : MemoryManagerBase {
@@ -19,7 +20,7 @@ namespace VM {
 
 		public NoncollectingMemoryManager( int size ) {
 			if (size < 0)
-				throw new ArgumentOutOfRangeException( "size" );
+				throw new ArgumentOutOfRangeException( "size".ToVMString() );
 
 			memory = new Word[size];
 		}

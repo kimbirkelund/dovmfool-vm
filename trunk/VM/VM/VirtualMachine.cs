@@ -70,7 +70,7 @@ namespace VM {
 			var loader = new ClassLoader( inputFile );
 			var entrypoint = loader.Read();
 			if (entrypoint == null)
-				throw new VMException( "No entry point specified." );
+				throw new VMException( "No entry point specified.".ToVMString() );
 
 			var obj = AppObject.CreateInstance( cacheClass[entrypoint.Class()] ).ToHandle();
 

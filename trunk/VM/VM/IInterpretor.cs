@@ -12,7 +12,7 @@ namespace VM {
 		void Pause();
 		void Resume();
 		void Kill();
-		void Join();
+		Handle<AppObject> Join();
 
 		UValue Send( Handle<VMObjects.String> message, Handle<VMObjects.AppObject> to, params Handle<AppObject>[] arguments );
 	}

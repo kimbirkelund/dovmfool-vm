@@ -19,7 +19,7 @@ namespace VM.VMObjects {
 		#region Properties
 		int start;
 		public int Start { get { return start; } }
-		public Handle<Class> VMClass { get { return KnownClasses.SystemReflectionMessageHandler; } }
+		public Handle<Class> VMClass { get { return KnownClasses.System_Reflection_Message_Handler; } }
 		public Word this[int index] {
 			get { return VirtualMachine.MemoryManager[Start + index]; }
 			set { VirtualMachine.MemoryManager[Start + index] = value; }
@@ -114,11 +114,11 @@ namespace VM.VMObjects {
 
 		static void SetCounts( this Handle<VMILMessageHandler> obj, int argumentCount, int localCount, int instructionCount ) {
 			if (argumentCount > 0x000000FF)
-				throw new InvalidVMProgramException( "Message handler has specifies more than 255 arguments." );
+				throw new InvalidVMProgramException( "Message handler has specifies more than 255 arguments.".ToVMString() );
 			if (localCount > 0x000000FF)
-				throw new InvalidVMProgramException( "Message handler has specifies more than 255 local variables." );
+				throw new InvalidVMProgramException( "Message handler has specifies more than 255 local variables.".ToVMString() );
 			if (instructionCount > 0x0000FFFF)
-				throw new InvalidVMProgramException( "Message handler has specifies more than 65535 local variables." );
+				throw new InvalidVMProgramException( "Message handler has specifies more than 65535 local variables.".ToVMString() );
 
 			obj[VMILMessageHandlerConsts.COUNTS_OFFSET] =
 				(instructionCount << VMILMessageHandlerConsts.INSTRUCTION_COUNT_RSHIFT) |
@@ -127,11 +127,11 @@ namespace VM.VMObjects {
 
 		static void SetHeader( this Handle<VMILMessageHandler> obj, Handle<String> name, bool isEntrypoint, VisibilityModifier visibility ) {
 			if (name == null && visibility != VisibilityModifier.None)
-				throw new InvalidVMProgramException( "Non-default message handler specified with no name." );
+				throw new InvalidVMProgramException( "Non-default message handler specified with no name.".ToVMString() );
 			if (name != null && visibility == VisibilityModifier.None)
-				throw new InvalidVMProgramException( "Default message handler specified with name." );
+				throw new InvalidVMProgramException( "Default message handler specified with name.".ToVMString() );
 			if (isEntrypoint && visibility == VisibilityModifier.None)
-				throw new InvalidVMProgramException( "Default message handler can not be entrypoint." );
+				throw new InvalidVMProgramException( "Default message handler can not be entrypoint.".ToVMString() );
 
 			if (name != null)
 				obj[MessageHandlerBaseConsts.HEADER_OFFSET] = (name.GetInternIndex() << MessageHandlerBaseConsts.NAME_RSHIFT) | (isEntrypoint ? MessageHandlerBaseConsts.IS_ENTRYPOINT_MASK : (Word) 0) | (int) visibility;

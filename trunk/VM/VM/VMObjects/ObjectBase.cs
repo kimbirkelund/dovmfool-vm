@@ -136,7 +136,7 @@ namespace VM.VMObjects {
 
 		public static Class Class<T>( this Handle<T> obj ) where T : struct, IVMObject<T> {
 			if (obj is IntHandle)
-				return KnownClasses.SystemInteger;
+				return KnownClasses.System_Integer;
 			if (((int) obj[ObjectBase.CLASS_POINTER_OFFSET]) < 0)
 				obj[ObjectBase.CLASS_POINTER_OFFSET] = KnownClasses.Resolve( obj[ObjectBase.CLASS_POINTER_OFFSET] );
 			return (Class) obj[ObjectBase.CLASS_POINTER_OFFSET];

@@ -32,7 +32,7 @@ namespace VM {
 
 				[SystemCallMethod( "read-line:0" )]
 				public static UValue ReadLine( IInterpretor interpretor, UValue receiver, UValue[] arguments ) {
-					return UValue.Ref( KnownClasses.SystemString, global::System.Console.ReadLine().ToVMString() );
+					return UValue.Ref( KnownClasses.System_String, global::System.Console.ReadLine().ToVMString() );
 				}
 			}
 		}
