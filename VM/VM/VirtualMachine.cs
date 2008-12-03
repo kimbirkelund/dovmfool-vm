@@ -9,6 +9,7 @@ using Sekhmet.Logging;
 
 namespace VM {
 	public static class VirtualMachine {
+		static bool initialized;
 		static int nextInterpretorId = 0;
 		static Dictionary<int, IInterpretor> interpretors = new Dictionary<int, IInterpretor>();
 
@@ -21,14 +22,20 @@ namespace VM {
 
 		static HandleCache<Class> cacheClass = new HandleCache<Class>();
 
-		static VirtualMachine() {
+		static void Initialize() {
+			if (initialized)
+				return;
+			initialized = true;
 			Logger = new Logger();
 			Logger.Handlers.Add( new ConsoleLogHandler() );
 
 			MemoryManager = new NoncollectingMemoryManager( 20000 );
 			InterpretorFactory = new Interpretor.Factory();
 
-			using (var loader = new ClassLoader( new MemoryStream( Resources.BaseTypes ) ))
+			var cb = typeof( VirtualMachine ).Assembly.CodeBase;
+			var baseTypesFilename = cb.Substring( 0, cb.ToLower().LastIndexOf( "vm.dll" ) ) + "BaseTypes.vmil";
+
+			using (var loader = new ClassLoader( new MemoryStream( Resources.BaseTypes ), baseTypesFilename ))
 				loader.Read();
 
 			KnownClasses.Update();
@@ -67,6 +74,7 @@ namespace VM {
 		}
 
 		public static void Execute( string inputFile ) {
+			Initialize();
 			var loader = new ClassLoader( inputFile );
 			var entrypoint = loader.Read();
 			if (entrypoint == null)

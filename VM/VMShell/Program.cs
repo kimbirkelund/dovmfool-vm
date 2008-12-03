@@ -13,7 +13,14 @@ namespace VMShell {
 
 			System.Diagnostics.Trace.Listeners.Add( new System.Diagnostics.ConsoleTraceListener() );
 
-			VM.VirtualMachine.Execute( inputFileArg.Value );
+			try {
+				VM.VirtualMachine.Execute( inputFileArg.Value );
+			} catch (Exception e) {
+				if (e.InnerException != null)
+					Console.WriteLine( e.InnerException );
+				else
+					Console.WriteLine( e );
+			}
 		}
 	}
 }

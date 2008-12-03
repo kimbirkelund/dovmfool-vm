@@ -20,6 +20,7 @@ namespace VM {
 		}
 
 		public ClassLoader( Stream input ) : this( new vml.SourceReader( input ) ) { }
+		public ClassLoader( Stream input, string sourceLocation ) : this( new vml.SourceReader( input, sourceLocation ) ) { }
 		public ClassLoader( string fileName ) : this( new vml.SourceReader( fileName ) ) { }
 
 		/// <summary>
@@ -88,7 +89,7 @@ namespace VM {
 					case vml.OpCode.LoadField: {
 							var idx = ins.MessageHandler.Class.Fields.IndexOf( (string) ins.Operand );
 							if (idx < 0)
-								throw new ClassLoaderException( ("No such field: '" + ins.Operand + "'.").ToVMString() );
+								throw new ClassLoaderException( (ins.Position + ": No such field: '" + ins.Operand + "'.").ToVMString() );
 							eins |= (uint) idx;
 							break;
 						}
@@ -96,14 +97,14 @@ namespace VM {
 					case vml.OpCode.LoadLocal: {
 							var idx = ins.MessageHandler.Locals.IndexOf( (string) ins.Operand );
 							if (idx < 0)
-								throw new ClassLoaderException( ("No such local variable: '" + ins.Operand + "'.").ToVMString() );
+								throw new ClassLoaderException( (ins.Position + ": No such local variable: '" + ins.Operand + "'.").ToVMString() );
 							eins |= (uint) idx;
 							break;
 						}
 					case vml.OpCode.LoadArgument: {
 							var idx = ins.MessageHandler.Arguments.IndexOf( (string) ins.Operand ) + 1;
 							if (idx < 0)
-								throw new ClassLoaderException( ("No such argument: '" + ins.Operand + "'.").ToVMString() );
+								throw new ClassLoaderException( (ins.Position + ": No such argument: '" + ins.Operand + "'.").ToVMString() );
 							eins |= (uint) idx;
 							break;
 						}
@@ -156,7 +157,7 @@ namespace VM {
 						trycatchStack.Pop();
 						break;
 					default:
-						throw new ArgumentException( ("Unexpected opcode : " + ins.OpCode).ToVMString() );
+						throw new ArgumentException( (ins.Position + ": Unexpected opcode : " + ins.OpCode).ToVMString() );
 				}
 
 				retInss.Add( eins );
