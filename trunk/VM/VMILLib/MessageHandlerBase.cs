@@ -5,6 +5,7 @@ using System.Text;
 
 namespace VMILLib {
 	public abstract class MessageHandlerBase {
+		public readonly SourcePosition Position;
 		public readonly VisibilityModifier Visibility;
 		public readonly string Name;
 		public readonly IList<string> Arguments;
@@ -21,7 +22,8 @@ namespace VMILLib {
 			}
 		}
 
-		public MessageHandlerBase( VisibilityModifier visibility, string name, IEnumerable<string> arguments ) {
+		public MessageHandlerBase( SourcePosition position, VisibilityModifier visibility, string name, IEnumerable<string> arguments ) {
+			this.Position = position;
 			this.Visibility = visibility;
 			this.Name = name;
 			this.Arguments = arguments.ToList().AsReadOnly();

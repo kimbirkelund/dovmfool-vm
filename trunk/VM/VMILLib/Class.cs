@@ -5,6 +5,7 @@ using System.Text;
 
 namespace VMILLib {
 	public sealed class Class {
+		public readonly SourcePosition Position;
 		public readonly VisibilityModifier Visibility;
 		public readonly string Name;
 		public readonly NameList SuperClasses;
@@ -14,7 +15,8 @@ namespace VMILLib {
 		public readonly ClassList InnerClasses;
 		public Class ParentClass { get; private set; }
 
-		public Class( VisibilityModifier visibility, string name, NameList superClasses, IEnumerable<string> fields, MessageHandlerBase defaultHandler, MessageHandlerList handlers, ClassList classes ) {
+		public Class(SourcePosition position, VisibilityModifier visibility, string name, NameList superClasses, IEnumerable<string> fields, MessageHandlerBase defaultHandler, MessageHandlerList handlers, ClassList classes ) {
+			this.Position = position;
 			this.Visibility = visibility;
 			this.Name = name;
 			this.SuperClasses = superClasses.Count == 0 && name != "Object" && ParentClass == null ? new NameList( new[] { "Object" } ) : superClasses;

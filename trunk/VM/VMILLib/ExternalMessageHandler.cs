@@ -8,8 +8,8 @@ namespace VMILLib {
 		public readonly string ExternalName;
 		public override bool IsExternal { get { return true; } }
 
-		public ExternalMessageHandler( VisibilityModifier visibility, string name, string externalName, IEnumerable<string> arguments )
-			: base( visibility, name, arguments ) {
+		public ExternalMessageHandler( SourcePosition position, VisibilityModifier visibility, string name, string externalName, IEnumerable<string> arguments )
+			: base( position, visibility, name, arguments ) {
 			this.ExternalName = externalName;
 		}
 

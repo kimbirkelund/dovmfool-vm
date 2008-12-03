@@ -11,6 +11,7 @@ namespace VMILLib {
 
 		bool isDisposed;
 		Stream input;
+		string filename;
 
 		Assembly assembly;
 
@@ -18,7 +19,15 @@ namespace VMILLib {
 			this.input = input;
 		}
 
-		public SourceReader( string input ) : this( new FileStream( input, FileMode.Open ) ) { }
+		public SourceReader( Stream input, string sourceLocation ) {
+			this.input = input;
+			this.filename = sourceLocation;
+		}
+
+		public SourceReader( string input )
+			: this( new FileStream( input, FileMode.Open ) ) {
+			this.filename = input;
+		}
 
 		public Assembly Read() {
 			if (assembly == null)
@@ -46,7 +55,7 @@ namespace VMILLib {
 			var handlers = new MessageHandlerList( cls.Handlers.Select( h => ReadMessageHandler( h ) ) );
 			var classes = new ClassList( cls.Classes.Select( c => ReadClass( c ) ) );
 
-			return new Class( visibility, name, inheritsFrom, fields, defaultHandler, handlers, classes );
+			return new Class( GetPos( cls.Location ), visibility, name, inheritsFrom, fields, defaultHandler, handlers, classes );
 		}
 
 		MessageHandlerBase ReadMessageHandler( Parser.MessageHandlerBase handlerBase ) {
@@ -62,13 +71,13 @@ namespace VMILLib {
 
 				var externalName = handler.ExternalName + ":" + handlerBase.Arguments.Count;
 
-				return new ExternalMessageHandler( visibility, name, externalName, arguments );
+				return new ExternalMessageHandler( GetPos( handler.Location ), visibility, name, externalName, arguments );
 			} else {
 				var handler = (Parser.VMILMessageHandler) handlerBase;
 				var locals = handler.Locals;
 				var instructions = ReadInstructions( handler.Instructions );
 
-				return new VMILMessageHandler( visibility, name, arguments, locals, instructions, handler.IsEntrypoint );
+				return new VMILMessageHandler( GetPos( handler.Location ), visibility, name, arguments, locals, instructions, handler.IsEntrypoint );
 			}
 		}
 
@@ -116,13 +125,13 @@ namespace VMILLib {
 				case OpCode.StoreLocal:
 				case OpCode.LoadLocal:
 				case OpCode.LoadArgument:
-					return new Instruction( ins.OpCode, (string) ins.Operand );
+					return new Instruction( GetPos( ins.Location ), ins.OpCode, (string) ins.Operand );
 				case OpCode.PushLiteral:
-					return new Instruction( OpCode.PushLiteral, ins.Operand is string ? (object) (string) ins.Operand : (int) ins.Operand );
+					return new Instruction( GetPos( ins.Location ), OpCode.PushLiteral, ins.Operand is string ? (object) (string) ins.Operand : (int) ins.Operand );
 				case OpCode.Jump:
 				case OpCode.JumpIfTrue:
 				case OpCode.JumpIfFalse:
-					return new Instruction( ins.OpCode, (string) ins.Operand );
+					return new Instruction( GetPos( ins.Location ), ins.OpCode, (string) ins.Operand );
 				case OpCode.LoadThis:
 				case OpCode.Pop:
 				case OpCode.Dup:
@@ -134,10 +143,10 @@ namespace VMILLib {
 				case OpCode.Try:
 				case OpCode.Catch:
 				case OpCode.EndTryCatch:
-					return new Instruction( ins.OpCode );
+					return new Instruction( GetPos( ins.Location ), ins.OpCode );
 				case OpCode.None:
 					if (ins is Parser.Label)
-						return new Label( ((Parser.Label) ins).Name );
+						return new Label( GetPos( ins.Location ), ((Parser.Label) ins).Name );
 					throw new ArgumentOutOfRangeException( "Invalid OpCode encountered: '" + ins.OpCode + "'." );
 				default:
 					throw new ArgumentOutOfRangeException( "Invalid OpCode encountered: '" + ins.OpCode + "'." );
@@ -146,6 +155,10 @@ namespace VMILLib {
 
 		NameList ReadNames( Parser.List<string> list ) {
 			return new NameList( list );
+		}
+
+		SourcePosition GetPos( Parser.LexLocation loc ) {
+			return new SourcePosition( filename, loc.StartLine, loc.StartColumn );
 		}
 
 		#region IDisposable Members

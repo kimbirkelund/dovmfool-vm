@@ -5,6 +5,7 @@ using System.Text;
 
 namespace VMILLib {
 	public class Instruction {
+		public readonly SourcePosition Position;
 		public readonly OpCode OpCode;
 		public readonly object Operand;
 
@@ -18,13 +19,14 @@ namespace VMILLib {
 			}
 		}
 
-		public Instruction( OpCode opCode, object operand ) {
+		public Instruction( SourcePosition position, OpCode opCode, object operand ) {
+			this.Position = position;
 			this.OpCode = opCode;
 			this.Operand = operand;
 		}
 
-		public Instruction( OpCode opCode )
-			: this( opCode, null ) {
+		public Instruction( SourcePosition position, OpCode opCode )
+			: this( position, opCode, null ) {
 		}
 
 		public override string ToString() {

@@ -7,8 +7,8 @@ namespace VMILLib {
 	public sealed class Label : Instruction {
 		public readonly string Name;
 
-		public Label( string name )
-			: base( OpCode.None, null ) {
+		public Label( SourcePosition position, string name )
+			: base(position, OpCode.None, null ) {
 			this.Name = name;
 		}
 
