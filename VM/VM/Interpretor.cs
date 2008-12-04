@@ -15,27 +15,6 @@ namespace VM {
 		int pc;
 		Handle<MessageHandlerBase> handlerBase;
 
-		static Action<Interpretor> handleException = ( _this ) => {
-			var excep = _this.stack.Pop();
-			if (!excep.Type.ToHandle().Is( KnownClasses.System_Exception ))
-				throw new InvalidCastException();
-			var _catch = _this.stack.PopTry();
-			ExecutionStack.ReturnAddress? ra = null;
-			while (_catch == null && (ra == null || !ra.Value.DoActualReturnHere)) {
-				ra = _this.stack.PopFrame( false );
-				_catch = _this.stack.PopTry();
-			}
-			if (ra != null && ra.Value.DoActualReturnHere)
-				throw VMException.MakeDotNetException( excep.ToHandle() );
-
-			if (ra != null) {
-				_this.handlerBase = ra.Value.Handler.ToHandle();
-				_this.pc = ra.Value.InstructionOffset;
-			}
-			_this.pc = _catch.Value + 1;
-			_this.stack.Push( excep.Type, excep.Value );
-		};
-
 		bool isDisposed = false;
 
 		IExecutionStack stack;
@@ -104,10 +83,11 @@ namespace VM {
 				var fieldOffset = receiver.GetFieldOffset( cacheClass[handler.Class()] );
 
 				for (; pc < handler.InstructionCount(); ) {
+					var ins = handler.GetInstruction( pc );
+					var opcode = (VMILLib.OpCode) (ins >> 27);
+					int operand = (int) (0x07FFFFFF & ins);
+				entry2:
 					try {
-						var ins = handler.GetInstruction( pc );
-						var opcode = (VMILLib.OpCode) (ins >> 27);
-						int operand = (int) (0x07FFFFFF & ins);
 
 						switch (opcode) {
 							case VMILLib.OpCode.StoreField: {
@@ -263,7 +243,24 @@ namespace VM {
 									goto entry;
 								}
 							case VMILLib.OpCode.Throw:
-								handleException( this );
+								var excep = stack.Pop();
+								if (!excep.Type.ToHandle().Is( KnownClasses.System_Exception ))
+									throw new InvalidCastException();
+								var _catch = stack.PopTry();
+								ExecutionStack.ReturnAddress? ra = null;
+								while (_catch == null && (ra == null || !ra.Value.DoActualReturnHere)) {
+									ra = stack.PopFrame( false );
+									_catch = stack.PopTry();
+								}
+								if (ra != null && ra.Value.DoActualReturnHere)
+									throw VMException.MakeDotNetException( excep.ToHandle() );
+
+								if (ra != null) {
+									handlerBase = ra.Value.Handler.ToHandle();
+									pc = ra.Value.InstructionOffset;
+								}
+								pc = _catch.Value + 1;
+								stack.Push( excep.Type, excep.Value );
 								goto entry;
 							case VMILLib.OpCode.Try:
 								stack.PushTry( operand );
@@ -282,7 +279,8 @@ namespace VM {
 					} catch (VMException ex) {
 						var vmex = ex.ToVMException();
 						stack.Push( vmex.Class(), vmex );
-						handleException( this );
+						opcode = VMILLib.OpCode.Throw;
+						goto entry2;
 					}
 				}
 
