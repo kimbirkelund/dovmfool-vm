@@ -100,7 +100,7 @@ namespace VM {
 			}
 			{
 			entry:
-				var receiver = ((AppObject) Data.Stack.GetArgument( 0 ).Value).ToHandle();
+				var receiver = Data.Stack.GetArgument( 0 ).ToHandle();
 				var fieldOffset = receiver.GetFieldOffset( cacheClass[Data.Handler.Class()] );
 				var handler = Data.Handler.To<VMILMessageHandler>();
 
