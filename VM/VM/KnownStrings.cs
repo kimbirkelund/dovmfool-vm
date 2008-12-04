@@ -16,7 +16,8 @@ namespace VM {
 		public static Handle<VM.VMObjects.String> is_false_0 { get; private set; }
 		public static Handle<VM.VMObjects.String> run_0 { get; private set; }
 		public static Handle<VM.VMObjects.String> to_string_0 { get; private set; }
-		public static Handle<VM.VMObjects.String> message_0 { get; private set; }
+        public static Handle<VM.VMObjects.String> message_0 { get; private set; }
+        public static Handle<VM.VMObjects.String> equals_1 { get; private set; }
 
 		public static void Initialize() {
 			initialize_0 = "initialize:0".ToVMString().Intern();
@@ -30,6 +31,7 @@ namespace VM {
 			run_0 = "run:0".ToVMString().Intern();
 			to_string_0 = "to-string:0".ToVMString().Intern();
 			message_0 = "message:0".ToVMString().Intern();
+            equals_1 = "equals:1".ToVMString().Intern();
 		}
 	}
 }
