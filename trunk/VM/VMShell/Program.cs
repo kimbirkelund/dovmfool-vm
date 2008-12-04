@@ -16,7 +16,7 @@ namespace VMShell {
 			System.Diagnostics.Trace.Listeners.Add( new System.Diagnostics.ConsoleTraceListener() );
 
 			try {
-				//var to = new Timer( new TimerCallback( Swapper ), null, TimeSpan.FromSeconds( 5 ), TimeSpan.FromSeconds( 5 ) );
+				var to = new Timer( new TimerCallback( Swapper ), null, TimeSpan.FromSeconds( 5 ), TimeSpan.FromSeconds( 5 ) );
 
 				var ret = VM.VirtualMachine.Execute( inputFileArg.Value );
 				if (ret != null)

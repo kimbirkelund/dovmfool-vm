@@ -11,5 +11,6 @@ namespace VM {
 		IInterpretor CreateInstance( InterpretorThread thread, InterpretorPosition position );
 
 		IExecutionStack CreateStack();
+		IExecutionStack CreateStack( IExecutionStack stack );
 	}
 }
