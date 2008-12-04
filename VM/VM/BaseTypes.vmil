@@ -18,6 +18,7 @@
 .class private System {
 	.fields { console }
 	
+	
 	.handler public initialize() {
 		push-literal "System.Console"
 		new-instance
@@ -30,12 +31,39 @@
 		return
 	}
 	
-	.handler public new-array .external System.Array.New(size)
+	.handler public new-array .external System.Array.new-array(size)
 		
 	.class private Array {
 		.handler public get .external System.Array.get(index)
 		.handler public set .external System.Array.set(index, object)		
 		.handler public length .external System.Array.length()
+		.handler public copy .external System.Array.copy(idsrc, arrdec, iddes, count)
+		.handler public copydescending .external System.Array.copydescending(idsrc, arrdec, iddes, count)
+		//.handler public index-of .external System.Array.index-of(object)
+		.handler public index-of(element){
+			.locals {counter} 
+			push-literal 0
+			store-local counter
+			
+			top:
+				load-this
+				load-local counter
+				push-literal "get:1"
+				send-message
+				load-argument element
+				push-literal "equals:1"
+				send-message								
+				jump-if-true done							
+				load-local counter
+				push-literal 1
+				push-literal "add:1"
+				send-message				
+				store-local counter
+			jump top
+			done:
+			load-local counter
+			return
+		}		
 	}
 	
 	.class public Exception {
@@ -330,9 +358,8 @@
 		.class public List {
 			.fields { arr, count, capacity }
 			
-			.handler public initialize(initialSize) {
-				push-literal "System"
-				new-instance								
+			.handler public initialize(sys, initialSize) {
+				load-argument sys											
 				load-argument initialSize					
 				push-literal "new-array:1"
 				send-message
@@ -348,12 +375,26 @@
 				load-field count
 				load-argument object
 				push-literal "set:2"
-				send-message				
+				send-message
+				
+				load-field count
+				push-literal 1
+				push-literal "add:1"
+				send-message
+				store-field count								
 			}
 			
 			.handler public length() {
-				load-field count
+				load-field count				
 				return 
+			}
+			
+			.handler public index-of(object) {
+				load-field arr
+				load-argument object
+				push-literal "index-of:1"
+				send-message
+				return				
 			}
 			
 			.handler public get(id) {
@@ -363,8 +404,84 @@
 				send-message
 				return
 			}
+			
+			.handler public insert-at(index, object) {							    
+				//move elements
+				load-field arr
+				load-argument index
+				load-field arr
+				load-argument index
+				push-literal 1
+				push-literal "add:1"
+				send-message
+				load-field count
+				load-argument index
+				push-literal "subtract:1"
+				send-message
+				push-literal "copydescending:4"
+				send-message
+				
+				//insert element
+				load-field arr
+				load-argument index		
+				load-argument object
+				push-literal "set:2"
+				send-message
+				
+				//Count + 1 
+				load-field count
+				push-literal 1
+				push-literal "add:1"
+				send-message
+				store-field count
+			}
 
+			.handler public remove(object) {							    				
+				load-this
+				dup
+				load-argument object
+				push-literal "index-of:1"
+				send-message
+				push-literal "remove-at:1"
+				send-message				
 
+				//Count - 1 
+				load-field count
+				push-literal 1
+				push-literal "subtract:1"
+				send-message
+				store-field count
+			}
+			
+			.handler public remove-at(id) {							    
+				load-field arr
+				//id+1
+				load-argument id
+				push-literal 1
+				push-literal "add:1"
+				send-message				
+				
+				load-field arr
+				load-argument id
+				//count-id
+				load-field count
+				load-argument id				
+				push-literal "subtract:1"
+				send-message
+				push-literal 1
+				push-literal "subtract:1"
+				send-message
+				
+				push-literal "copydescending:4"
+				send-message											
+				
+				//Count - 1 
+				load-field count
+				push-literal 1
+				push-literal "subtract:1"
+				send-message
+				store-field count
+			}
 		}
 	}
 	
