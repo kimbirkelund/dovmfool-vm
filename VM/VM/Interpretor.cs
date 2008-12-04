@@ -85,7 +85,7 @@ namespace VM {
 
 					var args = new UValue[argCount];
 					argCount.ForEachDescending( k => {
-						var v = Data.Stack[argCount - k - 1];
+						var v = Data.Stack.GetArgument( k - 1 );
 						if (v.IsNull)
 							args[k] = UValue.Null();
 						else if (v.Type == KnownClasses.System_Integer.Value)
