@@ -5,27 +5,28 @@ using System.Text;
 using VM.VMObjects;
 
 namespace VM {
-	class ExecutionStack {
-		const int TYPE_BASE_POINTER = -1;
-		const int TYPE_RETURN_HANDLER = -2;
-		const int TYPE_RETURN_INSTRUCTION_OFFSET = -3;
-		const int TYPE_FRAME_BOUNDARY = -4;
-		const int TYPE_TRY = -5;
-		const int TYPE_ACTUAL_RETURN_HERE = -6;
+	class ExecutionStack : IExecutionStack {
+		internal const int TYPE_BASE_POINTER = -1;
+		internal const int TYPE_RETURN_HANDLER = -2;
+		internal const int TYPE_RETURN_INSTRUCTION_OFFSET = -3;
+		internal const int TYPE_FRAME_BOUNDARY = -4;
+		internal const int TYPE_TRY = -5;
+		internal const int TYPE_ACTUAL_RETURN_HERE = -6;
 
-		const int ARGUMENT_OFFSET = 6;
-		const int RETURN_ADDRESS_OFFSET = 5;
-		const int RETURN_ADDRESS_INSTRUCTION_OFFSET = 4;
-		const int ACTUAL_RETURN_HERE_OFFSET = 3;
-		const int OLD_BASE_POINTER_OFFSET = 2;
-		const int OLD_FRAME_BOUNDARY_OFFSET = 1;
+		internal const int ARGUMENT_OFFSET = 6;
+		internal const int RETURN_ADDRESS_OFFSET = 5;
+		internal const int RETURN_ADDRESS_INSTRUCTION_OFFSET = 4;
+		internal const int ACTUAL_RETURN_HERE_OFFSET = 3;
+		internal const int OLD_BASE_POINTER_OFFSET = 2;
+		internal const int OLD_FRAME_BOUNDARY_OFFSET = 1;
 
-		int initialSize;
-		UValue[] stack;
-		int stackPointer = 0, basePointer, frameBoundary;
+		protected int initialSize;
+		protected UValue[] stack;
+		protected int stackPointer = 0, basePointer, frameBoundary;
 		public int BasePointer { get { return basePointer; } }
 		public int StackPointer { get { return stackPointer; } }
 		public int FrameBoundary { get { return frameBoundary; } }
+		public int Size { get { return stack.Length; } }
 
 		public UValue this[int index] {
 			get {
@@ -48,18 +49,24 @@ namespace VM {
 			stack = new UValue[initialSize];
 		}
 
+		public ExecutionStack( IExecutionStack stack )
+			: this( stack.Size ) {
+			for (int i = 0; i < stack.StackPointer; i++)
+				this[i] = stack[i];
+		}
+
 		public void Push( Class type, Word value ) {
 			Push( UValue.Ref( type, value ) );
 		}
 
-		public void Push( UValue v ) {
+		public virtual void Push( UValue v ) {
 			if (stackPointer == stack.Length)
 				Expand();
 
 			stack[stackPointer++] = v;
 		}
 
-		public UValue Pop() {
+		public virtual UValue Pop() {
 			if (stackPointer == 0)
 				throw new InvalidOperationException( "Stack is empty." );
 			if (stackPointer < stack.Length / 2 && stackPointer > initialSize)
@@ -77,7 +84,7 @@ namespace VM {
 			return stack[stackPointer - 1];
 		}
 
-		public void PushFrame( ReturnAddress returnAddress, Handle<MessageHandlerBase> callee ) {
+		public virtual void PushFrame( ReturnAddress returnAddress, Handle<MessageHandlerBase> callee ) {
 			Push( (Class) TYPE_RETURN_HANDLER, returnAddress.Handler );
 			Push( (Class) TYPE_RETURN_INSTRUCTION_OFFSET, returnAddress.InstructionOffset );
 			Push( (Class) TYPE_ACTUAL_RETURN_HERE, returnAddress.DoActualReturnHere );
@@ -89,7 +96,7 @@ namespace VM {
 			(!callee.IsExternal() ? callee.To<VMILMessageHandler>().LocalCount() : 0).ForEach( () => Push( new UValue() ) );
 		}
 
-		public ReturnAddress PopFrame( bool withReturnValue ) {
+		public virtual ReturnAddress PopFrame( bool withReturnValue ) {
 			UValue ret = withReturnValue ? Pop() : new UValue();
 
 			var retAdr = new ReturnAddress( (VMILMessageHandler) stack[basePointer - RETURN_ADDRESS_OFFSET].Value, stack[basePointer - RETURN_ADDRESS_INSTRUCTION_OFFSET].Value, stack[basePointer - ACTUAL_RETURN_HERE_OFFSET].Value );
@@ -103,14 +110,14 @@ namespace VM {
 			return retAdr;
 		}
 
-		public UValue GetLocal( int index ) {
+		public virtual UValue GetLocal( int index ) {
 			if (index + basePointer >= stackPointer)
 				throw new ArgumentOutOfRangeException( "Index plus base pointer must be less than the stack pointer.".ToVMString(), "index".ToVMString() );
 
 			return stack[basePointer + index];
 		}
 
-		public void SetLocal( int index, UValue value ) {
+		public virtual void SetLocal( int index, UValue value ) {
 			index = basePointer + index;
 			if (index >= stackPointer)
 				throw new ArgumentOutOfRangeException( "Index plus base pointer must be less than the stack pointer.".ToVMString(), "index".ToVMString() );
@@ -134,7 +141,7 @@ namespace VM {
 			Push( (Class) TYPE_TRY, index );
 		}
 
-		public int? PopTry() {
+		public virtual int? PopTry() {
 			var i = 0;
 			while (stackPointer - i > basePointer && this[i].Type != TYPE_TRY)
 				i++;

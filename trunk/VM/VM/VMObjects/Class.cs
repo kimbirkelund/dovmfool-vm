@@ -8,11 +8,12 @@ namespace VM.VMObjects {
 	internal static class ClassConsts {
 		public const int HEADER_OFFSET = 1;
 		public const int PARENT_CLASS_OFFSET = 2;
-		public const int COUNTS1_OFFSET = 3;
-		public const int COUNTS2_OFFSET = 4;
-		public const int LINEARIZATION_OFFSET = 5;
-		public const int INSTANCE_SIZE_OFFSET = 6;
-		public const int SUPERCLASSES_OFFSET = 7;
+		public const int FILENAME_OFFSET = 3;
+		public const int COUNTS1_OFFSET = 4;
+		public const int COUNTS2_OFFSET = 5;
+		public const int LINEARIZATION_OFFSET = 6;
+		public const int INSTANCE_SIZE_OFFSET = 7;
+		public const int SUPERCLASSES_OFFSET = 8;
 
 		public static readonly Word VISIBILITY_MASK = 0x00000003;
 
@@ -111,6 +112,16 @@ namespace VM.VMObjects {
 
 		public static String Name( this Handle<Class> obj ) {
 			return String.GetString( obj[ClassConsts.HEADER_OFFSET] >> ClassConsts.NAME_RSHIFT );
+		}
+
+		public static String Fullname( this Handle<Class> obj ) {
+			if (obj.ParentClass().IsNull())
+				return obj.Name();
+			return obj.ParentClass().ToHandle().Fullname().ToHandle().Concat( String.Dot ).ToHandle().Concat( obj.Name().ToHandle() );
+		}
+
+		public static String Filename( this Handle<Class> obj ) {
+			return (String) obj[ClassConsts.FILENAME_OFFSET];
 		}
 
 		public static MessageHandlerBase DefaultHandler( this Handle<Class> obj ) {
@@ -365,7 +376,7 @@ namespace VM.VMObjects {
 		}
 		#endregion
 
-		public static void InitInstance( this Handle<Class> obj, VisibilityModifier visibility, Handle<String> name, Handle<Class> parentClass, IList<Handle<String>> superClasses, int fieldCount, Handle<MessageHandlerBase> defaultHandler, IList<Handle<MessageHandlerBase>> messageHandlers, IList<Handle<Class>> innerClasses ) {
+		public static void InitInstance( this Handle<Class> obj, VisibilityModifier visibility, Handle<String> name, Handle<String> filename, Handle<Class> parentClass, IList<Handle<String>> superClasses, int fieldCount, Handle<MessageHandlerBase> defaultHandler, IList<Handle<MessageHandlerBase>> messageHandlers, IList<Handle<Class>> innerClasses ) {
 			if (name == null)
 				throw new InvalidVMProgramException( "Class with no name specified.".ToVMString() );
 			if (fieldCount > 0x0000FFFF)
@@ -379,6 +390,7 @@ namespace VM.VMObjects {
 
 			obj[ClassConsts.HEADER_OFFSET] = (name.GetInternIndex() << ClassConsts.NAME_RSHIFT) | (int) visibility;
 			obj[ClassConsts.PARENT_CLASS_OFFSET] = parentClass;
+			obj[ClassConsts.FILENAME_OFFSET] = filename;
 			obj[ClassConsts.INSTANCE_SIZE_OFFSET] = -1;
 			obj[ClassConsts.LINEARIZATION_OFFSET] = -1;
 			obj[ClassConsts.COUNTS1_OFFSET] = (fieldCount << ClassConsts.COUNTS1_FIELDS_RSHIFT) | messageHandlers.Count;

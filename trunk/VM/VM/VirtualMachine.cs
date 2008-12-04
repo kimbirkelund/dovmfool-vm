@@ -11,16 +11,21 @@ namespace VM {
 	public static class VirtualMachine {
 		static bool initialized;
 		static int nextInterpretorId = 0;
-		static Dictionary<int, IInterpretor> interpretors = new Dictionary<int, IInterpretor>();
+		static Dictionary<int, InterpretorThread> interpretors = new Dictionary<int, InterpretorThread>();
 
 		internal static MemoryManagerBase MemoryManager { get; private set; }
 		internal static Handle<AppObject> SystemInstance { get; private set; }
-		static IInterpretorFactory InterpretorFactory { get; set; }
 		static Dictionary<Handle<VMObjects.String>, Handle<VMObjects.Class>> classes = new Dictionary<Handle<VM.VMObjects.String>, Handle<Class>>();
 		internal static IEnumerable<Handle<Class>> Classes { get { return classes.Values; } }
 		internal static Logger Logger { get; private set; }
 
 		static HandleCache<Class> cacheClass = new HandleCache<Class>();
+
+		internal static event EventHandler<NewThreadEventArgs> NewThread;
+		static void OnNewInterpretor( InterpretorThread thread ) {
+			if (NewThread != null)
+				NewThread( null, new NewThreadEventArgs( thread ) );
+		}
 
 		static void Initialize() {
 			if (initialized)
@@ -30,7 +35,7 @@ namespace VM {
 			Logger.Handlers.Add( new ConsoleLogHandler() );
 
 			MemoryManager = new NoncollectingMemoryManager( 20000 );
-			InterpretorFactory = new Interpretor.Factory();
+			InterpretorThread.InterpretorFactory = new Interpretor.Factory();
 
 			KnownClasses.Initialize();
 			KnownStrings.Initialize();
@@ -76,7 +81,17 @@ namespace VM {
 			classes.Add( cls.Name().ToHandle(), cls );
 		}
 
-		public static void Execute( string inputFile ) {
+		public static void DebuggerDetached() {
+			InterpretorThread.InterpretorFactory = new Interpretor.Factory();
+			interpretors.ForEach( i => i.Value.Swap() );
+		}
+
+		public static void DebuggerAttached() {
+			InterpretorThread.InterpretorFactory = new Interpretor.Factory();
+			interpretors.ForEach( i => i.Value.Swap() );
+		}
+
+		public static Handle<AppObject> Execute( string inputFile ) {
 			Initialize();
 			var loader = new ClassLoader( inputFile );
 			var entrypoint = loader.Read();
@@ -94,22 +109,26 @@ namespace VM {
 
 			var intp = Fork( entrypoint, obj, SystemInstance );
 			intp.Start();
-			intp.Join();
+			return intp.Join();
 		}
 
-		internal static IInterpretor Fork( Handle<VMObjects.MessageHandlerBase> messageHandler, Handle<VMObjects.AppObject> obj, params Handle<AppObject>[] arguments ) {
+		internal static InterpretorThread Fork( Handle<VMObjects.MessageHandlerBase> messageHandler, Handle<VMObjects.AppObject> obj, params Handle<AppObject>[] arguments ) {
 			lock (typeof( VirtualMachine )) {
-				var interp = InterpretorFactory.CreateInstance( nextInterpretorId++, obj, messageHandler, arguments );
+				var interp = new InterpretorThread( nextInterpretorId++, messageHandler, obj, arguments );
 				interpretors.Add( interp.Id, interp );
 				return interp;
 			}
 		}
 
-		internal static IInterpretor GetInterpretor( int id ) {
-			IInterpretor interp;
+		internal static InterpretorThread GetInterpretor( int id ) {
+			InterpretorThread interp;
 			if (interpretors.TryGetValue( id, out interp ))
 				return interp;
 			throw new InvalidThreadIdException();
+		}
+
+		internal static IEnumerable<InterpretorThread> GetInterpretors() {
+			return interpretors.Values;
 		}
 	}
 }

@@ -13,6 +13,7 @@ namespace VM {
 		bool disposed;
 		vml.SourceReader reader;
 		Handle<vmo.MessageHandlerBase> entrypoint;
+		Handle<vmo.String> filename;
 
 		public ClassLoader( vml.SourceReader reader ) {
 			this.reader = reader;
@@ -20,8 +21,8 @@ namespace VM {
 		}
 
 		public ClassLoader( Stream input ) : this( new vml.SourceReader( input ) ) { }
-		public ClassLoader( Stream input, string sourceLocation ) : this( new vml.SourceReader( input, sourceLocation ) ) { }
-		public ClassLoader( string fileName ) : this( new vml.SourceReader( fileName ) ) { }
+		public ClassLoader( Stream input, string sourceLocation ) : this( new vml.SourceReader( input, sourceLocation ) ) { this.filename = sourceLocation.ToVMString().Intern(); }
+		public ClassLoader( string filename ) : this( new vml.SourceReader( filename ) ) { this.filename = filename.ToVMString().Intern(); }
 
 		/// <summary>
 		/// Reads the classes stored in input into the virtual machine.
@@ -45,7 +46,7 @@ namespace VM {
 			var innerClasses = new List<Handle<vmo.Class>>();
 			lc.InnerClasses.ForEach( c => innerClasses.Add( ReadClass( oc, c ) ) );
 
-			oc.InitInstance( lc.Visibility, lc.Name.ToVMString().Intern(), parentClass, lc.SuperClasses.Select( sc => sc.ToVMString().Intern() ).ToList(),
+			oc.InitInstance( lc.Visibility, lc.Name.ToVMString().Intern(), filename, parentClass, lc.SuperClasses.Select( sc => sc.ToVMString().Intern() ).ToList(),
 				lc.Fields.Count, lc.DefaultHandler != null ? ReadMessageHandler( oc, lc.DefaultHandler ) : null, handlers, innerClasses );
 
 			return oc;

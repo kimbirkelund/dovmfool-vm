@@ -8,45 +8,37 @@ using System.Threading;
 
 namespace VM {
 	class Interpretor : IInterpretor {
-		public readonly InterpretorData Data = new InterpretorData();
+		public InterpretorThread Thread { get; private set; }
+		public InterpretorPosition CurrentPosition { get { return new InterpretorPosition( handlerBase, pc ); } }
+		public Handle<AppObject> FinalResult { get; private set; }
 
-		Handle<AppObject> finalResult = null;
+		int pc;
+		Handle<MessageHandlerBase> handlerBase;
 
 		static Action<Interpretor> handleException = ( _this ) => {
-			var excep = _this.Data.Stack.Pop();
+			var excep = _this.stack.Pop();
 			if (!excep.Type.ToHandle().Is( KnownClasses.System_Exception ))
 				throw new InvalidCastException();
-			var _catch = _this.Data.Stack.PopTry();
+			var _catch = _this.stack.PopTry();
 			ExecutionStack.ReturnAddress? ra = null;
 			while (_catch == null && (ra == null || !ra.Value.DoActualReturnHere)) {
-				ra = _this.Data.Stack.PopFrame( false );
-				_catch = _this.Data.Stack.PopTry();
+				ra = _this.stack.PopFrame( false );
+				_catch = _this.stack.PopTry();
 			}
 			if (ra != null && ra.Value.DoActualReturnHere)
 				throw VMException.MakeDotNetException( excep.ToHandle() );
 
 			if (ra != null) {
-				_this.Data.Handler = ra.Value.Handler.ToHandle();
-				_this.Data.PC = ra.Value.InstructionOffset;
+				_this.handlerBase = ra.Value.Handler.ToHandle();
+				_this.pc = ra.Value.InstructionOffset;
 			}
-			_this.Data.PC = _catch.Value + 1;
-			_this.Data.Stack.Push( excep.Type, excep.Value );
+			_this.pc = _catch.Value + 1;
+			_this.stack.Push( excep.Type, excep.Value );
 		};
 
 		bool isDisposed = false;
-		bool isBlocked = false;
-		InterpretorState state;
-		public InterpretorState State {
-			get { return state; }
-		}
 
-		public int Id { get { return Data.Id; } }
-
-		object externalWaitObject = new object();
-		Thread thread;
-		EventWaitHandle waitToPause = new EventWaitHandle( false, EventResetMode.AutoReset ),
-			waitToResume = new EventWaitHandle( false, EventResetMode.AutoReset );
-
+		IExecutionStack stack;
 		HandleCache<Class> cacheClass = new HandleCache<Class>();
 		HandleCache<VM.VMObjects.String> cacheString = new HandleCache<VM.VMObjects.String>();
 		IntHandleCache cacheInt = new IntHandleCache();
@@ -54,30 +46,36 @@ namespace VM {
 		HandleCache<DelegateMessageHandler> cacheDelegateMessageHandler = new HandleCache<DelegateMessageHandler>();
 		HandleCache<VMILMessageHandler> cacheVMILMessageHandler = new HandleCache<VMILMessageHandler>();
 
-		Interpretor( int id, Handle<AppObject> entrypointObject, Handle<MessageHandlerBase> entrypoint, params Handle<AppObject>[] args )
-			: this( id ) {
-			Data.Stack.Push( entrypointObject.Class(), entrypointObject.Value );
+		Interpretor( InterpretorThread thread, Handle<AppObject> entrypointObject, Handle<MessageHandlerBase> entrypoint, params Handle<AppObject>[] args )
+			: this( thread ) {
+			this.stack = thread.Stack;
+			stack.Push( entrypointObject.Class(), entrypointObject.Value );
 			if (args.Length != entrypoint.ArgumentCount())
 				throw new VMAppException( ("Entrypoint takes " + entrypoint.ArgumentCount() + " arguments, but " + args.Length + " was supplied.").ToVMString() );
 
 			foreach (var arg in args)
-				Data.Stack.Push( arg.Class(), arg.Value );
-			Data.Stack.PushFrame( new ExecutionStack.ReturnAddress( (MessageHandlerBase) (-1), -1, true ), entrypoint );
-			Data.Handler = entrypoint;
+				stack.Push( arg.Class(), arg.Value );
+			stack.PushFrame( new ExecutionStack.ReturnAddress( (MessageHandlerBase) (-1), -1, true ), entrypoint );
+			handlerBase = entrypoint;
+			pc = 0;
 		}
 
-		Interpretor( int id ) {
-			Data.AttachedTo = this;
-			Data.Id = id;
-			Data.Stack = new ExecutionStack( 100 );
+		Interpretor( InterpretorThread thread ) {
+			this.Thread = thread;
 		}
 
-		Handle<AppObject> Invoke() {
+		Interpretor( InterpretorThread thread, InterpretorPosition position )
+			: this( thread ) {
+			this.handlerBase = position.MessageHandler;
+			this.pc = position.Position;
+		}
+
+		public void Run() {
 			{
-				if (Data.Handler.IsExternal()) {
-					var argCount = Data.Handler.ArgumentCount();
-					var receiver = Data.Stack.GetArgument( 0 ).ToHandle();
-					var handler = cacheDelegateMessageHandler[Data.Handler];
+				if (handlerBase.IsExternal()) {
+					var handler = cacheDelegateMessageHandler[handlerBase];
+					var argCount = handler.ArgumentCount();
+					var receiver = stack.GetArgument( 0 ).ToHandle();
 					var extName = cacheString[handler.ExternalName()];
 					var method = SystemCalls.FindMethod( extName );
 					if (method == null)
@@ -85,7 +83,7 @@ namespace VM {
 
 					var args = new UValue[argCount];
 					argCount.ForEachDescending( k => {
-						var v = Data.Stack.GetArgument( k + 1 );
+						var v = stack.GetArgument( k + 1 );
 						if (v.IsNull)
 							args[k] = UValue.Null();
 						else if (v.Type == KnownClasses.System_Integer.Value)
@@ -95,97 +93,86 @@ namespace VM {
 					} );
 
 					var retVal = method( this, receiver.ToUValue(), args );
-					return retVal.ToHandle();
+					FinalResult = retVal.ToHandle();
+					return;
 				}
 			}
 			{
 			entry:
-				var receiver = Data.Stack.GetArgument( 0 ).ToHandle();
-				var fieldOffset = receiver.GetFieldOffset( cacheClass[Data.Handler.Class()] );
-				var handler = Data.Handler.To<VMILMessageHandler>();
+				var receiver = stack.GetArgument( 0 ).ToHandle();
+				var handler = cacheVMILMessageHandler[handlerBase.Value];
+				var fieldOffset = receiver.GetFieldOffset( cacheClass[handler.Class()] );
 
-				for (; Data.PC < handler.InstructionCount(); ) {
-					if (handler.Start != Data.Handler.Start)
-						System.Diagnostics.Debugger.Break();
-
-					if (state == InterpretorState.Stopped)
-						return null;
-					if (state == InterpretorState.Paused) {
-						waitToPause.Set();
-						while (state == InterpretorState.Paused)
-							waitToResume.WaitOne();
-						waitToPause.Set();
-					}
-
+				for (; pc < handler.InstructionCount(); ) {
 					try {
-						var ins = handler.GetInstruction( Data.PC );
+						var ins = handler.GetInstruction( pc );
 						var opcode = (VMILLib.OpCode) (ins >> 27);
 						int operand = (int) (0x07FFFFFF & ins);
 
 						switch (opcode) {
 							case VMILLib.OpCode.StoreField: {
-									var v = Data.Stack.Pop();
+									var v = stack.Pop();
 									receiver.SetField( operand + fieldOffset, v );
-									Data.PC++;
+									pc++;
 									break;
 								}
 							case VMILLib.OpCode.LoadField:
-								Data.Stack.Push( receiver.GetField( operand + fieldOffset ) );
-								Data.PC++;
+								stack.Push( receiver.GetField( operand + fieldOffset ) );
+								pc++;
 								break;
 							case VMILLib.OpCode.StoreLocal:
-								Data.Stack.SetLocal( operand, Data.Stack.Pop() );
-								Data.PC++;
+								stack.SetLocal( operand, stack.Pop() );
+								pc++;
 								break;
 							case VMILLib.OpCode.LoadLocal:
-								Data.Stack.Push( Data.Stack.GetLocal( operand ) );
-								Data.PC++;
+								stack.Push( stack.GetLocal( operand ) );
+								pc++;
 								break;
 							case VMILLib.OpCode.LoadArgument:
-								Data.Stack.Push( Data.Stack.GetArgument( operand ) );
-								Data.PC++;
+								stack.Push( stack.GetArgument( operand ) );
+								pc++;
 								break;
 							case VMILLib.OpCode.PushLiteralInt:
-								Data.Stack.Push( (operand & 0x03FFFFFF) * ((operand & 0x04000000) != 0 ? -1 : 1) );
-								Data.PC++;
+								stack.Push( (operand & 0x03FFFFFF) * ((operand & 0x04000000) != 0 ? -1 : 1) );
+								pc++;
 								break;
 							case VMILLib.OpCode.PushLiteralString:
-								Data.Stack.Push( KnownClasses.System_String, VMObjects.String.GetString( operand ).Value );
-								Data.PC++;
+								stack.Push( KnownClasses.System_String, VMObjects.String.GetString( operand ).Value );
+								pc++;
 								break;
 							case VMILLib.OpCode.PushLiteralIntExtend:
-								int i = Data.Stack.Pop().Value;
+								int i = stack.Pop().Value;
 								i += (operand & 0x03FFFFFF) * ((operand & 0x04000000) != 0 ? -1 : 1);
-								Data.Stack.Push( i );
-								Data.PC++;
+								stack.Push( i );
+								pc++;
 								break;
 							case VMILLib.OpCode.Pop:
-								Data.Stack.Pop();
-								Data.PC++;
+								stack.Pop();
+								pc++;
 								break;
 							case VMILLib.OpCode.Dup:
-								Data.Stack.Push( Data.Stack.Peek() );
-								Data.PC++;
+								stack.Push( stack.Peek() );
+								pc++;
 								break;
 							case VMILLib.OpCode.NewInstance: {
-									var v = Data.Stack.Pop();
+									var v = stack.Pop();
 									if (v.Type != KnownClasses.System_String.Start)
 										throw new InvalidCastException();
 									var clsName = cacheString[v.Value];
 									var cls = VirtualMachine.ResolveClass( cacheClass[receiver.Class()], clsName );
 									var obj = VMObjects.AppObject.CreateInstance( cacheClass[cls] );
-									Data.Stack.Push( cls, obj );
-									Data.PC++;
+									stack.Push( cls, obj );
+									pc++;
 									break;
 								}
 							case VMILLib.OpCode.SendMessage: {
-									var messageVal = Data.Stack.Pop();
+									var messageVal = stack.Pop();
 									if (messageVal.Type != KnownClasses.System_String.Value)
 										throw new InvalidOperationException( "Value on top of stack is not a message." );
 									var message = cacheString[messageVal.Value];
 									var argCount = ParseArgumentCount( message );
-									var newReceiver = Data.Stack[argCount];
-									var newHandlerBase = cacheMessageHandlerBase[cacheClass[newReceiver.Type].ResolveMessageHandler( cacheClass[Data.Handler.Class()], message )];
+									var newReceiver = stack[argCount];
+									var newHandlerBase = cacheMessageHandlerBase[cacheClass[newReceiver.Type].ResolveMessageHandler( cacheClass[handler.Class()], message )];
 									if (newHandlerBase == null)
 										throw new UnknownExternalCallException( message );
 
@@ -197,7 +184,7 @@ namespace VM {
 
 										var args = new UValue[argCount];
 										argCount.ForEachDescending( k => {
-											var v = Data.Stack[argCount - k - 1];
+											var v = stack[argCount - k - 1];
 											if (v.IsNull)
 												args[k] = UValue.Null();
 											else if (v.Type == KnownClasses.System_Integer.Value)
@@ -206,69 +193,72 @@ namespace VM {
 												args[k] = UValue.Ref( v.Type, v.Value );
 										} );
 
-										Data.Stack.PushFrame( new ExecutionStack.ReturnAddress( Data.Handler, Data.PC + 1, false ), newHandlerBase );
-										Data.PC = 0;
-										Data.Handler = newHandlerBase;
+										stack.PushFrame( new ExecutionStack.ReturnAddress( handlerBase, pc + 1, false ), newHandlerBase );
+										pc = 0;
+										handlerBase = newHandlerBase;
 										var retVal = method( this, newReceiver, args );
 
-										var retadr = Data.Stack.PopFrame( false );
-										Data.Handler = retadr.Handler.ToHandle();
-										Data.PC = retadr.InstructionOffset;
+										var retadr = stack.PopFrame( false );
+										handlerBase = retadr.Handler.ToHandle();
+										pc = retadr.InstructionOffset;
 										if (!retVal.IsVoid)
-											Data.Stack.Push( retVal );
+											stack.Push( retVal );
 									} else {
 										var newHandler = newHandlerBase.To<VMILMessageHandler>();
 										if (newHandler.IsDefault()) {
 											var arglist = VMObjects.Array.CreateInstance( argCount ).ToHandle();
-											argCount.ForEachDescending( k => arglist.Set( k, Data.Stack.Pop() ) );
-											Data.Stack.PushFrame( new ExecutionStack.ReturnAddress( Data.Handler, Data.PC + 1, false ), newHandlerBase );
-											Data.Stack.Push( message.ToUValue() );
-											Data.Stack.Push( arglist.ToUValue() );
+											argCount.ForEachDescending( k => arglist.Set( k, stack.Pop() ) );
+											stack.PushFrame( new ExecutionStack.ReturnAddress( handlerBase, pc + 1, false ), newHandlerBase );
+											stack.Push( message.ToUValue() );
+											stack.Push( arglist.ToUValue() );
 										} else
-											Data.Stack.PushFrame( new ExecutionStack.ReturnAddress( Data.Handler, Data.PC + 1, false ), newHandlerBase );
-										Data.PC = 0;
-										Data.Handler = newHandlerBase;
+											stack.PushFrame( new ExecutionStack.ReturnAddress( handlerBase, pc + 1, false ), newHandlerBase );
+										pc = 0;
+										handlerBase = newHandlerBase;
 									}
 									goto entry;
 								}
 							case VMILLib.OpCode.ReturnVoid:
 							case VMILLib.OpCode.Return: {
-									var ret = Data.Stack.PopFrame( opcode == VMILLib.OpCode.Return );
-									Data.Handler = ret.Handler.ToHandle();
-									Data.PC = ret.InstructionOffset;
+									var ret = stack.PopFrame( opcode == VMILLib.OpCode.Return );
+									handlerBase = ret.Handler.ToHandle();
+									pc = ret.InstructionOffset;
 									if (ret.DoActualReturnHere) {
-										if (opcode == VMILLib.OpCode.ReturnVoid)
-											return null;
-										return Data.Stack.Pop().ToHandle();
+										if (opcode == VMILLib.OpCode.ReturnVoid) {
+											FinalResult = null;
+											return;
+										}
+										FinalResult = stack.Pop().ToHandle();
+										return;
 									}
 									goto entry;
 								}
 							case VMILLib.OpCode.Jump:
-								Data.PC += (int) (((operand & 0x04000000) != 0 ? -1 : 1) * (operand & 0x03FFFFFF));
+								pc += (int) (((operand & 0x04000000) != 0 ? -1 : 1) * (operand & 0x03FFFFFF));
 								continue;
 							case VMILLib.OpCode.JumpIfTrue: {
-									var v = Data.Stack.Pop();
+									var v = stack.Pop();
 									if (v.IsNull)
-										Data.PC++;
+										pc++;
 									else {
 										var res = v.Type == KnownClasses.System_Integer.Value ? v.Value : Send( KnownStrings.is_true_0, v.ToHandle() ).Value;
 										if (res > 0)
-											Data.PC += (int) (((operand & 0x04000000) != 0 ? -1 : 1) * (operand & 0x03FFFFFF));
+											pc += (int) (((operand & 0x04000000) != 0 ? -1 : 1) * (operand & 0x03FFFFFF));
 										else
-											Data.PC++;
+											pc++;
 									}
 									goto entry;
 								}
 							case VMILLib.OpCode.JumpIfFalse: {
-									var v = Data.Stack.Pop();
+									var v = stack.Pop();
 									if (v.IsNull)
-										Data.PC += (int) (((operand & 0x04000000) != 0 ? -1 : 1) * (operand & 0x03FFFFFF));
+										pc += (int) (((operand & 0x04000000) != 0 ? -1 : 1) * (operand & 0x03FFFFFF));
 									else {
 										var res = v.Type == KnownClasses.System_Integer.Value ? v.Value : Send( KnownStrings.is_false_0, v.ToHandle() ).Value;
 										if (res <= 0)
-											Data.PC += (int) (((operand & 0x04000000) != 0 ? -1 : 1) * (operand & 0x03FFFFFF));
+											pc += (int) (((operand & 0x04000000) != 0 ? -1 : 1) * (operand & 0x03FFFFFF));
 										else
-											Data.PC++;
+											pc++;
 									}
 									goto entry;
 								}
@@ -276,22 +266,22 @@ namespace VM {
 								handleException( this );
 								goto entry;
 							case VMILLib.OpCode.Try:
-								Data.Stack.PushTry( operand );
-								Data.PC++;
+								stack.PushTry( operand );
+								pc++;
 								break;
 							case VMILLib.OpCode.Catch:
-								Data.Stack.PopTry();
-								Data.PC = operand + 1;
+								stack.PopTry();
+								pc = operand + 1;
 								goto entry;
 							case VMILLib.OpCode.EndTryCatch:
-								Data.PC++;
+								pc++;
 								break;
 							default:
 								throw new InvalidVMProgramException( ("Unknown VMILLib.OpCode encountered: " + opcode).ToVMString() );
 						}
 					} catch (VMException ex) {
 						var vmex = ex.ToVMException();
-						Data.Stack.Push( vmex.Class(), vmex );
+						stack.Push( vmex.Class(), vmex );
 						handleException( this );
 					}
 				}
@@ -322,116 +312,69 @@ namespace VM {
 			var newHandlerBase = cacheMessageHandlerBase[cacheClass[to.Class()].ResolveMessageHandler( cacheClass[to.Class()], message )];
 			if (newHandlerBase == null)
 				throw new MessageNotUnderstoodException( message, to );
-			Data.Stack.Push( to.Class(), to );
-			arguments.ForEach( a => Data.Stack.Push( a.Class(), a ) );
-			Data.Stack.PushFrame( new ExecutionStack.ReturnAddress( Data.Handler, Data.PC, true ), newHandlerBase );
-			Data.PC = 0;
-			Data.Handler = newHandlerBase;
+			stack.Push( to.Class(), to );
+			arguments.ForEach( a => stack.Push( a.Class(), a ) );
+			stack.PushFrame( new ExecutionStack.ReturnAddress( handlerBase, pc, true ), newHandlerBase );
+			pc = 0;
+			handlerBase = newHandlerBase;
 
 			if (newHandlerBase.IsExternal()) {
 				var newHandler = newHandlerBase.To<DelegateMessageHandler>();
 				var method = SystemCalls.FindMethod( cacheString[newHandler.ExternalName()] );
 				if (method == null) {
-					Data.Stack.PopFrame( false );
+					stack.PopFrame( false );
 					throw new MessageNotUnderstoodException( message, to );
 				}
 
 				var ret = method( this, to.ToUValue(), arguments.Select( a => a.ToUValue() ).ToArray() );
-				Data.Stack.PopFrame( false );
+				stack.PopFrame( false );
 				return ret;
-			} else
-				return Invoke().ToUValue();
-		}
-
-		public void Start() {
-			if (state == InterpretorState.Stopped)
-				throw new InterpretorException( "Interpretor has been stopped.".ToVMString() );
-			lock (externalWaitObject) {
-				if (state != InterpretorState.NotStarted)
-					throw new InterpretorException( "Interpretor already started.".ToVMString() );
-
-				thread = new Thread( () => finalResult = Invoke() );
-				thread.IsBackground = true;
-				state = InterpretorState.Running;
-				thread.Start();
+			} else {
+				Run();
+				return FinalResult.ToUValue();
 			}
-		}
-
-		public void Pause() {
-			if (state == InterpretorState.Stopped)
-				throw new InterpretorException( "Interpretor has been stopped.".ToVMString() );
-			lock (externalWaitObject) {
-				if (state != InterpretorState.Paused && state != InterpretorState.Running && state != InterpretorState.Blocked)
-					throw new InterpretorException( "Interpretor not in either of the states Paused, Running or Blocked.".ToVMString() );
-
-				state = InterpretorState.Paused;
-				if (state == InterpretorState.Running)
-					waitToPause.WaitOne();
-			}
-		}
-
-		public void Resume() {
-			if (state == InterpretorState.Stopped)
-				throw new InterpretorException( "Interpretor has been stopped.".ToVMString() );
-			lock (externalWaitObject) {
-				state = isBlocked ? InterpretorState.Blocked : InterpretorState.Running;
-				if (!isBlocked)
-					waitToResume.Set();
-			}
-		}
-
-		public void Kill() {
-			if (state == InterpretorState.Stopped)
-				throw new InterpretorException( "Interpretor has been stopped.".ToVMString() );
-			lock (externalWaitObject) {
-				state = InterpretorState.Stopped;
-				if (thread.Join( 5000 ))
-					return;
-				thread.Abort();
-				if (!thread.Join( 5000 ))
-					throw new InterpretorFailedToStopException();
-				thread = null;
-			}
-		}
-
-		public Handle<AppObject> Join() {
-			if (thread != null && thread.ThreadState != ThreadState.Unstarted)
-				thread.Join();
-
-			return finalResult;
 		}
 
 		public void Dispose() {
-			lock (externalWaitObject) {
+			lock (this) {
 				if (isDisposed)
 					return;
 				isDisposed = true;
 			}
 
-			if (State != InterpretorState.Stopped) {
-				Kill();
-				cacheClass.Clear();
-				cacheClass = null;
-				cacheDelegateMessageHandler.Clear();
-				cacheDelegateMessageHandler = null;
-				cacheInt.Clear();
-				cacheInt = null;
-				cacheMessageHandlerBase.Clear();
-				cacheMessageHandlerBase = null;
-				cacheString.Clear();
-				cacheString = null;
-				cacheVMILMessageHandler.Clear();
-				cacheVMILMessageHandler = null;
-			}
+			cacheClass.Clear();
+			cacheClass = null;
+			cacheDelegateMessageHandler.Clear();
+			cacheDelegateMessageHandler = null;
+			cacheInt.Clear();
+			cacheInt = null;
+			cacheMessageHandlerBase.Clear();
+			cacheMessageHandlerBase = null;
+			cacheString.Clear();
+			cacheString = null;
+			cacheVMILMessageHandler.Clear();
+			cacheVMILMessageHandler = null;
 		}
 
 		public class Factory : IInterpretorFactory {
-			public IInterpretor CreateInstance( int id, Handle<AppObject> entrypointObject, Handle<MessageHandlerBase> entrypoint, params Handle<AppObject>[] args ) {
-				return new Interpretor( id, entrypointObject, entrypoint, args );
+			public IInterpretor CreateInstance( InterpretorThread thread, Handle<AppObject> entrypointObject, Handle<MessageHandlerBase> entrypoint, params Handle<AppObject>[] args ) {
+				return new Interpretor( thread, entrypointObject, entrypoint, args );
 			}
 
-			public IInterpretor CreateInstance( int id ) {
-				return new Interpretor( id );
+			public IInterpretor CreateInstance( InterpretorThread thread ) {
+				return new Interpretor( thread );
+			}
+
+			public IInterpretor CreateInstance( InterpretorThread thread, InterpretorPosition position ) {
+				return new Interpretor( thread, position );
+			}
+
+			public IExecutionStack CreateStack() {
+				return new ExecutionStack( 100 );
+			}
+
+			public IExecutionStack CreateStack( IExecutionStack stack ) {
+				return new ExecutionStack( stack );
 			}
 		}
 	}
