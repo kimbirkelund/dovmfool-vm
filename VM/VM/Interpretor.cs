@@ -23,7 +23,7 @@ namespace VM {
 				_catch = _this.Data.Stack.PopTry();
 			}
 			if (ra != null && ra.Value.DoActualReturnHere)
-				throw VMException.MakeDotNetException( ((AppObject) excep.Value).ToHandle() );
+				throw VMException.MakeDotNetException( excep.ToHandle() );
 
 			if (ra != null) {
 				_this.Data.Handler = ra.Value.Handler.ToHandle();
@@ -76,7 +76,7 @@ namespace VM {
 			{
 				if (Data.Handler.IsExternal()) {
 					var argCount = Data.Handler.ArgumentCount();
-					var receiver = ((AppObject) Data.Stack.GetArgument( 0 ).Value).ToHandle();
+					var receiver = Data.Stack.GetArgument( 0 ).ToHandle();
 					var handler = cacheDelegateMessageHandler[Data.Handler];
 					var extName = cacheString[handler.ExternalName()];
 					var method = SystemCalls.FindMethod( extName );
@@ -91,7 +91,7 @@ namespace VM {
 						else if (v.Type == KnownClasses.System_Integer.Value)
 							args[k] = UValue.Int( v.Value );
 						else
-							args[k] = UValue.Ref( v.Type, v.Value ); ((AppObject) v.Value).ToHandle();
+							args[k] = UValue.Ref( v.Type, v.Value ); v.ToHandle();
 					} );
 
 					var retVal = method( this, receiver.ToUValue(), args );
@@ -193,7 +193,7 @@ namespace VM {
 										var newHandler = cacheDelegateMessageHandler[newHandlerBase.Start];
 										var method = SystemCalls.FindMethod( cacheString[newHandler.ExternalName()] );
 										if (method == null)
-											throw new MessageNotUnderstoodException( message, ((AppObject) newReceiver.Value).ToHandle() );
+											throw new MessageNotUnderstoodException( message, newReceiver.ToHandle() );
 
 										var args = new UValue[argCount];
 										argCount.ForEachDescending( k => {
@@ -203,7 +203,7 @@ namespace VM {
 											else if (v.Type == KnownClasses.System_Integer.Value)
 												args[k] = UValue.Int( v.Value );
 											else
-												args[k] = UValue.Ref( v.Type, v.Value ); ((AppObject) v.Value).ToHandle();
+												args[k] = UValue.Ref( v.Type, v.Value );
 										} );
 
 										Data.Stack.PushFrame( new ExecutionStack.ReturnAddress( Data.Handler, Data.PC + 1, false ), newHandlerBase );
@@ -239,7 +239,7 @@ namespace VM {
 									if (ret.DoActualReturnHere) {
 										if (opcode == VMILLib.OpCode.ReturnVoid)
 											return null;
-										return ((AppObject) Data.Stack.Pop().Value).ToHandle();
+										return Data.Stack.Pop().ToHandle();
 									}
 									goto entry;
 								}
@@ -251,7 +251,7 @@ namespace VM {
 									if (v.IsNull)
 										Data.PC++;
 									else {
-										var res = v.Type == KnownClasses.System_Integer.Value ? v.Value : Send( KnownStrings.is_true_0, ((AppObject) v.Value).ToHandle() ).Value;
+										var res = v.Type == KnownClasses.System_Integer.Value ? v.Value : Send( KnownStrings.is_true_0, v.ToHandle() ).Value;
 										if (res > 0)
 											Data.PC += (int) (((operand & 0x04000000) != 0 ? -1 : 1) * (operand & 0x03FFFFFF));
 										else
@@ -264,7 +264,7 @@ namespace VM {
 									if (v.IsNull)
 										Data.PC += (int) (((operand & 0x04000000) != 0 ? -1 : 1) * (operand & 0x03FFFFFF));
 									else {
-										var res = v.Type == KnownClasses.System_Integer.Value ? v.Value : Send( KnownStrings.is_false_0, ((AppObject) v.Value).ToHandle() ).Value;
+										var res = v.Type == KnownClasses.System_Integer.Value ? v.Value : Send( KnownStrings.is_false_0, v.ToHandle() ).Value;
 										if (res <= 0)
 											Data.PC += (int) (((operand & 0x04000000) != 0 ? -1 : 1) * (operand & 0x03FFFFFF));
 										else
