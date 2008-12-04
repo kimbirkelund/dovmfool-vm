@@ -9,6 +9,7 @@ namespace VM {
 		public abstract class HandleBase {
 			static int createdHandles, disposedHandles;
 			Container container;
+			public bool IsDebug { get { return container.IsDebug; } }
 			public virtual bool IsValid { get; private set; }
 			public virtual int Start { get { return container.Start; } }
 			internal virtual HandleUpdater Updater { get { return container.Updater; } }
@@ -24,12 +25,12 @@ namespace VM {
 				disposedHandles++;
 			}
 
-			protected HandleBase( int start ) {
-				Init( start );
+			protected HandleBase( int start, bool isDebug ) {
+				Init( start, isDebug );
 			}
 
-			protected virtual void Init( int start ) {
-				container = new Container( start );
+			protected virtual void Init( int start, bool isDebug ) {
+				container = new Container( start, isDebug );
 				IsValid = true;
 				createdHandles++;
 			}
@@ -42,11 +43,13 @@ namespace VM {
 
 			#region Container
 			class Container {
+				public readonly bool IsDebug;
 				public int Start;
 				public HandleUpdater Updater;
 
-				public Container( int start ) {
+				public Container( int start, bool isDebug ) {
 					this.Start = start;
+					this.IsDebug = isDebug;
 					Updater = newPosition => Start = newPosition;
 				}
 			}
@@ -62,15 +65,11 @@ namespace VM {
 			set { VirtualMachine.MemoryManager[Start + index] = value; }
 		}
 
-		public Handle( T value ) : base( value.Start ) { }
-
-		public static explicit operator Handle<T>( T obj ) {
-			return MemoryManagerBase.CreateHandle( obj );
-		}
+		public Handle( T value, bool isDebug ) : base( value.Start, isDebug ) { }
 
 		public static implicit operator T( Handle<T> handle ) {
 			if (handle == null)
-				return new T();
+				return new T().New( 0 );
 			return handle.Value;
 		}
 
@@ -85,7 +84,7 @@ namespace VM {
 		}
 
 		public Handle<TTo> To<TTo>() where TTo : struct, IVMObject<TTo> {
-			return new Handle<TTo>( new TTo().New( Start ) );
+			return new Handle<TTo>( new TTo().New( Start ), IsDebug );
 		}
 
 		#region Equals
@@ -123,12 +122,11 @@ namespace VM {
 		internal override MemoryManagerBase.HandleBase.HandleUpdater Updater { get { return null; } }
 
 		public IntHandle( int value )
-			: base( (VMObjects.AppObject) 0 ) {
-			Init( value );
+			: base( (VMObjects.AppObject) 0, false ) {
+			this.value = value;
 		}
 
-		protected override void Init( int value ) {
-			this.value = value;
+		protected override void Init( int value, bool isDebug ) {
 		}
 
 		protected override void InternalUnregister() { }

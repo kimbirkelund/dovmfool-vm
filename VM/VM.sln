@@ -11,8 +11,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sekhmet", "Sekhmet\Sekhmet.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VMILLib", "VMILLib\VMILLib.csproj", "{464D1D09-B6CE-46D1-AC36-F06189FBD142}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VMTests", "VMTests\VMTests.csproj", "{3A3CACF8-FD82-456B-BD98-669FEE60C080}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{66FB9580-A25E-422D-9257-5F5ED39D4F81}"
 	ProjectSection(SolutionItems) = preProject
 		LocalTestRun.testrunconfig = LocalTestRun.testrunconfig
@@ -28,6 +26,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documents", "Documents", "{
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VMShell", "VMShell\VMShell.csproj", "{5798A068-A460-4175-896C-66AC36703A9C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VM.Debugging", "VM.Debugging\VM.Debugging.csproj", "{34EEE397-368D-4A02-9799-D882683AE81E}"
 EndProject
 Global
 	GlobalSection(TestCaseManagementSettings) = postSolution
@@ -58,14 +58,14 @@ Global
 		{464D1D09-B6CE-46D1-AC36-F06189FBD142}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{464D1D09-B6CE-46D1-AC36-F06189FBD142}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{464D1D09-B6CE-46D1-AC36-F06189FBD142}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3A3CACF8-FD82-456B-BD98-669FEE60C080}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3A3CACF8-FD82-456B-BD98-669FEE60C080}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3A3CACF8-FD82-456B-BD98-669FEE60C080}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3A3CACF8-FD82-456B-BD98-669FEE60C080}.Release|Any CPU.Build.0 = Release|Any CPU
 		{5798A068-A460-4175-896C-66AC36703A9C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{5798A068-A460-4175-896C-66AC36703A9C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5798A068-A460-4175-896C-66AC36703A9C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5798A068-A460-4175-896C-66AC36703A9C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{34EEE397-368D-4A02-9799-D882683AE81E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{34EEE397-368D-4A02-9799-D882683AE81E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{34EEE397-368D-4A02-9799-D882683AE81E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{34EEE397-368D-4A02-9799-D882683AE81E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

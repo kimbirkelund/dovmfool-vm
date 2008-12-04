@@ -14,6 +14,8 @@
     <FileAlignment>512</FileAlignment>
     <StartupObject>
     </StartupObject>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>VM.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -39,9 +41,6 @@
     </Reference>
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
-    <Reference Include="System.ServiceModel">
-      <RequiredTargetFramework>3.0</RequiredTargetFramework>
-    </Reference>
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -49,15 +48,19 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Debugging\Class.cs" />
-    <Compile Include="Debugging\IDebuggerService.cs" />
+    <Compile Include="Debugging\DebugExecutionStack.cs" />
+    <Compile Include="Debugging\DebugInterpretor.cs" />
+    <Compile Include="Debugging\IDebugInterpretor.cs" />
+    <Compile Include="IExecutionStack.cs" />
     <Compile Include="Interpretor.cs" />
     <Compile Include="ClassLoader.cs" />
     <Compile Include="ExecutionStack.cs" />
     <Compile Include="HandleCache.cs" />
     <Compile Include="IInterpretorFactory.cs" />
+    <Compile Include="InterpretorThread.cs" />
     <Compile Include="KnownClasses.cs" />
     <Compile Include="KnownStrings.cs" />
+    <Compile Include="NewInterpretorEventArgs.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -82,7 +85,6 @@
     <Compile Include="VMObjects\DelegateMessageHandler.cs" />
     <Compile Include="VMObjects\Integer.cs" />
     <Compile Include="IVMObject.cs" />
-    <Compile Include="InterpretorData.cs" />
     <Compile Include="VMObjects\MessageHandlerBase.cs" />
     <Compile Include="VMObjects\ObjectBase.cs" />
     <Compile Include="VMObjects\String.cs" />
@@ -110,6 +112,7 @@
     <None Include="BaseTypes.vmil">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="VM.snk" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">

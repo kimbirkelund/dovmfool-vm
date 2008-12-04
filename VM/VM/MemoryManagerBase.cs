@@ -25,15 +25,15 @@ namespace VM {
 
 		internal abstract Word this[int index] { get; set; }
 
-		static internal Handle<T> CreateHandle<T>( T obj ) where T : struct, IVMObject<T> {
-			var handle = new Handle<T>( obj );
+		internal static Handle<T> CreateHandle<T>( T obj, bool isDebug ) where T : struct, IVMObject<T> {
+			var handle = new Handle<T>( obj, isDebug );
 
 			if (obj.Start > 0) {
 				//lock (handles) {
-					if (handles.ContainsKey( handle.Start ))
-						handles[handle.Start].Add( handle.Updater );
-					else
-						handles.Add( handle.Start, new List<HandleBase.HandleUpdater> { handle.Updater } );
+				if (handles.ContainsKey( handle.Start ))
+					handles[handle.Start].Add( handle.Updater );
+				else
+					handles.Add( handle.Start, new List<HandleBase.HandleUpdater> { handle.Updater } );
 				//}
 				handlesCreated++;
 			}
@@ -45,11 +45,11 @@ namespace VM {
 				handle.Unregister();
 			else {
 				//lock (handles) {
-					if (!handles.ContainsKey( handle.Start ))
-						return;
+				if (!handles.ContainsKey( handle.Start ))
+					return;
 
-					handles[handle.Start].Remove( handle.Updater );
-					handlesDisposed++;
+				handles[handle.Start].Remove( handle.Updater );
+				handlesDisposed++;
 				//}
 			}
 		}
@@ -60,18 +60,18 @@ namespace VM {
 
 		internal static void MoveHandles( int fromPosition, int toPosition, bool ignoreExistingLists ) {
 			//lock (handles) {
-				if (!handles.ContainsKey( fromPosition ))
-					return;
-				if (!ignoreExistingLists && handles.ContainsKey( toPosition ))
-					throw new ArgumentException( "Target position already contains a handles list. Those must be moved first.".ToVMString(), "toPosition".ToVMString() );
+			if (!handles.ContainsKey( fromPosition ))
+				return;
+			if (!ignoreExistingLists && handles.ContainsKey( toPosition ))
+				throw new ArgumentException( "Target position already contains a handles list. Those must be moved first.".ToVMString(), "toPosition".ToVMString() );
 
-				var l = handles[fromPosition];
-				handles.Remove( fromPosition );
-				if (handles.ContainsKey( toPosition ))
-					handles[toPosition].AddRange( l );
-				else
-					handles.Add( toPosition, l );
-				l.ForEach( h => h( toPosition ) );
+			var l = handles[fromPosition];
+			handles.Remove( fromPosition );
+			if (handles.ContainsKey( toPosition ))
+				handles[toPosition].AddRange( l );
+			else
+				handles.Add( toPosition, l );
+			l.ForEach( h => h( toPosition ) );
 			//}
 		}
 

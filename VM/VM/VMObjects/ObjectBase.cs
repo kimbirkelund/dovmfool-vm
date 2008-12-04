@@ -123,7 +123,7 @@ namespace VM.VMObjects {
 				Math.Pow( 2, 2 );
 			if (obj.Start == 0)
 				return null;
-			return (Handle<T>) obj;
+			return new Handle<T>( obj, false );
 		}
 
 		public static IntHandle ToHandle( this Integer obj ) {
@@ -131,6 +131,22 @@ namespace VM.VMObjects {
 		}
 
 		public static IntHandle ToHandle( this int obj ) {
+			return new IntHandle( obj );
+		}
+
+		public static Handle<T> ToDebugHandle<T>( this T obj ) where T : struct, IVMObject<T> {
+			if (obj.Start == 984)
+				Math.Pow( 2, 2 );
+			if (obj.Start == 0)
+				return null;
+			return new Handle<T>( obj, true );
+		}
+
+		public static IntHandle ToDebugHandle( this Integer obj ) {
+			return new IntHandle( obj.Value );
+		}
+
+		public static IntHandle ToDebugHandle( this int obj ) {
 			return new IntHandle( obj );
 		}
 

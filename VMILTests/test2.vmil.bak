@@ -15,7 +15,5 @@
 		push-literal "Og Christer tror ikke på mig!!!!"
 		push-literal "write-line:1"
 		send-message
-
-		return-void
-       }
+      }
 }

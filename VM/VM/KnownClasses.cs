@@ -73,13 +73,12 @@ namespace VM {
 			internal override MemoryManagerBase.HandleBase.HandleUpdater Updater { get { return null; } }
 
 			public DummyClassHandle( string name, int value )
-				: base( (VMObjects.Class) 0 ) {
+				: base( (VMObjects.Class) 0, false ) {
 				this.Name = name.Replace( "_", "." );
-				Init( value );
+				this.value = value;
 			}
 
-			protected override void Init( int value ) {
-				this.value = value;
+			protected override void Init( int value, bool isDebug ) {
 			}
 
 			protected override void InternalUnregister() { }
