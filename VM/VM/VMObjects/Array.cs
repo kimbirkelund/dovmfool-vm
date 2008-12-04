@@ -102,6 +102,18 @@ namespace VM.VMObjects {
 			return obj[ArrayConsts.ELEMENT_COUNT_OFFSET];
 		}
 
+        public static int IndexOf(this Handle<Array> obj, Handle<AppObject> element)
+        {
+            for (int i = 0; i < obj.Length(); i++)
+            {
+                UValue v = obj.Get(i);
+                Handle<AppObject> h = ExtUValue.ToHandle(v);
+                if (h.Send(KnownStrings.equals_1, element).Value > 0) return i;
+            }
+
+            return -1;
+        }
+
 		internal static UValue Get( this Handle<Array> obj, int arrayIndex ) {
 			if (arrayIndex < 0 || obj.Length() <= arrayIndex)
 				throw new ArgumentOutOfRangeException( "arrayIndex".ToVMString() );
@@ -166,7 +178,7 @@ namespace VM.VMObjects {
 			for (int i = 0; i < obj.Length(); i++)
 				yield return obj.Get<T>( i );
 		}
-
+        
 		internal static IEnumerable<UValue> GetEnumerator( this Handle<Array> obj ) {
 			for (int i = 0; i < obj.Length(); i++)
 				yield return obj.Get( i );
