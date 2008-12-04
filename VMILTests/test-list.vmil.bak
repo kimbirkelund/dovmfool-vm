@@ -1,0 +1,120 @@
+.class public Program {
+       .handler public main(sys) {      	
+      		.entrypoint
+      		.locals {list, con}
+
+			load-argument sys
+			push-literal "get-console:0"
+			send-message
+			store-local con
+			
+			//list test						
+			push-literal "System.Collections.List"			
+			new-instance
+			store-local list
+						
+			load-local list
+			load-argument sys
+			push-literal 5
+			push-literal "initialize:2"
+			send-message
+			
+			load-local list
+			push-literal 5
+			push-literal "add:1"
+			send-message			
+			
+			load-local list
+			push-literal 4
+			push-literal "add:1"
+			send-message		
+			
+			load-local con
+			
+			load-local list
+			push-literal 1
+			push-literal "get:1"
+			send-message			
+			
+			push-literal "write-line:1"
+			send-message
+			
+			load-local con			
+			
+			load-local list
+			push-literal "length:0"			
+			send-message			
+			
+			push-literal "write-line:1"
+			send-message			
+			
+			load-local list
+			push-literal 0
+			push-literal "remove-at:1"			
+			send-message			
+		
+			load-local con			
+			
+			load-local list
+			push-literal "length:0"			
+			send-message			
+			
+			push-literal "write-line:1"
+			send-message
+			
+			load-local con			
+			
+			load-local list
+			push-literal 0
+			push-literal "get:1"
+			send-message		
+			
+			push-literal "write-line:1"
+			send-message
+			
+			load-local list
+			push-literal 0
+			push-literal 1
+			push-literal "insert-at:2"
+			send-message	
+			
+			load-local con			
+			
+			load-local list
+			push-literal 0
+			push-literal "get:1"
+			send-message		
+			
+			push-literal "write-line:1"
+			send-message
+			
+			load-local con			
+
+			load-local list
+			push-literal 4
+			push-literal "index-of:1"
+			send-message		
+	
+			push-literal "write-line:1"
+			send-message
+			
+			load-local list
+			push-literal 1
+			push-literal "remove:1"
+			send-message
+			
+			load-local con			
+			
+			load-local list
+			push-literal 0
+			push-literal "get:1"
+			send-message		
+			
+			push-literal "write-line:1"
+			send-message
+
+
+
+		return-void
+       }
+}
