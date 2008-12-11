@@ -1,44 +1,62 @@
 .class public Program {
 	.handler public Main(sys) {
 		.entrypoint
-		.locals { t1, t2, console }
+		.locals { ts, console, i, count }
 		
 		load-argument sys
 		push-literal "get-console:0"
 		send-message
 		store-local console
-		
-		push-literal "Program.Foo"
-		new-instance
-		dup
-		store-local t1
-		dup
-		load-local console
-		push-literal "1"
-		push-literal "initialize:2"
-		send-message
-		push-literal "start:0"
-		send-message
-		
-		push-literal "Program.Foo"
-		new-instance
-		dup
-		store-local t2
-		dup
-		load-local console
-		push-literal "2"
-		push-literal "initialize:2"
-		send-message
-		push-literal "start:0"
-		send-message
 
-		load-local t1
-		push-literal "join:0"
+		push-literal 0
+		store-local i
+		push-literal 1
+		store-local count
+		load-argument sys
+		load-local count
+		push-literal "new-array:1"
 		send-message
+		store-local ts
 		
-		load-local t2
-		push-literal "join:0"
-		send-message
+		start:
+			load-local i
+			load-local count
+			push-literal "equals:1"
+			send-message
+			jump-if-true join
+		
+			load-local ts
+			load-local i
+			push-literal "Program.Foo"
+			new-instance
+
+			dup
+			load-local console
+			load-local i
+			push-literal "initialize:2"
+			send-message
+
+			dup
+			push-literal "start:0"
+			send-message
+
+			push-literal "set:2"
+			send-message
+
+			load-local i
+			push-literal 1
+			push-literal "add:1"
+			send-message
+			store-local i
+			jump start
+
+		join:
+			load-local ts
+			push-literal 0
+			push-literal "get:1"
+			send-message
+			push-literal "join:0"
+			send-message				
 	}
 
 	.class public Foo extends System.Threading.Thread {
@@ -58,8 +76,11 @@
 		.handler public run() {
 			start:
 				load-field console
+				push-literal " "
 				load-field text
-				push-literal "write-line:1"
+				push-literal "concat:1"
+				send-message				
+				push-literal "write:1"
 				send-message
 				
 				load-field threading
