@@ -5,7 +5,7 @@ function global:test($name) {
 	    write-error "No such test"
 	 } else {
 	 	 write-progress $name "Copying"
-	 	 cp "$name.vmil.bak" "$name.vmil"
+		 cp "$name.vmil.bak" "$name.vmil"
 	 	 write-progress $name "Running"
 	 	 vmshl "$name.vmil"
 	}
