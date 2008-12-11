@@ -1,0 +1,355 @@
+.class public Program {
+	   .fields{sy, con}
+
+       .handler public main(sys) {      	
+      		.entrypoint
+      		.locals {arr, i, st, et, size}
+      		push-literal 100000	
+      		store-local size      		      		
+      		push-literal 0
+			store-local i
+      		
+			load-argument sys
+			push-literal "get-console:0"
+			send-message
+			store-field con
+			load-argument sys
+			store-field sy
+									
+			load-this
+			load-field sy											
+			load-local size
+			push-literal "new-array:1"
+			send-message
+			store-local arr
+			
+			//
+			gtop:
+			load-local size		
+			load-local i
+			push-literal "subtract:1"
+			send-message
+			jump-if-false gend						
+			
+			load-local arr
+			load-local i
+			load-field sy
+			push-literal 1000
+			push-literal "next-random:1"
+			send-message
+			push-literal "set:2"
+			send-message						
+			
+					
+			load-local i
+			push-literal 1
+			push-literal "add:1"
+			send-message
+			store-local i
+									
+			jump gtop
+			gend:
+			//
+			
+			load-field sy														
+			push-literal "get-millisecond:0"
+			send-message
+			store-local st
+			
+			load-local arr			
+			load-local size
+			push-literal "merge_sort:2"
+			send-message			
+			
+			load-argument sys														
+			push-literal "get-millisecond:0"
+			send-message
+			store-local et
+			
+			load-field con
+			load-local arr
+			push-literal 3
+			push-literal "get:1"
+			send-message
+			push-literal "write-line:1"
+			send-message
+			
+			load-field con
+			load-local et
+			load-local st
+			push-literal "subtract:1"
+			send-message
+			push-literal "write-line:1"
+			send-message				
+
+		return-void
+       }
+       
+       .handler public merge_sort(A, n) {
+			.locals {A1, A2, n1, n2, i}
+			//if (n < 2) return;			
+				load-argument n
+				push-literal 1
+				push-literal "subtract:1"
+				send-message
+				jump-if-false end		
+			//var n1 = n / 2;
+				load-argument n
+				push-literal 2
+				push-literal "divide:1"
+				send-message
+				store-local n1
+			//var n2 = n  - n1;  /* the number of elements in A2 */
+				load-argument n
+				load-local n1
+				push-literal "subtract:1"
+				send-message
+				store-local n2
+			//A1 = new Array();
+				load-field sy											
+				load-local n1
+				push-literal "new-array:1"
+				send-message
+				store-local A1
+			//A2 = new Array();
+				load-field sy											
+				load-local n2
+				push-literal "new-array:1"
+				send-message
+				store-local A2
+			//for (var i =0; i < n1; i++) { A1[i] = A[i]; }				
+				push-literal 0
+				store-local i
+				for1top:
+					load-local n1
+					load-local i
+					push-literal "subtract:1"
+					send-message
+					jump-if-false for1end
+					
+					load-local A1
+					load-local i					
+					load-argument A
+					load-local i
+					push-literal "get:1"
+					send-message
+					push-literal "set:2"
+					send-message										
+					
+					load-local i
+					push-literal 1
+					push-literal "add:1"
+					send-message
+					store-local i
+					
+					jump for1top
+				for1end:
+			  //for (var i = 0; i < n2; i++) {A2[i] = A[i+n1];}
+				push-literal 0
+				store-local i
+				for2top:
+					load-local n2
+					load-local i
+					push-literal "subtract:1"
+					send-message
+					jump-if-false for2end
+					
+					load-local A2
+					load-local i					
+					load-argument A
+					load-local i
+					load-local n1
+					push-literal "add:1"					
+					send-message					
+					push-literal "get:1"
+					send-message
+					push-literal "set:2"
+					send-message										
+					
+					load-local i
+					push-literal 1
+					push-literal "add:1"
+					send-message
+					store-local i
+					
+					jump for2top
+				for2end:
+			
+			//merge_sort(A1, n1);
+			load-this
+			load-local A1
+			load-local n1
+			push-literal "merge_sort:2"
+			send-message
+			
+			//merge_sort(A2, n2);
+			load-this
+			load-local A2
+			load-local n2			
+			push-literal "merge_sort:2"
+			send-message
+
+
+			//merge(A1, n1, A2, n2, A);
+			load-this
+			load-local A1
+			load-local n1
+			load-local A2
+			load-local n2
+			load-argument A
+			push-literal "merge:5"
+			send-message
+  			
+			end:
+			return-void
+  }
+       
+       .handler public merge(A, a, B, b, C) {
+			.locals {i,j,k}
+			//i = 0; j = 0; k = 0;
+				push-literal 0
+				store-local i
+				push-literal 0
+				store-local j
+				push-literal 0
+				store-local k					
+  			//while (i < a && j < b) {if (A[i] <= B[j]) { C[k] = A[i]; i++; k++;} else {  C[k] = B[j];  j++; k++; } }
+  				while1top:
+  					load-argument a
+  					load-local i
+  					push-literal "subtract:1"
+  					send-message
+  					jump-if-false while1end
+  					load-argument b
+  					load-local j
+  					push-literal "subtract:1"
+  					send-message
+  					jump-if-false while1end
+  					
+  					//A[i] <= B[j]
+  					load-argument B
+  					load-local j
+  					push-literal "get:1"
+  					send-message
+  					push-literal 1
+  					push-literal "add:1"
+  					send-message
+  					
+  					load-argument A
+  					load-local i
+  					push-literal "get:1"
+  					send-message
+  					
+  					push-literal "subtract:1"
+  					send-message
+  					jump-if-false elser
+					//if C[k] = A[i]; i++; k++;
+						load-argument C
+  						load-local k
+  						load-argument A
+  						load-local i  					
+  						push-literal "get:1"
+  						send-message
+  						push-literal "set:2"
+  						send-message
+  					
+  						load-local i
+  						push-literal 1
+  						push-literal "add:1"
+  						send-message
+  						store-local i
+  					
+  						load-local k
+  						push-literal 1
+  						push-literal "add:1"
+  						send-message
+  						store-local k					
+						jump while1top   				  					
+  					elser: //C[k] = B[j];  j++; k++; 					
+  						load-argument C
+  						load-local k
+  						load-argument B
+  						load-local j  					
+  						push-literal "get:1"
+  						send-message
+  						push-literal "set:2"
+  						send-message
+  					
+  						load-local j
+  						push-literal 1
+  						push-literal "add:1"
+  						send-message
+  						store-local j
+  					
+  						load-local k
+  						push-literal 1
+  						push-literal "add:1"
+  						send-message
+  						store-local k
+  					jump while1top   				  					
+				while1end:
+			//while (i < a) {C[k]= A[i];i++; k++;}  				
+  				while2top:  				  				
+  					load-argument a
+  					load-local i
+  					push-literal "subtract:1"
+  					send-message
+  					jump-if-false while2end
+  					
+  					load-argument C
+  					load-local k
+  					load-argument A
+  					load-local i  					
+  					push-literal "get:1"
+  					send-message
+  					push-literal "set:2"
+  					send-message
+  					
+  					load-local i
+  					push-literal 1
+  					push-literal "add:1"
+  					send-message
+  					store-local i
+  					
+  					load-local k
+  					push-literal 1
+  					push-literal "add:1"
+  					send-message
+  					store-local k
+  					
+  					jump while2top  			
+				while2end:  
+				//while (j < b)  {C[k]= B[j]; j++; k++;}
+				while3top:
+  					load-argument b
+  					load-local j
+  					push-literal "subtract:1"
+  					send-message
+  					jump-if-false while3end
+
+  					load-argument C
+  					load-local k
+  					load-argument B
+  					load-local j  					
+  					push-literal "get:1"
+  					send-message
+  					push-literal "set:2"
+  					send-message
+  					
+  					load-local j
+  					push-literal 1
+  					push-literal "add:1"
+  					send-message
+  					store-local j
+  					
+  					load-local k
+  					push-literal 1
+  					push-literal "add:1"
+  					send-message
+  					store-local k
+  					
+  					jump while3top  			
+				while3end:
+				return-void              
+       }
+}

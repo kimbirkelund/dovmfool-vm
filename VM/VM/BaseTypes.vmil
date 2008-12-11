@@ -32,6 +32,9 @@
 	}
 	
 	.handler public new-array .external System.Array.new-array(size)
+	
+	.handler public next-random .external System.Rand.next(size) 
+	.handler public get-millisecond .external System.DT.get-millisecond() 
 		
 	.class private Array {
 		.handler public get .external System.Array.get(index)
