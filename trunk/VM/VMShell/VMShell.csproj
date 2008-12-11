@@ -12,6 +12,8 @@
     <AssemblyName>VMShell</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>VM.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -53,10 +55,17 @@
       <Project>{879263E1-25E5-4BE7-B185-FEBA869F0A7F}</Project>
       <Name>Sekhmet</Name>
     </ProjectReference>
+    <ProjectReference Include="..\VM.Debugging\VM.Debugging.csproj">
+      <Project>{34EEE397-368D-4A02-9799-D882683AE81E}</Project>
+      <Name>VM.Debugging</Name>
+    </ProjectReference>
     <ProjectReference Include="..\VM\VM.csproj">
       <Project>{B64CA0FD-3F02-414D-ACF1-BD1CEED657D4}</Project>
       <Name>VM</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="VM.snk" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
