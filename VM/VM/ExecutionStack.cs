@@ -44,13 +44,16 @@ namespace VM {
 		public ExecutionStack( int initialSize ) {
 			this.initialSize = initialSize;
 			if (initialSize < 0)
-				throw new ArgumentOutOfRangeException( "Argument must be greater than zero.".ToVMString(), "initialSize".ToVMString() );
+				throw new ArgumentOutOfRangeException( "Argument must be greater than zero.".ToVMString().ToHandle(), "initialSize".ToVMString().ToHandle() );
 
 			stack = new UValue[initialSize];
 		}
 
 		public ExecutionStack( IExecutionStack stack )
 			: this( stack.Size ) {
+			this.basePointer = stack.BasePointer;
+			this.frameBoundary = stack.FrameBoundary;
+			this.stackPointer = stack.StackPointer;
 			for (int i = 0; i < stack.StackPointer; i++)
 				this[i] = stack[i];
 		}
@@ -93,7 +96,9 @@ namespace VM {
 			frameBoundary = stackPointer - ARGUMENT_OFFSET - callee.ArgumentCount();
 			basePointer = stackPointer;
 
-			(!callee.IsExternal() ? callee.To<VMILMessageHandler>().LocalCount() : 0).ForEach( () => Push( new UValue() ) );
+			if (!callee.IsExternal())
+				using (var hVmilCallee = callee.To<VMILMessageHandler>())
+					hVmilCallee.LocalCount().ForEach( () => Push( new UValue() ) );
 		}
 
 		public virtual ReturnAddress PopFrame( bool withReturnValue ) {
@@ -112,7 +117,7 @@ namespace VM {
 
 		public virtual UValue GetLocal( int index ) {
 			if (index + basePointer >= stackPointer)
-				throw new ArgumentOutOfRangeException( "Index plus base pointer must be less than the stack pointer.".ToVMString(), "index".ToVMString() );
+				throw new ArgumentOutOfRangeException( "Index plus base pointer must be less than the stack pointer.".ToVMString().ToHandle(), "index".ToVMString().ToHandle() );
 
 			return stack[basePointer + index];
 		}
@@ -120,7 +125,7 @@ namespace VM {
 		public virtual void SetLocal( int index, UValue value ) {
 			index = basePointer + index;
 			if (index >= stackPointer)
-				throw new ArgumentOutOfRangeException( "Index plus base pointer must be less than the stack pointer.".ToVMString(), "index".ToVMString() );
+				throw new ArgumentOutOfRangeException( "Index plus base pointer must be less than the stack pointer.".ToVMString().ToHandle(), "index".ToVMString().ToHandle() );
 
 			stack[index] = value;
 		}
@@ -132,7 +137,7 @@ namespace VM {
 		public UValue GetArgument( int index ) {
 			index = frameBoundary + index;
 			if (index > basePointer - ARGUMENT_OFFSET)
-				throw new ArgumentOutOfRangeException( "No such argument.".ToVMString(), "index".ToVMString() );
+				throw new ArgumentOutOfRangeException( "No such argument.".ToVMString().ToHandle(), "index".ToVMString().ToHandle() );
 
 			return stack[index];
 		}

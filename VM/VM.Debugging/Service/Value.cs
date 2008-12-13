@@ -54,10 +54,11 @@ namespace VM.Debugging.Service {
 			if (!val.IsReference)
 				return new Value { Type = ValueType.Integer, Data = val.Value };
 
-			var h = val.ToHandle();
+			var h = val.ToWeakHandle();
+
 			return new Value {
 				Type = ValueType.OldBasePointer,
-				Class = VM.Debugging.Service.Server.ClassReflectionService.Get( h.Class().ToHandle() ),
+				Class = VM.Debugging.Service.Server.ClassReflectionService.Get( h.Class().ToWeakHandle() ),
 				Data = VM.Debugging.Service.Server.ObjectReflectionService.Get( h )
 			};
 		}

@@ -7,7 +7,9 @@ using VMILLib;
 namespace VM.VMObjects {
 	public struct ObjectBase : IVMObject<ObjectBase> {
 		#region Constants
-		public const int CLASS_POINTER_OFFSET = 0;
+		public const int CLASS_POINTER_OFFSET = -1;
+		public const int SIZE_OFFSET = -2;
+		public const int SIZE_RSHIFT = 2;
 		#endregion
 
 		#region Properties
@@ -32,7 +34,8 @@ namespace VM.VMObjects {
 
 		#region Instance methods
 		public override string ToString() {
-			return ExtObjectBase.ToString( this.ToHandle() );
+			using (var hThis = this.ToHandle())
+				return ExtObjectBase.ToString( hThis );
 		}
 
 		public bool Equals( Handle<ObjectBase> obj1, Handle<ObjectBase> obj2 ) {
@@ -115,15 +118,17 @@ namespace VM.VMObjects {
 		public static string ToString( this Handle<ObjectBase> obj ) {
 			if (obj.IsNull())
 				return "{NULL}";
-			return "{" + obj.Class().ToHandle().Name().ToString() + "}";
+			using (var hObjClass = obj.Class().ToHandle())
+				return "{" + hObjClass.Name().ToString() + "}";
 		}
 
 		public static Handle<T> ToHandle<T>( this T obj ) where T : struct, IVMObject<T> {
-			if (obj.Start == 984)
-				Math.Pow( 2, 2 );
 			if (obj.Start == 0)
 				return null;
-			return new Handle<T>( obj, false );
+			var h = MemoryManagerBase.CreateHandle<T>( obj, false );
+			if (!h.IsWeak)
+				MemoryManagerBase.AssertHandle( h );
+			return h;
 		}
 
 		public static IntHandle ToHandle( this Integer obj ) {
@@ -134,12 +139,10 @@ namespace VM.VMObjects {
 			return new IntHandle( obj );
 		}
 
-		public static Handle<T> ToDebugHandle<T>( this T obj ) where T : struct, IVMObject<T> {
-			if (obj.Start == 984)
-				Math.Pow( 2, 2 );
+		public static Handle<T> ToWeakHandle<T>( this T obj ) where T : struct, IVMObject<T> {
 			if (obj.Start == 0)
 				return null;
-			return new Handle<T>( obj, true );
+			return MemoryManagerBase.CreateHandle<T>( obj, true );
 		}
 
 		public static IntHandle ToDebugHandle( this Integer obj ) {
@@ -153,13 +156,20 @@ namespace VM.VMObjects {
 		public static Class Class<T>( this Handle<T> obj ) where T : struct, IVMObject<T> {
 			if (obj is IntHandle)
 				return KnownClasses.System_Integer;
-			if (((int) obj[ObjectBase.CLASS_POINTER_OFFSET]) < 0)
+			if (((int) obj[ObjectBase.CLASS_POINTER_OFFSET]) < 0) {
+				MarkSweepCompactMemoryManager.DisableAddressVerification();
 				obj[ObjectBase.CLASS_POINTER_OFFSET] = KnownClasses.Resolve( obj[ObjectBase.CLASS_POINTER_OFFSET] );
+				MarkSweepCompactMemoryManager.EnableAddressVerification();
+			}
 			return (Class) obj[ObjectBase.CLASS_POINTER_OFFSET];
 		}
 
 		public static void Class<T>( this Handle<T> obj, Handle<Class> cls ) where T : struct, IVMObject<T> {
 			obj[ObjectBase.CLASS_POINTER_OFFSET] = cls;
+		}
+
+		public static int Size<T>( this Handle<T> obj ) where T : struct, IVMObject<T> {
+			return obj[ObjectBase.SIZE_OFFSET] >> ObjectBase.SIZE_RSHIFT;
 		}
 
 		public static bool IsNull<T>( this Handle<T> obj ) where T : struct, IVMObject<T> {

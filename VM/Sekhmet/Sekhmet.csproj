@@ -55,6 +55,7 @@
     <Compile Include="Collections\Enums.cs" />
     <Compile Include="Collections\Graph.cs" />
     <Compile Include="Collections\IIndexer.cs" />
+    <Compile Include="Collections\PriorityQueue.cs" />
     <Compile Include="Collections\SingletonManager.cs" />
     <Compile Include="Collections\Tree.cs" />
     <Compile Include="Collections\Trie.cs" />

@@ -9,6 +9,7 @@ namespace Sekhmet {
     /// <summary>
     /// Easy access to express assertions about ones code. For debugging purposes only.
     /// </summary>
+	[System.Diagnostics.DebuggerStepThrough]
     public static class Assert {
         /// <summary>
         /// Asserts the specified action.

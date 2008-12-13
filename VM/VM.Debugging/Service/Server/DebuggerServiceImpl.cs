@@ -5,15 +5,15 @@ using System.Text;
 
 namespace VM.Debugging.Service.Server {
 	class DebuggerServiceImpl : IDebuggerService {
-		public int[] GetInterpretors() {
-			return DebuggerService.GetInterpretors();
+		public int[] GetInterpreters() {
+			return DebuggerService.GetInterpreters();
 		}
 
-		public InterpretorPosition Break( int id ) {
+		public InterpreterPosition Break( int id ) {
 			return DebuggerService.Break( id );
 		}
 
-		public InterpretorPosition StepOne( int id ) {
+		public InterpreterPosition StepOne( int id ) {
 			return DebuggerService.StepOne( id );
 		}
 

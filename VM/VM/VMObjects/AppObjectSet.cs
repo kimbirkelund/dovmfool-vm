@@ -51,7 +51,8 @@ namespace VM.VMObjects {
 
 		#region Instance methods
 		public override string ToString() {
-			return ExtAppObjectSet.ToString( this.ToHandle() );
+			using (var hThis = this.ToHandle())
+				return ExtAppObjectSet.ToString( hThis );
 		}
 
 		public bool Equals( Handle<AppObjectSet> obj1, Handle<AppObjectSet> obj2 ) {

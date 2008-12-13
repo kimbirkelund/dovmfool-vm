@@ -32,7 +32,7 @@ namespace VM.Debugging.Service.Server {
 		}
 
 		public static int ResolveClass( string name ) {
-			var cls = VirtualMachine.ResolveClass( null, name.ToVMString() ).ToHandle();
+			var cls = VirtualMachine.ResolveClass( null, name.ToVMString().ToWeakHandle() ).ToWeakHandle();
 			return Get( cls );
 		}
 
@@ -61,13 +61,13 @@ namespace VM.Debugging.Service.Server {
 		}
 
 		public static int[] SuperClasses( int id ) {
-			return Get( id ).SuperClasses().Select( s => Get( VirtualMachine.ResolveClass( null, s.ToHandle() ).ToHandle() ) ).ToArray();
+			return Get( id ).SuperClasses().Select( s => Get( VirtualMachine.ResolveClass( null, s.ToWeakHandle() ).ToWeakHandle() ) ).ToArray();
 		}
 
 		public static int? DefaultMessageHandler( int id ) {
 			var cls = Get( id );
 			var defh = cls.DefaultHandler();
-			return defh.IsNull() ? (int?) null : MessageHandlerReflectionService.Get( defh.ToHandle() );
+			return defh.IsNull() ? (int?) null : MessageHandlerReflectionService.Get( defh.ToWeakHandle() );
 		}
 
 		public static int MessageHandlerCount( int id ) {
@@ -75,7 +75,7 @@ namespace VM.Debugging.Service.Server {
 		}
 
 		public static int[] MessageHandlers( int id ) {
-			return Get( id ).MessageHandlers().Select( h => MessageHandlerReflectionService.Get( h.ToHandle() ) ).ToArray();
+			return Get( id ).MessageHandlers().Select( h => MessageHandlerReflectionService.Get( h.ToWeakHandle() ) ).ToArray();
 		}
 
 		public static int InnerClassCount( int id ) {
@@ -83,12 +83,12 @@ namespace VM.Debugging.Service.Server {
 		}
 
 		public static int[] InnerClasses( int id ) {
-			return Get( id ).InnerClasses().Select( c => Get( c.ToHandle() ) ).ToArray();
+			return Get( id ).InnerClasses().Select( c => Get( c.ToWeakHandle() ) ).ToArray();
 		}
 
 		public static int? ParentClass( int id ) {
 			var cls = Get( id );
-			return cls.IsNull() ? (int?) null : Get( cls.ParentClass().ToHandle() );
+			return cls.IsNull() ? (int?) null : Get( cls.ParentClass().ToWeakHandle() );
 		}
 
 		public static int FieldCount( int id ) {

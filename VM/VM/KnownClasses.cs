@@ -7,6 +7,7 @@ using System.Reflection;
 
 namespace VM {
 	internal static class KnownClasses {
+		public static Handle<Class> Void { get; private set; }
 		public static Handle<Class> Object { get; private set; }
 		public static Handle<Class> ObjectSet { get; private set; }
 		public static Handle<Class> System { get; private set; }
@@ -23,8 +24,8 @@ namespace VM {
 		public static Handle<Class> System_InvalidVMProgramException { get; private set; }
 		public static Handle<Class> System_InvalidThreadIdException { get; private set; }
 		public static Handle<Class> System_ClassLoaderException { get; private set; }
-		public static Handle<Class> System_InterpretorException { get; private set; }
-		public static Handle<Class> System_InterpretorFailedToStopException { get; private set; }
+		public static Handle<Class> System_InterpreterException { get; private set; }
+		public static Handle<Class> System_InterpreterFailedToStopException { get; private set; }
 		public static Handle<Class> System_ApplicationException { get; private set; }
 		public static Handle<Class> System_InvalidCastException { get; private set; }
 		public static Handle<Class> System_ArgumentException { get; private set; }
@@ -52,9 +53,15 @@ namespace VM {
 
 			foreach (var prop in props) {
 				var h = (DummyClassHandle) prop.GetValue( null, null );
-				handles[h.Value * -1] = VirtualMachine.ResolveClass( null, h.Name.ToVMString() ).ToHandle();
+				using (var hHName = h.Name.ToVMString().ToHandle())
+					handles[h.Value * -1] = VirtualMachine.ResolveClass( null, hHName ).ToHandle();
 				prop.SetValue( null, handles[h.Value * -1], null );
 			}
+			handles.Where( h => h != null ).ForEach( h => MemoryManagerBase.AssertHandle( h ) );
+		}
+
+		internal static void Dispose() {
+			handles.Where( h => h != null ).ForEach( h => h.Dispose() );
 		}
 
 		public static Class Resolve( int start ) {
@@ -70,12 +77,12 @@ namespace VM {
 			public new int Value { get { return value; } }
 			public override bool IsValid { get { return true; } }
 			public override int Start { get { return Value; } }
-			internal override MemoryManagerBase.HandleBase.HandleUpdater Updater { get { return null; } }
 
 			public DummyClassHandle( string name, int value )
 				: base( (VMObjects.Class) 0, false ) {
 				this.Name = name.Replace( "_", "." );
 				this.value = value;
+				global::System.GC.SuppressFinalize( this );
 			}
 
 			protected override void Init( int value, bool isDebug ) {

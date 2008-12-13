@@ -7,8 +7,8 @@ using VMILLib;
 namespace VM.VMObjects {
 	public struct DelegateMessageHandler : IVMObject<DelegateMessageHandler> {
 		#region Constants
-		public const int EXTERNAL_NAME_OFFSET = 3;
-		public const int ARGUMENT_COUNT_OFFSET = 4;
+		public const int EXTERNAL_NAME_OFFSET = 2;
+		public const int ARGUMENT_COUNT_OFFSET = 3;
 		#endregion
 
 		#region Properties
@@ -43,17 +43,25 @@ namespace VM.VMObjects {
 
 		#region Instance methods
 		public override string ToString() {
-			return ExtDelegateMessageHandler.ToString( this.ToHandle() );
+			using (var hThis = this.ToHandle())
+				return ExtDelegateMessageHandler.ToString( hThis );
 		}
 
 		public bool Equals( Handle<DelegateMessageHandler> obj1, Handle<DelegateMessageHandler> obj2 ) {
 			return obj1.Start == obj2.Start;
 		}
+
+		internal static int[] GetReferences( int adr ) {
+			return new int[] { 
+				VirtualMachine.MemoryManager[adr + MessageHandlerBaseConsts.CLASS_POINTER_OFFSET], 
+				VirtualMachine.MemoryManager[adr + EXTERNAL_NAME_OFFSET] 
+			};
+		}
 		#endregion
 
 		#region Static methods
 		internal static DelegateMessageHandler CreateInstance() {
-			return VirtualMachine.MemoryManager.Allocate<DelegateMessageHandler>( ARGUMENT_COUNT_OFFSET );
+			return VirtualMachine.MemoryManager.Allocate<DelegateMessageHandler>( ARGUMENT_COUNT_OFFSET + 1 );
 		}
 		#endregion
 	}
@@ -93,13 +101,13 @@ namespace VM.VMObjects {
 
 		static void SetHeader( this Handle<DelegateMessageHandler> obj, Handle<String> name, bool isEntrypoint, VisibilityModifier visibility ) {
 			if (name == null && visibility != VisibilityModifier.None)
-				throw new InvalidVMProgramException( "Non-default message handler specified with no name.".ToVMString() );
+				throw new InvalidVMProgramException( "Non-default message handler specified with no name.".ToVMString().ToHandle() );
 			if (name != null && visibility == VisibilityModifier.None)
-				throw new InvalidVMProgramException( "Default message handler specified with name.".ToVMString() );
+				throw new InvalidVMProgramException( "Default message handler specified with name.".ToVMString().ToHandle() );
 			if (isEntrypoint && visibility == VisibilityModifier.None)
-				throw new InvalidVMProgramException( "Default message handler can not be entrypoint.".ToVMString() );
+				throw new InvalidVMProgramException( "Default message handler can not be entrypoint.".ToVMString().ToHandle() );
 
-			obj[MessageHandlerBaseConsts.HEADER_OFFSET] = (name.GetInternIndex() << MessageHandlerBaseConsts.NAME_RSHIFT) | (isEntrypoint ? MessageHandlerBaseConsts.IS_ENTRYPOINT_MASK : (Word) 0) | MessageHandlerBaseConsts.IS_EXTERNAL_MASK | (int) visibility;
+			obj[MessageHandlerBaseConsts.HEADER_OFFSET] = (name.Value.GetInternIndex() << MessageHandlerBaseConsts.NAME_RSHIFT) | (isEntrypoint ? MessageHandlerBaseConsts.IS_ENTRYPOINT_MASK : (Word) 0) | MessageHandlerBaseConsts.IS_EXTERNAL_MASK | (int) visibility;
 		}
 
 		public static void InitInstance( this Handle<DelegateMessageHandler> obj, Handle<String> name, VisibilityModifier visibility, Handle<Class> cls, bool isEntrypoint, int argumentsCount, Handle<String> externalName ) {
