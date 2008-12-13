@@ -5,7 +5,7 @@ using System.Text;
 using VM.VMObjects;
 
 namespace VM.Debugging {
-	interface IDebugInterpretor : IInterpretor {
+	interface IDebugInterpreter : IInterpreter {
 		event EventHandler<StackPushEventArgs> StackPushed;
 		event EventHandler<StackPopEventArgs> StackPopped;
 		event EventHandler<StackChangeEventArgs> StackChanged;
@@ -14,16 +14,16 @@ namespace VM.Debugging {
 		void SetBreakpoint( Handle<VMILMessageHandler> messageHandler, int offset );
 		void ClearBreakpoint( Handle<VMILMessageHandler> messageHandler, int offset );
 		void ClearBreakpoints();
-		InterpretorPosition Break();
-		InterpretorPosition StepOne();
+		InterpreterPosition Break();
+		InterpreterPosition StepOne();
 		void Continue();
 	}
 
 	class BreakpointHitEventArgs : EventArgs {
-		public readonly Handle<VMILMessageHandler> MessageHandler;
+		public readonly Handle<MessageHandlerBase> MessageHandler;
 		public readonly int Position;
 
-		public BreakpointHitEventArgs( Handle<VMILMessageHandler> messageHandler, int position ) {
+		public BreakpointHitEventArgs( Handle<MessageHandlerBase> messageHandler, int position ) {
 			this.MessageHandler = messageHandler;
 			this.Position = position;
 		}

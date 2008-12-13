@@ -11,8 +11,8 @@ namespace VM.Debugging.Service.Server {
 		static Dictionary<Handle<AppObject>, int> objToId = new Dictionary<Handle<AppObject>, int>();
 
 		static int Add( Handle<AppObject> obj ) {
-			if (!obj.IsDebug)
-				obj = obj.Value.ToDebugHandle();
+			if (!obj.IsWeak)
+				obj = obj.Value.ToWeakHandle();
 			var id = nextId++;
 			idToObj.Add( id, obj );
 			objToId.Add( obj, id );
@@ -36,19 +36,19 @@ namespace VM.Debugging.Service.Server {
 		public Value GetField( int objectId, int classId, int index ) {
 			var obj = Get( objectId );
 			var cls = ClassReflectionService.Get( classId );
-			var val = obj.GetField( obj.GetFieldOffset( cls ) + index ).ToHandle();
+			var val = obj.GetField( obj.GetFieldOffset( cls ) + index ).ToWeakHandle();
 
 			if (val is IntHandle)
 				return new Value { Type = ValueType.Integer, Data = val.Start };
 			return new Value {
 				Type = ValueType.Object,
-				Class = ClassReflectionService.Get( val.Class().ToHandle() ),
+				Class = ClassReflectionService.Get( val.Class().ToWeakHandle() ),
 				Data = Get( val )
 			};
 		}
 
 		public int Class( int objectId ) {
-			return ClassReflectionService.Get( Get( objectId ).Class().ToHandle() );
+			return ClassReflectionService.Get( Get( objectId ).Class().ToWeakHandle() );
 		}
 	}
 }

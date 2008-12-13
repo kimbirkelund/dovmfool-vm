@@ -56,13 +56,14 @@ namespace VM.Debugging.Service.Server {
 		}
 
 		public static int Class( int id ) {
-			return ClassReflectionService.Get( Get( id ).Class().ToHandle() );
+			return ClassReflectionService.Get( Get( id ).Class().ToWeakHandle() );
 		}
 
 		public static int LocalCount( int id ) {
 			var h = Get( id );
 			if (!h.IsExternal())
-				return h.To<VMILMessageHandler>().LocalCount();
+				using (var hH = h.To<VMILMessageHandler>())
+					return hH.LocalCount();
 			return 0;
 		}
 	}

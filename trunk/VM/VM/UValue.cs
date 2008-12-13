@@ -8,25 +8,22 @@ namespace VM {
 	struct UValue {
 		public readonly Word Value;
 		public readonly Class Type;
-		public readonly bool IsReference;
-		public readonly bool IsVoid;
-		public readonly bool IsNull;
+		public bool IsReference { get { return Type > 0 && Type.Start != KnownClasses.System_Integer.Start; } }
+		public bool IsVoid { get { return Type.Start == KnownClasses.Void.Start; } }
+		public bool IsNull { get { return Type == 0 && Value == 0; } }
 
-		UValue( bool isVoid, bool isReference, Class type, Word value ) {
-			this.IsVoid = isVoid;
-			this.IsReference = isReference;
+		UValue( Class type, Word value ) {
 			this.Type = type;
 			this.Value = value;
-			this.IsNull = Type == 0 && Value == 0 && IsReference;
 		}
 
-		public static UValue Void() { return new UValue( true, false, (Class) 0, 0 ); }
-		public static UValue Null() { return new UValue( false, true, (Class) 0, 0 ); }
-		public static UValue Int( int i ) { return new UValue( false, false, KnownClasses.System_Integer.Value, i ); }
+		public static UValue Void() { return new UValue( KnownClasses.Void, 0 ); }
+		public static UValue Null() { return new UValue( (Class) 0, 0 ); }
+		public static UValue Int( int i ) { return new UValue( KnownClasses.System_Integer.Value, i ); }
 		public static UValue Ref( Class type, Word value ) {
 			if (type == KnownClasses.System_Integer.Start)
 				return Int( value );
-			return new UValue( false, true, type, value );
+			return new UValue( type, value );
 		}
 
 		public static implicit operator UValue( int value ) {
@@ -73,7 +70,7 @@ namespace VM {
 					case -5: return "TRY MARKER: " + Value;
 					case -6: return "RETURN HERE: " + Value;
 					default:
-						throw new ArgumentException( ("Invalid stack value type: " + Type.Start).ToVMString() );
+						throw new ArgumentException( ("Invalid stack value type: " + Type.Start).ToVMString().ToHandle() );
 				}
 			}
 			if (Type == KnownClasses.System_Integer.Start)
@@ -107,6 +104,22 @@ namespace VM {
 			if (!h.IsReference)
 				throw new System.ArgumentException( "Integer valued argument can not be converted to specific handle." );
 			return new T().New( h.Value ).ToHandle();
+		}
+
+		public static Handle<AppObject> ToWeakHandle( this UValue h ) {
+			if (h.IsVoid)
+				throw new System.ArgumentException( "Void valued argument can not be converted to handle." );
+			if (h.IsReference)
+				return ((AppObject) h.Value).ToWeakHandle();
+			return new IntHandle( h.Value );
+		}
+
+		public static Handle<T> ToWeakHandle<T>( this UValue h ) where T : struct, IVMObject<T> {
+			if (h.IsVoid)
+				throw new System.ArgumentException( "Void valued argument can not be converted to handle." );
+			if (!h.IsReference)
+				throw new System.ArgumentException( "Integer valued argument can not be converted to specific handle." );
+			return new T().New( h.Value ).ToWeakHandle();
 		}
 	}
 }

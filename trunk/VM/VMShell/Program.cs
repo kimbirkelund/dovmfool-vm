@@ -18,20 +18,20 @@ namespace VMShell {
 			System.Diagnostics.Trace.Listeners.Add( new System.Diagnostics.ConsoleTraceListener() );
 
 			//try {
-				Thread thread = null;
-				if (swapperArg.Value)
-					thread = new Thread( Swapper );
-				else if (pauserArg.Value)
-					thread = new Thread( Pauser );
+			Thread thread = null;
+			if (swapperArg.Value)
+				thread = new Thread( Swapper );
+			else if (pauserArg.Value)
+				thread = new Thread( Pauser );
 
-				VM.VirtualMachine.BeginExecuting( inputFileArg.Value );
-				if (thread != null) {
-					thread.IsBackground = true;
-					thread.Start();
-				}
-				var ret = VM.VirtualMachine.EndExecuting();
-				if (ret != null)
-					Console.WriteLine( ret );
+			VM.VirtualMachine.BeginExecuting( inputFileArg.Value );
+			if (thread != null) {
+				thread.IsBackground = true;
+				thread.Start();
+			}
+			var ret = VM.VirtualMachine.EndExecuting();
+			if (ret != null)
+				Console.WriteLine( ret );
 			//} catch (Exception e) {
 			//    if (e.InnerException != null)
 			//        Console.WriteLine( e.InnerException );
@@ -42,20 +42,19 @@ namespace VMShell {
 
 		static void Swapper() {
 			while (true) {
-				Thread.Sleep( 2000 );
+				Thread.Sleep( 5000 );
 				if (isDebug) {
-					Console.Write( "Continue" );
-					VM.Debugging.Service.Server.DebuggerService.GetInterpretors().ForEach( i => VM.Debugging.Service.Server.DebuggerService.Continue( i ) );
+					Console.WriteLine( "\n\n---------------------Continue---------------------\n\n" );
+					VM.Debugging.Service.Server.DebuggerService.GetInterpreters().ForEach( i => VM.Debugging.Service.Server.DebuggerService.Continue( i ) );
 					VM.VirtualMachine.DebuggerDetached();
 				} else {
 					VM.VirtualMachine.DebuggerAttached();
-					Console.Write( "Break" );
-					VM.Debugging.Service.Server.DebuggerService.GetInterpretors().ForEach( i => VM.Debugging.Service.Server.DebuggerService.Break( i ) );
-					Thread.Sleep( 2000 );
-					Console.Write( "Step" );
-					for (int i = 0; i < 20; i++) {
-						VM.Debugging.Service.Server.DebuggerService.GetInterpretors().ForEach( j => VM.Debugging.Service.Server.DebuggerService.StepOne( j ) );
-					}
+					Console.WriteLine( "\n\n---------------------Break---------------------\n\n" );
+					VM.Debugging.Service.Server.DebuggerService.GetInterpreters().ForEach( i => VM.Debugging.Service.Server.DebuggerService.Break( i ) );
+					Thread.Sleep( 5000 );
+					Console.WriteLine( "\n\n---------------------Step---------------------\n\n" );
+					for (int i = 0; i < 20; i++)
+						VM.Debugging.Service.Server.DebuggerService.GetInterpreters().ForEach( j => VM.Debugging.Service.Server.DebuggerService.StepOne( j ) );
 				}
 
 				isDebug = !isDebug;
@@ -67,13 +66,13 @@ namespace VMShell {
 				Console.Write( "Sleeping" );
 				Thread.Sleep( 2000 );
 				Console.Write( "BeginPausing" );
-				VM.VirtualMachine.GetInterpretors().ForEach( i => i.BeginPause() );
+				VM.VirtualMachine.GetInterpreters().ForEach( i => i.BeginPause() );
 				Console.Write( "EndPausing" );
-				VM.VirtualMachine.GetInterpretors().ForEach( i => i.EndPause() );
+				VM.VirtualMachine.GetInterpreters().ForEach( i => i.EndPause() );
 				Console.Write( "Sleeping" );
 				Thread.Sleep( 2000 );
 				Console.Write( "Resuming" );
-				VM.VirtualMachine.GetInterpretors().ForEach( i => i.Resume() );
+				VM.VirtualMachine.GetInterpreters().ForEach( i => i.Resume() );
 			}
 		}
 	}

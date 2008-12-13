@@ -6,8 +6,8 @@ using VMILLib;
 
 namespace VM.VMObjects {
 	internal static class VMILMessageHandlerConsts {
-		public const int COUNTS_OFFSET = 3;
-		public const int INSTRUCTIONS_OFFSET = 4;
+		public const int COUNTS_OFFSET = 2;
+		public const int INSTRUCTIONS_OFFSET = 3;
 
 		public const int INSTRUCTION_COUNT_RSHIFT = 16;
 		public static readonly Word ARGUMENT_COUNT_MASK = 0x0000FF00;
@@ -54,11 +54,16 @@ namespace VM.VMObjects {
 
 		#region Instance methods
 		public override string ToString() {
-			return ExtVMILMessageHandler.ToString( this.ToHandle() );
+			using (var hThis = this.ToHandle())
+				return ExtVMILMessageHandler.ToString( hThis );
 		}
 
 		public bool Equals( Handle<VMILMessageHandler> obj1, Handle<VMILMessageHandler> obj2 ) {
 			return obj1.Start == obj2.Start;
+		}
+
+		internal static int[] GetReferences( int adr ) {
+			return new int[] { VirtualMachine.MemoryManager[adr + MessageHandlerBaseConsts.CLASS_POINTER_OFFSET] };
 		}
 		#endregion
 	}
@@ -114,11 +119,11 @@ namespace VM.VMObjects {
 
 		static void SetCounts( this Handle<VMILMessageHandler> obj, int argumentCount, int localCount, int instructionCount ) {
 			if (argumentCount > 0x000000FF)
-				throw new InvalidVMProgramException( "Message handler has specifies more than 255 arguments.".ToVMString() );
+				throw new InvalidVMProgramException( "Message handler has specifies more than 255 arguments.".ToVMString().ToHandle() );
 			if (localCount > 0x000000FF)
-				throw new InvalidVMProgramException( "Message handler has specifies more than 255 local variables.".ToVMString() );
+				throw new InvalidVMProgramException( "Message handler has specifies more than 255 local variables.".ToVMString().ToHandle() );
 			if (instructionCount > 0x0000FFFF)
-				throw new InvalidVMProgramException( "Message handler has specifies more than 65535 local variables.".ToVMString() );
+				throw new InvalidVMProgramException( "Message handler has specifies more than 65535 local variables.".ToVMString().ToHandle() );
 
 			obj[VMILMessageHandlerConsts.COUNTS_OFFSET] =
 				(instructionCount << VMILMessageHandlerConsts.INSTRUCTION_COUNT_RSHIFT) |
@@ -127,14 +132,14 @@ namespace VM.VMObjects {
 
 		static void SetHeader( this Handle<VMILMessageHandler> obj, Handle<String> name, bool isEntrypoint, VisibilityModifier visibility ) {
 			if (name == null && visibility != VisibilityModifier.None)
-				throw new InvalidVMProgramException( "Non-default message handler specified with no name.".ToVMString() );
+				throw new InvalidVMProgramException( "Non-default message handler specified with no name.".ToVMString().ToHandle() );
 			if (name != null && visibility == VisibilityModifier.None)
-				throw new InvalidVMProgramException( "Default message handler specified with name.".ToVMString() );
+				throw new InvalidVMProgramException( "Default message handler specified with name.".ToVMString().ToHandle() );
 			if (isEntrypoint && visibility == VisibilityModifier.None)
-				throw new InvalidVMProgramException( "Default message handler can not be entrypoint.".ToVMString() );
+				throw new InvalidVMProgramException( "Default message handler can not be entrypoint.".ToVMString().ToHandle() );
 
 			if (name != null)
-				obj[MessageHandlerBaseConsts.HEADER_OFFSET] = (name.GetInternIndex() << MessageHandlerBaseConsts.NAME_RSHIFT) | (isEntrypoint ? MessageHandlerBaseConsts.IS_ENTRYPOINT_MASK : (Word) 0) | (int) visibility;
+				obj[MessageHandlerBaseConsts.HEADER_OFFSET] = (name.Value.GetInternIndex() << MessageHandlerBaseConsts.NAME_RSHIFT) | (isEntrypoint ? MessageHandlerBaseConsts.IS_ENTRYPOINT_MASK : (Word) 0) | (int) visibility;
 			else
 				obj[MessageHandlerBaseConsts.HEADER_OFFSET] = 0;
 		}

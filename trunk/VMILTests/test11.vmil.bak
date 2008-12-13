@@ -10,7 +10,7 @@
 
 		push-literal 0
 		store-local i
-		push-literal 1
+		push-literal 13
 		store-local count
 		load-argument sys
 		load-local count
@@ -60,13 +60,13 @@
 	}
 
 	.class public Foo extends System.Threading.Thread {
-		.fields { threading, console, text }
+		.fields { threading, console, index }
 
-		.handler public initialize(console, text) {
+		.handler public initialize(console, index) {
 			load-argument console
 			store-field console
-			load-argument text
-			store-field text
+			load-argument index
+			store-field index
 			
 			push-literal "System.Threading"
 			new-instance
@@ -76,10 +76,14 @@
 		.handler public run() {
 			start:
 				load-field console
-				push-literal " "
-				load-field text
-				push-literal "concat:1"
-				send-message				
+				push-literal "Hello World! "
+				load-field index
+				push-literal 13
+				push-literal "modulo:1"
+				send-message
+				push-literal 1
+				push-literal "substring:2"
+				send-message
 				push-literal "write:1"
 				send-message
 				

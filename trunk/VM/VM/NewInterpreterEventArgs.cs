@@ -5,9 +5,9 @@ using System.Text;
 
 namespace VM {
 	internal sealed class NewThreadEventArgs : EventArgs {
-		public readonly InterpretorThread Thread;
+		public readonly InterpreterThread Thread;
 
-		public NewThreadEventArgs( InterpretorThread thread ) {
+		public NewThreadEventArgs( InterpreterThread thread ) {
 			this.Thread = thread;
 		}
 	}

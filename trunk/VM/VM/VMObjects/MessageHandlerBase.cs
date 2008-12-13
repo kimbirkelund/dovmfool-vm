@@ -5,9 +5,9 @@ using System.Text;
 using VMILLib;
 
 namespace VM.VMObjects {
-	public static class MessageHandlerBaseConsts {
-		public const int HEADER_OFFSET = 1;
-		public const int CLASS_POINTER_OFFSET = 2;
+	static class MessageHandlerBaseConsts {
+		public const int HEADER_OFFSET = 0;
+		public const int CLASS_POINTER_OFFSET = 1;
 		public static readonly Word VISIBILITY_MASK = 0x00000003;
 		public static readonly Word IS_EXTERNAL_MASK = 0x00000004;
 		public static readonly Word IS_ENTRYPOINT_MASK = 0x00000008;
@@ -37,11 +37,19 @@ namespace VM.VMObjects {
 
 		#region Instance methods
 		public override string ToString() {
-			return ExtMessageHandlerBase.ToString( this.ToHandle() );
+			using (var hThis = this.ToHandle())
+				return ExtMessageHandlerBase.ToString( hThis );
 		}
 
 		public bool Equals( Handle<MessageHandlerBase> obj1, Handle<MessageHandlerBase> obj2 ) {
 			return obj1.Start == obj2.Start;
+		}
+
+		internal static int[] GetReferences( int adr ) {
+			if ((VirtualMachine.MemoryManager[MessageHandlerBaseConsts.HEADER_OFFSET] & MessageHandlerBaseConsts.IS_EXTERNAL_MASK) != 0)
+				return DelegateMessageHandler.GetReferences( adr );
+			else
+				return VMILMessageHandler.GetReferences( adr );
 		}
 		#endregion
 
@@ -97,14 +105,18 @@ namespace VM.VMObjects {
 
 		public static int ArgumentCount( this Handle<MessageHandlerBase> obj ) {
 			if (obj.IsExternal())
-				return obj.To<DelegateMessageHandler>().ArgumentCount();
-			return obj.To<VMILMessageHandler>().ArgumentCount();
+				using (var hDel = obj.To<DelegateMessageHandler>())
+					return hDel.ArgumentCount();
+			using (var hVmil = obj.To<VMILMessageHandler>())
+				return hVmil.ArgumentCount();
 		}
 
 		public static string ToString( this Handle<MessageHandlerBase> obj ) {
 			if (obj.IsExternal())
-				return obj.To<DelegateMessageHandler>().ToString();
-			return obj.To<VMILMessageHandler>().ToString();
+				using (var hDel = obj.To<DelegateMessageHandler>())
+					return hDel.ToString();
+			using (var hVmil = obj.To<VMILMessageHandler>())
+				return hVmil.ToString();
 		}
 	}
 }

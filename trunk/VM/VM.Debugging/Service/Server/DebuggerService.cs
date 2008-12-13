@@ -6,13 +6,13 @@ using System.Runtime.Serialization;
 
 namespace VM.Debugging.Service.Server {
 	static class DebuggerService {
-		static Dictionary<InterpretorThread, int> interpToId = new Dictionary<InterpretorThread, int>();
-		static Dictionary<int, InterpretorThread> idToInterp = new Dictionary<int, InterpretorThread>();
+		static Dictionary<InterpreterThread, int> interpToId = new Dictionary<InterpreterThread, int>();
+		static Dictionary<int, InterpreterThread> idToInterp = new Dictionary<int, InterpreterThread>();
 
-		public static event EventHandler<NewInterpretorEventArgs> NewInterpretor;
-		static void OnNewInterpretor( int id ) {
-			if (NewInterpretor != null)
-				NewInterpretor( null, new NewInterpretorEventArgs( id ) );
+		public static event EventHandler<NewInterpreterEventArgs> NewInterpreter;
+		static void OnNewInterpreter( int id ) {
+			if (NewInterpreter != null)
+				NewInterpreter( null, new NewInterpreterEventArgs( id ) );
 		}
 		public static event EventHandler<BreakpointHitEventArgs> BreakpointHit;
 		static void OnBreakpointHit( int messageHandler, int position ) {
@@ -38,18 +38,18 @@ namespace VM.Debugging.Service.Server {
 		}
 
 		static DebuggerService() {
-			VM.VirtualMachine.NewThread += new EventHandler<VM.NewThreadEventArgs>( VirtualMachine_NewInterpretor );
+			VM.VirtualMachine.NewThread += new EventHandler<VM.NewThreadEventArgs>( VirtualMachine_NewInterpreter );
 		}
 
-		static void VirtualMachine_NewInterpretor( object sender, VM.NewThreadEventArgs e ) {
-			OnNewInterpretor( Get( (InterpretorThread) e.Thread ) );
+		static void VirtualMachine_NewInterpreter( object sender, VM.NewThreadEventArgs e ) {
+			OnNewInterpreter( Get( (InterpreterThread) e.Thread ) );
 		}
 
-		static int Add( InterpretorThread interp ) {
+		static int Add( InterpreterThread interp ) {
 			interpToId.Add( interp, interp.Id );
 			idToInterp.Add( interp.Id, interp );
 
-			((IDebugInterpretor) interp).StackChanged += new EventHandler<VM.Debugging.StackChangeEventArgs>( interp_StackChanged );
+			((IDebugInterpreter) interp.Interpreter).StackChanged += new EventHandler<VM.Debugging.StackChangeEventArgs>( interp_StackChanged );
 			return interp.Id;
 		}
 
@@ -57,14 +57,14 @@ namespace VM.Debugging.Service.Server {
 			OnStackChanged( new StackChangeEventArgs( e.Position, e.NewValue.ToValue() ) );
 		}
 
-		public static InterpretorThread Get( int id ) {
+		public static InterpreterThread Get( int id ) {
 			if (!idToInterp.ContainsKey( id ))
 				throw new System.ArgumentOutOfRangeException( "id" );
 
 			return idToInterp[id];
 		}
 
-		public static int Get( InterpretorThread interp ) {
+		public static int Get( InterpreterThread interp ) {
 			int id;
 			if (!interpToId.TryGetValue( interp, out id ))
 				id = Add( interp );
@@ -79,29 +79,31 @@ namespace VM.Debugging.Service.Server {
 			VirtualMachine.DebuggerDetached();
 		}
 
-		public static int[] GetInterpretors() {
-			return VirtualMachine.GetInterpretors().Select( i => Get( i ) ).ToArray();
+		public static int[] GetInterpreters() {
+			return VirtualMachine.GetInterpreters().Select( i => Get( i ) ).ToArray();
 		}
 
-		public static InterpretorPosition Break( int id ) {
-			var ip = ((IDebugInterpretor) Get( id ).Interpretor).Break();
-			return new InterpretorPosition( MessageHandlerReflectionService.Get( ip.MessageHandler.To<VMObjects.MessageHandlerBase>() ), ip.Position );
+		public static InterpreterPosition Break( int id ) {
+			var ip = ((IDebugInterpreter) Get( id ).Interpreter).Break();
+			using (var hBase = ip.MessageHandler.To<VMObjects.MessageHandlerBase>())
+				return new InterpreterPosition( MessageHandlerReflectionService.Get( hBase ), ip.Position );
 		}
 
-		public static InterpretorPosition StepOne( int id ) {
-			var ip = ((IDebugInterpretor) Get( id ).Interpretor).StepOne();
-			return new InterpretorPosition( MessageHandlerReflectionService.Get( ip.MessageHandler.To<VMObjects.MessageHandlerBase>() ), ip.Position );
+		public static InterpreterPosition StepOne( int id ) {
+			var ip = ((IDebugInterpreter) Get( id ).Interpreter).StepOne();
+			using (var hBase = ip.MessageHandler.To<VMObjects.MessageHandlerBase>())
+				return new InterpreterPosition( MessageHandlerReflectionService.Get( hBase ), ip.Position );
 		}
 
 		public static void Continue( int id ) {
-			((IDebugInterpretor) Get( id ).Interpretor).Continue();
+			((IDebugInterpreter) Get( id ).Interpreter).Continue();
 		}
 	}
 
-	class NewInterpretorEventArgs : EventArgs {
+	class NewInterpreterEventArgs : EventArgs {
 		public readonly int Id;
 
-		public NewInterpretorEventArgs( int id ) {
+		public NewInterpreterEventArgs( int id ) {
 			this.Id = id;
 		}
 	}

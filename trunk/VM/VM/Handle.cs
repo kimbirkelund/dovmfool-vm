@@ -5,60 +5,57 @@ using System.Text;
 using VM.VMObjects;
 
 namespace VM {
-	partial class MemoryManagerBase {
-		public abstract class HandleBase {
-			static int createdHandles, disposedHandles;
-			Container container;
-			public bool IsDebug { get { return container.IsDebug; } }
-			public virtual bool IsValid { get; private set; }
-			public virtual int Start { get { return container.Start; } }
-			internal virtual HandleUpdater Updater { get { return container.Updater; } }
+	public enum HandleType {
+		Normal,
+		Weak,
+	}
 
-			internal virtual void Unregister() {
+	public abstract class HandleBase : IDisposable {
+#if DEBUG
+		static int nextId;
+		internal readonly int id = nextId++;
+#endif
+
+		protected int start;
+		public virtual int Start {
+			get { return start; }
+			internal set { start = value; }
+		}
+
+		public bool IsWeak { get; private set; }
+		public virtual bool IsValid { get; private set; }
+
+		internal virtual void Unregister() {
+			System.GC.SuppressFinalize( this );
+			InternalUnregister();
+		}
+
+		protected virtual void InternalUnregister() {
+			IsValid = false;
+			MemoryManagerBase.Unregister( this );
+		}
+
+		protected HandleBase( int start, bool isWeak ) {
+			Init( start, isWeak );
+		}
+
+		protected virtual void Init( int start, bool isWeak ) {
+			this.start = start;
+			this.IsWeak = isWeak;
+			IsValid = true;
+			if (IsWeak)
 				System.GC.SuppressFinalize( this );
-				InternalUnregister();
-			}
+		}
 
-			protected virtual void InternalUnregister() {
-				IsValid = false;
-				MemoryManagerBase.Unregister( this );
-				disposedHandles++;
-			}
+		internal delegate void HandleUpdater( int newPosition );
 
-			protected HandleBase( int start, bool isDebug ) {
-				Init( start, isDebug );
-			}
-
-			protected virtual void Init( int start, bool isDebug ) {
-				container = new Container( start, isDebug );
-				IsValid = true;
-				createdHandles++;
-			}
-
-			~HandleBase() {
-				InternalUnregister();
-			}
-
-			internal delegate void HandleUpdater( int newPosition );
-
-			#region Container
-			class Container {
-				public readonly bool IsDebug;
-				public int Start;
-				public HandleUpdater Updater;
-
-				public Container( int start, bool isDebug ) {
-					this.Start = start;
-					this.IsDebug = isDebug;
-					Updater = newPosition => Start = newPosition;
-				}
-			}
-			#endregion
+		public void Dispose() {
+			Unregister();
 		}
 	}
 
 	[System.Diagnostics.DebuggerDisplay( "handle[{ToString()}]" )]
-	public class Handle<T> : MemoryManagerBase.HandleBase where T : struct, IVMObject<T> {
+	public class Handle<T> : HandleBase where T : struct, IVMObject<T> {
 		public T Value { get { return new T().New( Start ); } }
 		internal Word this[int index] {
 			get { return VirtualMachine.MemoryManager[Start + index]; }
@@ -84,7 +81,8 @@ namespace VM {
 		}
 
 		public Handle<TTo> To<TTo>() where TTo : struct, IVMObject<TTo> {
-			return new Handle<TTo>( new TTo().New( Start ), IsDebug );
+			var h = new Handle<TTo>( new TTo().New( Start ), IsWeak );
+			return h;
 		}
 
 		#region Equals
@@ -119,11 +117,11 @@ namespace VM {
 		public new int Value { get { return value; } }
 		public override bool IsValid { get { return false; } }
 		public override int Start { get { return Value; } }
-		internal override MemoryManagerBase.HandleBase.HandleUpdater Updater { get { return null; } }
 
 		public IntHandle( int value )
 			: base( (VMObjects.AppObject) 0, false ) {
 			this.value = value;
+			System.GC.SuppressFinalize( this );
 		}
 
 		protected override void Init( int value, bool isDebug ) {

@@ -1,3 +1,5 @@
+.class private Void {}
+
 .class public Object {
 	.handler public get-type .external Object.get-type()
 	.handler public to-string .external Object.to-string()
@@ -152,19 +154,19 @@
 		}
 	}
 	
-	.class public InterpretorException extends System.Exception {
+	.class public InterpreterException extends System.Exception {
 		.handler public initialize() {
 			load-this
-			push-literal "An unknown error occured in the interpretor."
+			push-literal "An unknown error occured in the interpreter."
 			push-literal "initialize:1"
 			send-message
 		}
 	}
 	
-	.class public InterpretorFailedToStopException extends System.Exception {
+	.class public InterpreterFailedToStopException extends System.Exception {
 		.handler public initialize() {
 			load-this
-			push-literal "Interpretor failed to stop."
+			push-literal "Interpreter failed to stop."
 			push-literal "initialize:1"
 			send-message
 		}
@@ -322,6 +324,7 @@
 		.handler public add .external System.Integer.add(other)
 		.handler public multiply .external System.Integer.multiply(other)
 		.handler public divide .external System.Integer.divide(other)
+		.handler public modulo .external System.Integer.modulo(other)
 		
 		.handler public compare-to(other) {
 			load-this
@@ -499,7 +502,7 @@
 			
 			.handler public is-public() {
 				load-field vis
-				push-literal 0
+				push-literal 1
 				push-literal "equals:1"
 				send-message
 				return
@@ -507,7 +510,7 @@
 			
 			.handler public is-protected() {
 				load-field vis
-				push-literal 1
+				push-literal 2
 				push-literal "equals:1"
 				send-message
 				return
@@ -515,7 +518,7 @@
 			
 			.handler public is-private() {
 				load-field vis
-				push-literal 2
+				push-literal 3
 				push-literal "equals:1"
 				send-message
 				return
@@ -523,21 +526,9 @@
 					
 			.handler public is-none() {
 				load-field vis
-				push-literal 2
-				push-literal "compareTo:1"
-				jump-if-true returnTrue
-				
-				load-field vis
 				push-literal 0
 				push-literal "compareTo:1"
-				jump-if-false returnTrue
-				
-				push-literal 0
 				return
-				
-				returnTrue:
-					push-literal 1
-					return
 			}
 			
 			.handler public to-string() {
@@ -987,7 +978,7 @@
 	.class public Threading {
 		.handler public sleep .external System.Threading.sleep(milis)
 		.class public Thread {
-			.fields { interpretor }
+			.fields { interpreter }
 			
 			.handler public start .external System.Threading.Thread.start(obj)
 			.handler public join .external System.Threading.Thread.join()

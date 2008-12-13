@@ -8,9 +8,9 @@ using Sekhmet;
 namespace VM.VMObjects {
 	public struct String : IVMObject<String> {
 		#region Constants
-		public const int LENGTH_INTERNED_OFFSET = 1;
-		public const int HASH_CODE_OFFSET = 2;
-		public const int FIRST_CHAR_OFFSET = 3;
+		public const int LENGTH_INTERNED_OFFSET = 0;
+		public const int HASH_CODE_OFFSET = 1;
+		public const int FIRST_CHAR_OFFSET = 2;
 		public const int INTERN_RSHIFT = 31;
 		public const int LENGTH_MASK = 0x7FFFFFFF;
 		#endregion
@@ -22,24 +22,6 @@ namespace VM.VMObjects {
 		public Word this[int index] {
 			get { return VirtualMachine.MemoryManager[Start + index]; }
 			set { VirtualMachine.MemoryManager[Start + index] = value; }
-		}
-
-		static Handle<String> empty;
-		public static Handle<String> Empty {
-			get {
-				if (empty == null)
-					empty = "".ToVMString().Intern();
-				return empty;
-			}
-		}
-
-		static Handle<String> dot;
-		public static Handle<String> Dot {
-			get {
-				if (dot == null)
-					dot = ".".ToVMString().Intern();
-				return dot;
-			}
 		}
 		#endregion
 
@@ -73,11 +55,14 @@ namespace VM.VMObjects {
 
 		#region Instance methods
 		public override bool Equals( object value ) {
-			if (value is String)
-				return ExtString.Equals( this.ToHandle(), ((String) value).ToHandle() );
-			if (value is Handle<String>)
-				return ExtString.Equals( this.ToHandle(), (Handle<String>) value );
-			return false;
+			using (var hThis = this.ToHandle()) {
+				if (value is String)
+					using (var hValue = ((String) value).ToHandle())
+						return ExtString.Equals( hThis, hValue );
+				if (value is Handle<String>)
+					return ExtString.Equals( hThis, (Handle<String>) value );
+				return false;
+			}
 		}
 
 		public bool Equals( Handle<String> obj1, Handle<String> obj2 ) {
@@ -85,18 +70,21 @@ namespace VM.VMObjects {
 		}
 
 		public override int GetHashCode() {
-			return ExtString.GetHashCode( this.ToHandle() );
+			using (var hThis = this.ToHandle())
+				return ExtString.GetHashCode( hThis );
 		}
 
 		public override string ToString() {
-			return ExtString.ToString( this.ToHandle() );
+			using (var hThis = this.ToHandle())
+				return ExtString.ToString( hThis );
 		}
 		#endregion
 
 		#region Static methods
 		public static String CreateInstance( int length ) {
-			var str = VirtualMachine.MemoryManager.Allocate<String>( FIRST_CHAR_OFFSET - 1 + (length + 1) / 2 );
+			var str = VirtualMachine.MemoryManager.Allocate<String>( FIRST_CHAR_OFFSET + (length + 1) / 2 );
 			str[String.LENGTH_INTERNED_OFFSET] = length & LENGTH_MASK;
+			str[String.HASH_CODE_OFFSET] = 0;
 			return str;
 		}
 
@@ -119,7 +107,7 @@ namespace VM.VMObjects {
 			return obj[String.LENGTH_INTERNED_OFFSET] & String.LENGTH_MASK;
 		}
 
-		public static bool IsInterned( this Handle<String> obj ) {
+		public static bool IsInterned( this String obj ) {
 			return obj[String.LENGTH_INTERNED_OFFSET] >> String.INTERN_RSHIFT;
 		}
 
@@ -184,15 +172,16 @@ namespace VM.VMObjects {
 				i += splitAt.Length();
 			}
 
-			var arr = Array.CreateInstance( list.Count ).ToHandle();
-			list.ForEach( ( e, i ) => arr.Set( i, e ) );
-
-			return arr;
+			using (var arr = Array.CreateInstance( list.Count ).ToHandle()) {
+				list.ForEach( ( e, i ) => arr.Set( i, e ) );
+				list.ForEach( s => s.Dispose() );
+				return arr;
+			}
 		}
 
 		public static int IndexOf( this Handle<String> obj, Handle<String> str, int startIndex ) {
 			if (startIndex < 0 || obj.Length() <= startIndex)
-				throw new ArgumentOutOfRangeException( "startIndex".ToVMString() );
+				throw new ArgumentOutOfRangeException( "startIndex".ToVMString().ToHandle() );
 
 			int i = 0;
 		top:
@@ -213,7 +202,7 @@ namespace VM.VMObjects {
 
 		public static int LastIndexOf( this Handle<String> obj, Handle<String> str, int startIndex ) {
 			if (startIndex < 0 || obj.Length() <= startIndex)
-				throw new ArgumentOutOfRangeException( "startIndex".ToVMString() );
+				throw new ArgumentOutOfRangeException( "startIndex".ToVMString().ToHandle() );
 
 			int i = startIndex;
 		top:
@@ -234,25 +223,26 @@ namespace VM.VMObjects {
 
 		public static String Substring( this Handle<String> obj, int start, int count ) {
 			if (start < 0)
-				throw new ArgumentOutOfRangeException( "start".ToVMString() );
+				throw new ArgumentOutOfRangeException( "start".ToVMString().ToHandle() );
 			if (count < 0 || start + count > obj.Length())
-				throw new ArgumentOutOfRangeException( "count".ToVMString() );
+				throw new ArgumentOutOfRangeException( "count".ToVMString().ToHandle() );
 
 			var wordCount = (count + 1) / 2;
-			var newStr = String.CreateInstance( count ).ToHandle();
+			using (var newStr = String.CreateInstance( count ).ToHandle()) {
 
-			for (int cur = start, w = String.FIRST_CHAR_OFFSET; cur < count + start; cur += 2, w++) {
-				if (cur % 2 == 0)
-					newStr[w] = obj[cur / 2 + String.FIRST_CHAR_OFFSET];
-				else {
-					Word w1 = (obj[cur / 2 + String.FIRST_CHAR_OFFSET] << 16);
-					Word w2 = (cur < obj.Length() ? (obj[cur / 2 + 1 + String.FIRST_CHAR_OFFSET] >> 16) : (Word) 0);
-					Word w3 = w1 | w2;
-					newStr[w] = w1 | w2;
+				for (int cur = start, w = String.FIRST_CHAR_OFFSET; cur < count + start; cur += 2, w++) {
+					if (cur % 2 == 0)
+						newStr[w] = obj[cur / 2 + String.FIRST_CHAR_OFFSET];
+					else {
+						Word w1 = (obj[cur / 2 + String.FIRST_CHAR_OFFSET] << 16);
+						Word w2 = (cur < obj.Length() ? (obj[cur / 2 + 1 + String.FIRST_CHAR_OFFSET] >> 16) : (Word) 0);
+						Word w3 = w1 | w2;
+						newStr[w] = w1 | w2;
+					}
 				}
-			}
 
-			return newStr;
+				return newStr.Value;
+			}
 		}
 
 		public static String Substring( this Handle<String> obj, int start ) {
@@ -290,30 +280,31 @@ namespace VM.VMObjects {
 		}
 
 		public static String Concat( this Handle<String> str1, Handle<VM.VMObjects.String> str2 ) {
-			var str = String.CreateInstance( str1.Length() + str2.Length() ).ToHandle();
+			using (var str = String.CreateInstance( str1.Length() + str2.Length() ).ToHandle()) {
 
-			var s1Len = str1.Length();
-			var s1WC = (s1Len + 1) / 2;
-			var s2Len = str2.Length();
-			var s2WC = (s2Len + 1) / 2;
+				var s1Len = str1.Length();
+				var s1WC = (s1Len + 1) / 2;
+				var s2Len = str2.Length();
+				var s2WC = (s2Len + 1) / 2;
 
-			for (int i = 0; i < s1WC; i++)
-				str[String.FIRST_CHAR_OFFSET + i] = str1[String.FIRST_CHAR_OFFSET + i];
+				for (int i = 0; i < s1WC; i++)
+					str[String.FIRST_CHAR_OFFSET + i] = str1[String.FIRST_CHAR_OFFSET + i];
 
-			if (s1Len % 2 == 0) {
-				for (int i = 0; i < s2WC; i++)
-					str[String.FIRST_CHAR_OFFSET + s1WC + i] = str2[String.FIRST_CHAR_OFFSET + i];
-			} else {
-				int j = String.FIRST_CHAR_OFFSET + s1WC - 1;
-				for (int i = 0; i < s2WC; i++) {
-					str[j] &= 0xFFFF0000;
-					str[j++] |= str2[String.FIRST_CHAR_OFFSET + i] >> 16;
-					if (i != s2WC - 1 || s2Len % 2 == 0)
-						str[j] |= str2[String.FIRST_CHAR_OFFSET + i] << 16;
+				if (s1Len % 2 == 0) {
+					for (int i = 0; i < s2WC; i++)
+						str[String.FIRST_CHAR_OFFSET + s1WC + i] = str2[String.FIRST_CHAR_OFFSET + i];
+				} else {
+					int j = String.FIRST_CHAR_OFFSET + s1WC - 1;
+					for (int i = 0; i < s2WC; i++) {
+						str[j] &= 0xFFFF0000;
+						str[j++] |= str2[String.FIRST_CHAR_OFFSET + i] >> 16;
+						if (i != s2WC - 1 || s2Len % 2 == 0)
+							str[j] |= str2[String.FIRST_CHAR_OFFSET + i] << 16;
+					}
 				}
-			}
 
-			return str;
+				return str;
+			}
 		}
 
 		public static string ToString( this Handle<String> obj ) {
@@ -327,7 +318,7 @@ namespace VM.VMObjects {
 				yield return obj[i];
 		}
 
-		public static Handle<String> ToVMString( this string str ) {
+		public static String ToVMString( this string str ) {
 			var bytes = Encoding.Unicode.GetBytes( str );
 			if (bytes.Length % 4 != 0) {
 				var temp = bytes;
@@ -336,22 +327,23 @@ namespace VM.VMObjects {
 			}
 			var ints = bytes.ToUIntStream();
 
-			var vmStr = VMObjects.String.CreateInstance( str.Length ).ToHandle();
-			ints.ForEach( ( b, i ) => vmStr[i + VMObjects.String.FIRST_CHAR_OFFSET] = b );
+			using (var vmStr = VMObjects.String.CreateInstance( str.Length ).ToHandle()) {
+				ints.ForEach( ( b, i ) => vmStr[i + VMObjects.String.FIRST_CHAR_OFFSET] = b );
 
-			return vmStr;
+				return vmStr;
+			}
 		}
 
-		public static Handle<String> Intern( this Handle<String> str ) {
+		public static String Intern( this String str ) {
 			if (str.IsInterned())
 				return str;
 
 			foreach (var istr in strings)
 				if (Equals( istr, str ))
-					return istr;
+					return istr.Value;
 
-			strings.Add( str );
-			str[VMObjects.String.LENGTH_INTERNED_OFFSET] |= 0x80000000;
+			strings.Add( str.ToHandle() );
+			VirtualMachine.MemoryManager[str.Start + String.LENGTH_INTERNED_OFFSET] |= 0x80000000;
 			return str;
 		}
 
@@ -363,10 +355,11 @@ namespace VM.VMObjects {
 			return strings[index];
 		}
 
-		public static int GetInternIndex( this Handle<VMObjects.String> str ) {
+		public static int GetInternIndex( this String str ) {
 			if (!str.IsInterned())
-				throw new ArgumentException( "Specified string must be interned.".ToVMString(), "str".ToVMString() );
-			return strings.FindIndex( s => Equals( s, str ) );
+				throw new ArgumentException( "Specified string must be interned.".ToVMString().ToHandle(), "str".ToVMString().ToHandle() );
+			using (var hStr = str.ToHandle())
+				return strings.FindIndex( s => Equals( s, hStr ) );
 		}
 	}
 }

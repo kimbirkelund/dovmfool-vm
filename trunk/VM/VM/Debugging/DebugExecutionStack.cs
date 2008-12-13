@@ -25,7 +25,7 @@ namespace VM.Debugging {
 		public DebugExecutionStack( int initialSize )
 			: base( initialSize ) { }
 
-		public DebugExecutionStack( ExecutionStack stack ) : base( stack ) { }
+		public DebugExecutionStack( IExecutionStack stack ) : base( stack ) { }
 
 		public override UValue Pop() {
 			var v = base.Pop();

@@ -6,7 +6,7 @@ using System.Reflection;
 using VM.VMObjects;
 
 namespace VM {
-	delegate UValue SystemCall( IInterpretor interpretor, UValue receiver, UValue[] arguments );
+	delegate UValue SystemCall( UValue receiver, UValue[] arguments );
 
 	internal static partial class SystemCalls {
 		static SCCls root;
@@ -23,7 +23,10 @@ namespace VM {
 			var method = root.FindMethod( name );
 			if (method == null)
 				throw new UnknownExternalCallException( name );
-			cache.Add( name, method );
+			lock (typeof( SystemCalls )) {
+				if (!cache.ContainsKey( name ))
+					cache.Add( name, method );
+			}
 			return method;
 		}
 
@@ -42,19 +45,18 @@ namespace VM {
 				if (!initialized)
 					Init();
 
-				var dotIndex = name.IndexOf( VMObjects.String.Dot );
+				var dotIndex = name.IndexOf( KnownStrings.Dot );
 				if (dotIndex == -1)
 					dotIndex = name.Length();
 
-				var curName = name.Substring( 0, dotIndex ).ToHandle();
-				var restName = dotIndex < name.Length() ? name.Substring( dotIndex + 1 ).ToHandle() : VMObjects.String.Empty;
-
-				if (restName.Length() == 0) {
-					if (methods.ContainsKey( curName ))
-						return methods[curName];
-				} else if (classes.ContainsKey( curName ))
-					return classes[curName].FindMethod( restName );
-
+				using (var curName = name.Substring( 0, dotIndex ).ToHandle()) {
+					if (dotIndex == name.Length()) {
+						if (methods.ContainsKey( curName ))
+							return methods[curName];
+					} else if (classes.ContainsKey( curName ))
+						using (var restName = name.Substring( dotIndex + 1 ).ToHandle())
+							return classes[curName].FindMethod( restName );
+				}
 				return null;
 			}
 
@@ -67,15 +69,19 @@ namespace VM {
 					(from t in type.GetNestedTypes( BindingFlags.Public | BindingFlags.NonPublic )
 					 from a in t.GetCustomAttributes( typeof( SystemCallClassAttribute ), false ).OfType<SystemCallClassAttribute>()
 					 where a != null
-					 select new { Type = t, Attribute = a }).ForEach( p =>
-						 classes.Add( p.Attribute.Name.ToVMString().Intern(), new SCCls( p.Type ) ) );
+					 select new { Type = t, Attribute = a }).ForEach( p => {
+						 using (var hPName = p.Attribute.Name.ToVMString().Intern().ToHandle())
+							 classes.Add( hPName, new SCCls( p.Type ) );
+					 } );
 
 					methods = new Dictionary<Handle<VM.VMObjects.String>, SystemCall>();
 					(from m in type.GetMethods( BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static )
 					 from a in m.GetCustomAttributes( typeof( SystemCallMethodAttribute ), false ).OfType<SystemCallMethodAttribute>()
 					 where a != null
-					 select new { Method = m, Attribute = a }).ForEach( p =>
-						 methods.Add( p.Attribute.Name.ToVMString().Intern(), (SystemCall) Delegate.CreateDelegate( typeof( SystemCall ), p.Method ) ) );
+					 select new { Method = m, Attribute = a }).ForEach( p => {
+						 using (var hPName = p.Attribute.Name.ToVMString().Intern().ToHandle())
+							 methods.Add( hPName, (SystemCall) Delegate.CreateDelegate( typeof( SystemCall ), p.Method ) );
+					 } );
 					initialized = true;
 				}
 			}

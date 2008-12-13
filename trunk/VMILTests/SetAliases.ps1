@@ -10,3 +10,14 @@ function global:test($name) {
 	 	 vmshl "$name.vmil"
 	}
 }
+
+function global:testAll() {
+	 $i = 1
+	 while ($true) {
+	       if (-not (test-path ".\test$($i).vmil.bak")) {
+	       	  return
+	       }
+	       test "test$i"
+	       $i++
+	 }
+}

@@ -48,19 +48,21 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="MarkSweepCompactMemoryManager.cs" />
     <Compile Include="Debugging\DebugExecutionStack.cs" />
-    <Compile Include="Debugging\DebugInterpretor.cs" />
-    <Compile Include="Debugging\IDebugInterpretor.cs" />
+    <Compile Include="Debugging\DebugInterpreter.cs" />
+    <Compile Include="Debugging\IDebugInterpreter.cs" />
     <Compile Include="IExecutionStack.cs" />
-    <Compile Include="Interpretor.cs" />
+    <Compile Include="Interpreter.cs" />
     <Compile Include="ClassLoader.cs" />
     <Compile Include="ExecutionStack.cs" />
-    <Compile Include="HandleCache.cs" />
-    <Compile Include="IInterpretorFactory.cs" />
-    <Compile Include="InterpretorThread.cs" />
+    <Compile Include="IInterpreterFactory.cs" />
+    <Compile Include="InterpreterThread.cs" />
     <Compile Include="KnownClasses.cs" />
     <Compile Include="KnownStrings.cs" />
-    <Compile Include="NewInterpretorEventArgs.cs" />
+    <Compile Include="MemoryManager.cs" />
+    <Compile Include="MemoryManagerBase.statics.cs" />
+    <Compile Include="NewInterpreterEventArgs.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -69,8 +71,10 @@
     <Compile Include="SystemCalls.System.Array.cs" />
     <Compile Include="SystemCalls.System.Console.cs" />
     <Compile Include="SystemCalls.cs" />
+    <Compile Include="SystemCalls.System.DateTime.cs" />
     <Compile Include="SystemCalls.System.Integer.cs" />
     <Compile Include="SystemCalls.Object.cs" />
+    <Compile Include="SystemCalls.System.Random.cs" />
     <Compile Include="SystemCalls.System.Reflection.cs" />
     <Compile Include="SystemCalls.System.String.cs" />
     <Compile Include="SystemCalls.System.Threading.cs" />
@@ -85,12 +89,13 @@
     <Compile Include="VMObjects\DelegateMessageHandler.cs" />
     <Compile Include="VMObjects\Integer.cs" />
     <Compile Include="IVMObject.cs" />
+    <Compile Include="GCExts.cs" />
     <Compile Include="VMObjects\MessageHandlerBase.cs" />
     <Compile Include="VMObjects\ObjectBase.cs" />
     <Compile Include="VMObjects\String.cs" />
     <Compile Include="VMObjects\VMILMessageHandler.cs" />
     <Compile Include="Handle.cs" />
-    <Compile Include="IInterpretor.cs" />
+    <Compile Include="IInterpreter.cs" />
     <Compile Include="NoncollectingMemoryManager.cs" />
     <Compile Include="MemoryManagerBase.cs" />
     <Compile Include="Masks.cs" />

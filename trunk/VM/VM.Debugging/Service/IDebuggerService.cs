@@ -13,31 +13,31 @@ namespace VM.Debugging.Service {
 		[OperationContract]
 		void Detach();
 		[OperationContract]
-		int[] GetInterpretors();
+		int[] GetInterpreters();
 
 		[OperationContract]
-		InterpretorPosition Break( int id );
+		InterpreterPosition Break( int id );
 		[OperationContract]
-		InterpretorPosition StepOne( int id );
+		InterpreterPosition StepOne( int id );
 		[OperationContract]
 		void Continue( int id );
 	}
 
 	internal interface IDebuggerCallbackService {
-		void NewInterpretor( int id );
-		void Pop( int interpretorId, int popCount );
-		void Push( int interpretorId, Value value );
-		void StackChange( int interpretorId, Value newValue );
+		void NewInterpreter( int id );
+		void Pop( int interpreterId, int popCount );
+		void Push( int interpreterId, Value value );
+		void StackChange( int interpreterId, Value newValue );
 	}
 
 	[DataContract]
-	class InterpretorPosition {
+	class InterpreterPosition {
 		[DataMember]
 		public int MessageHandlerId { get; set; }
 		[DataMember]
 		public int Position { get; set; }
 
-		public InterpretorPosition( int messageHandlerId, int position ) {
+		public InterpreterPosition( int messageHandlerId, int position ) {
 			this.MessageHandlerId = messageHandlerId;
 			this.Position = position;
 		}
