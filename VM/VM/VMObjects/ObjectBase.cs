@@ -126,8 +126,10 @@ namespace VM.VMObjects {
 			if (obj.Start == 0)
 				return null;
 			var h = MemoryManagerBase.CreateHandle<T>( obj, false );
+#if DEBUG
 			if (!h.IsWeak)
 				MemoryManagerBase.AssertHandle( h );
+#endif
 			return h;
 		}
 

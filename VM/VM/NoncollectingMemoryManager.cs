@@ -46,5 +46,11 @@ namespace VM {
 			for (int i = 0; i < size; i++)
 				this[w + i] = this[obj + i];
 		}
+
+		internal override void NewMemory( Word[] memory, int start, int size ) {
+			this.start = start;
+			this.size = size;
+			this.memory = memory;
+		}
 	}
 }

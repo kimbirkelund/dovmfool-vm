@@ -31,7 +31,8 @@ namespace VM.GC {
 			var cls = VirtualMachine.MemoryManager[adr + VMObjects.ObjectBase.CLASS_POINTER_OFFSET];
 			if (cls < 0)
 				cls = KnownClasses.Resolve( cls ).Start;
-			yield return cls;
+			if (cls > 0)
+				yield return cls;
 
 			if (cls == KnownClasses.System_Reflection_Class.Start)
 				foreach (var item in VMObjects.Class.GetReferences( adr ))
