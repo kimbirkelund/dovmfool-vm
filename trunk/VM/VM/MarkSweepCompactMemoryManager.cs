@@ -38,23 +38,25 @@ namespace VM {
 					haveCollected = true;
 				}
 				if (FreeSizeInWords < size + 2)
-					throw VirtualMachine.OutOfMemoryException;
+					return new T().New( 0 );
 
 			retry:
 				var previousHole = firstHole;
 				var hole = firstHole;
-				var holeSize = memory[hole];
-				Sekhmet.Assert.IsTrue( hole + holeSize <= memory.Length );
+				int holeSize = hole < memory.Length ? (int) memory[hole] : 0;
+				if (hole < memory.Length)
+					Sekhmet.Assert.IsTrue( hole + holeSize <= memory.Length );
 				while (holeSize < size + 2) {
 					if (hole >= SizeInWords) {
 						if (!haveCollected) {
 							Collect();
 							haveCollected = true;
 						} else if (!haveCompacted) {
-							Compact();
+							//Compact();
 							haveCompacted = true;
 						} else
-							throw VirtualMachine.OutOfMemoryException;
+							return new T().New( 0 );
+						hole = firstHole;
 						goto retry;
 					}
 					previousHole = hole;
@@ -140,8 +142,6 @@ namespace VM {
 		void Mark( IEnumerable<int> roots ) {
 			var grey = new Queue<int>();
 			roots.ForEach( a => {
-				if (a == 0)
-					System.Diagnostics.Debugger.Break();
 				a.SetBlack();
 				a.GetReferences().ForEach( r => {
 					r.SetGrey();
@@ -165,10 +165,6 @@ namespace VM {
 			var hole = firstHole;
 			var obj = start + 2;
 			while (true) {
-				if (hole > 0 && hole < memory.Length && memory[hole + memory[hole] - 1] == 2657)
-					System.Diagnostics.Debugger.Break();
-				if (previousHole > 0 && previousHole < memory.Length && memory[previousHole + memory[previousHole] - 1] == 2657)
-					System.Diagnostics.Debugger.Break();
 				if (obj > hole) {
 					previousHole = hole;
 					obj = hole + memory[hole] + 2;
@@ -211,9 +207,21 @@ namespace VM {
 			throw new NotImplementedException();
 		}
 
-		[System.Diagnostics.Conditional( "DEBUG" )]
+		internal override void NewMemory( Word[] memory, int start, int size ) {
+			this.start = start;
+			this.size = size;
+			this.memory = memory;
+			var hole = firstHole;
+			while (memory[hole + memory[hole] - 1] < memory.Length)
+				hole = memory[hole + memory[hole] - 1];
+
+			memory[hole] = memory.Length - hole;
+			memory[hole + memory[hole] - 1] = int.MaxValue;
+		}
+
+		//[System.Diagnostics.Conditional( "DEBUG" )]
 		void DumpMemory( string file ) {
-#if DEBUG
+			//#if DEBUG
 			using (var writer = new System.IO.StreamWriter( file )) {
 				var hole = firstHole;
 				var obj = 3;
@@ -256,7 +264,7 @@ namespace VM {
 						break;
 				}
 			}
-#endif
+			//#endif
 		}
 
 		[System.Diagnostics.Conditional( "DEBUG" )]
@@ -279,7 +287,7 @@ namespace VM {
 				while (hole < adr && memory[hole + memory[hole] - 1] < adr)
 					hole = memory[hole + memory[hole] - 1];
 
-				var obj = 3;
+				var obj = hole < adr ? hole + memory[hole] + 2 : 3;
 				while (obj + (memory[obj + ObjectBase.SIZE_OFFSET] >> ObjectBase.SIZE_RSHIFT) < adr)
 					obj += (memory[obj + ObjectBase.SIZE_OFFSET] >> ObjectBase.SIZE_RSHIFT) + 2;
 				Sekhmet.Assert.IsTrue( adr >= obj, "Address " + adr + " in object " + obj + " is not valid." );

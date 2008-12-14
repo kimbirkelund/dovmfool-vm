@@ -21,5 +21,7 @@ namespace VM {
 			return obj;
 		}
 		protected abstract void RelocateHere( int obj, int size );
+
+		internal abstract void NewMemory( Word[] memory, int start, int size );
 	}
 }

@@ -34,7 +34,7 @@ namespace VM {
 			Logger = new Logger();
 			Logger.Handlers.Add( new ConsoleLogHandler() );
 
-			MemoryManager = new MemoryManager( 2000000 );
+			MemoryManager = new MemoryManager( 7000, 200000000 );
 			InterpreterThread.InterpreterFactory = new Interpreter.Factory();
 
 			KnownClasses.Initialize();
@@ -106,27 +106,27 @@ namespace VM {
 		public static void BeginExecuting( string inputFile ) {
 			Initialize();
 
+			Handle<MessageHandlerBase> entrypoint;
 			using (var loader = new ClassLoader( inputFile ))
-			using (var entrypoint = loader.Read()) {
-				if (entrypoint == null)
-					throw new VMException( "No entry point specified.".ToVMString().ToHandle() );
+				entrypoint = loader.Read();
+			if (entrypoint == null)
+				throw new VMException( "No entry point specified.".ToVMString().ToHandle() );
 
-				using (var entrypointClass = entrypoint.Class().ToHandle())
-				using (var obj = AppObject.CreateInstance( entrypointClass ).ToHandle()) {
-					var hasSystem = SystemInstance != null;
+			using (var entrypointClass = entrypoint.Class().ToHandle())
+			using (var obj = AppObject.CreateInstance( entrypointClass ).ToHandle()) {
+				var hasSystem = SystemInstance != null;
 
-					if (!hasSystem)
-						SystemInstance = AppObject.CreateInstance( KnownClasses.System ).ToHandle();
-					var intp = Fork( entrypoint, obj, SystemInstance );
-					if (!hasSystem)
-						intp.MessageQueue.Push( () => {
-							intp.Send( KnownStrings.initialize_0, SystemInstance );
-							return false;
-						} );
+				if (!hasSystem)
+					SystemInstance = AppObject.CreateInstance( KnownClasses.System ).ToHandle();
+				var intp = Fork( entrypoint, obj, SystemInstance );
+				if (!hasSystem)
+					intp.MessageQueue.Push( () => {
+						intp.Send( KnownStrings.initialize_0, SystemInstance );
+						return false;
+					} );
 
-					mainInterpreter = intp.Id;
-					intp.Start();
-				}
+				mainInterpreter = intp.Id;
+				intp.Start();
 			}
 		}
 

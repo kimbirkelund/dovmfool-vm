@@ -38,7 +38,7 @@ namespace VM {
 				lock (handles) {
 					List<HandleBase> l;
 					if (handles.TryGetValue( handle.Start, out l )) {
-						var idx = l.FindIndex( p => p.id == handle.id );
+						var idx = l.FindIndex( p => object.ReferenceEquals( p, handle ) );
 						if (idx != -1)
 							l.RemoveAt( idx );
 					}
@@ -48,6 +48,7 @@ namespace VM {
 
 		[System.Diagnostics.Conditional( "DEBUG" )]
 		internal static void AssertHandle( HandleBase h ) {
+#if DEBUG
 			if (!h.IsValid)
 				throw new global::System.ArgumentException( "Should only be called with valid handles." );
 			if (h.IsWeak)
@@ -56,6 +57,7 @@ namespace VM {
 				Sekhmet.Assert.IsTrue( handles.ContainsKey( h.Start ) );
 				Sekhmet.Assert.IsTrue( handles[h.Start].Any( ih => ih.id == h.id ) );
 			}
+#endif
 		}
 
 		internal static void MoveHandles( int fromPosition, int toPosition ) {

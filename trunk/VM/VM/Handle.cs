@@ -81,7 +81,7 @@ namespace VM {
 		}
 
 		public Handle<TTo> To<TTo>() where TTo : struct, IVMObject<TTo> {
-			var h = new Handle<TTo>( new TTo().New( Start ), IsWeak );
+			var h = MemoryManagerBase.CreateHandle( new TTo().New( Start ), IsWeak );
 			return h;
 		}
 
