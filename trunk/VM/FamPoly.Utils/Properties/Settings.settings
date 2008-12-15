@@ -3,10 +3,10 @@
   <Profiles />
   <Settings>
     <Setting Name="GPPGPath" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">c:\users\sekhmet\progs\gppg\binaries\gppg.exe</Value>
+      <Value Profile="(Default)">GPPG_GPLex_Bin\gppg\binaries\gppg.exe</Value>
     </Setting>
     <Setting Name="GPLexPath" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">c:\users\sekhmet\progs\gplex\binaries\gplex.exe</Value>
+      <Value Profile="(Default)">GPPG_GPLex_Bin\gplex\binaries\gplex.exe</Value>
     </Setting>
   </Settings>
 </SettingsFile>
