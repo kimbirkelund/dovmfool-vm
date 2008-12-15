@@ -1,4 +1,4 @@
-set-alias vmshl "$(resolve-path ..\VM\VMShell\bin\Debug\vmshell.exe)" -scope Global
+set-alias vmshl "$(resolve-path ..\vmshl\vmshell.exe)" -scope Global
 
 function global:test($name) {
 	 if (-not (test-path "$name.vmil.bak")) {
