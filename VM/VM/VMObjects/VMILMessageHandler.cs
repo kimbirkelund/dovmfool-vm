@@ -62,8 +62,12 @@ namespace VM.VMObjects {
 			return obj1.Start == obj2.Start;
 		}
 
-		internal static int[] GetReferences( int adr ) {
-			return new int[] { VirtualMachine.MemoryManager[adr + MessageHandlerBaseConsts.CLASS_POINTER_OFFSET] };
+		internal static IEnumerable<int> GetReferences( int adr ) {
+			var cls = VirtualMachine.MemoryManager[adr + MessageHandlerBaseConsts.CLASS_POINTER_OFFSET];
+			if (cls < 0)
+				cls = KnownClasses.Resolve( cls );
+			if (cls > 0)
+				yield return cls;
 		}
 		#endregion
 	}

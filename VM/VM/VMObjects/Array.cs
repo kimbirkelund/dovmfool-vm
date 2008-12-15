@@ -104,7 +104,7 @@ namespace VM.VMObjects {
 				int cls = VirtualMachine.MemoryManager[adr + ArrayConsts.FIRST_ELEMENT_OFFSET + i];
 				if (cls < 0)
 					cls = KnownClasses.Resolve( cls ).Start;
-				if (cls != 0)
+				if (cls > 0)
 					refs.Add( cls );
 				if (cls != KnownClasses.System_Integer.Start) {
 					var val = VirtualMachine.MemoryManager[adr + ArrayConsts.FIRST_ELEMENT_OFFSET + i + 1];

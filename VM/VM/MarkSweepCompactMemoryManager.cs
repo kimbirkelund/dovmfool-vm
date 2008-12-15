@@ -31,6 +31,10 @@ namespace VM {
 
 		internal override T Allocate<T>( int size ) {
 			lock (this) {
+#if DEBUG
+				if (new T().VMClass.Start == KnownClasses.System_Integer.Start)
+					System.Diagnostics.Debugger.Break();
+#endif
 				var haveCollected = false;
 				var haveCompacted = false;
 				if (FreeSizeInWords < size + 2) {
@@ -162,13 +166,13 @@ namespace VM {
 		void Sweep() {
 			var allocatedBefore = AllocatedSizeInWords;
 			var previousHole = -1;
-			var hole = firstHole;
+			var nextHole = firstHole;
 			var obj = start + 2;
 			while (true) {
-				if (obj > hole) {
-					previousHole = hole;
-					obj = hole + memory[hole] + 2;
-					hole = memory[hole + memory[hole] - 1];
+				if (obj > nextHole) {
+					previousHole = nextHole;
+					obj = nextHole + memory[nextHole] + 2;
+					nextHole = memory[nextHole + memory[nextHole] - 1];
 				}
 				if (obj >= size)
 					break;
@@ -181,25 +185,28 @@ namespace VM {
 				}
 
 				allocated -= objSize + 2;
-				if (previousHole != -1 && previousHole + memory[previousHole] + 2 == obj && hole == obj + objSize) // obj right between previousHole and hole
-					memory[previousHole] = memory[previousHole] + 2 + objSize + memory[hole];
-				else if (previousHole != -1 && previousHole + memory[previousHole] + 2 == obj) { // obj right after previousHole
-					memory[previousHole] = memory[previousHole] + objSize + 2;
-					memory[obj + objSize - 1] = hole;
-				} else if (hole == obj + objSize) { // obj right before hold
-					if (previousHole != -1)
-						memory[previousHole + memory[previousHole] - 1] = obj - 2;
-					memory[obj - 2] = objSize + 2 + memory[hole];
-				} else { // obj between two objects
-					if (previousHole != -1)
-						memory[previousHole + memory[previousHole] - 1] = obj - 2;
-					memory[obj - 2] = objSize + 2;
-					memory[obj + objSize - 1] = hole;
-					previousHole = obj - 2;
+				var newHole = obj - 2;
+				var newHoleSize = objSize + 2;
+				memory[newHole] = newHoleSize;
+				if (previousHole != -1)
+					memory[previousHole + memory[previousHole] - 1] = newHole;
+				memory[newHole + memory[newHole] - 1] = nextHole;
+
+				if (newHole + memory[newHole] == nextHole) {
+					memory[newHole] = memory[newHole] + memory[nextHole];
+					nextHole = newHole;
 				}
-				if (firstHole > obj - 2)
-					firstHole = obj - 2;
-				obj += objSize + 2;
+				if (previousHole != -1 && previousHole + memory[previousHole] == newHole) {
+					memory[previousHole] = memory[previousHole] + memory[newHole];
+					nextHole = previousHole;
+				} else
+					previousHole = newHole;
+
+				if (firstHole > newHole)
+					firstHole = newHole;
+				obj = newHole + memory[newHole] + 2;
+
+				AssertHeap();
 			}
 		}
 
@@ -208,20 +215,31 @@ namespace VM {
 		}
 
 		internal override void NewMemory( Word[] memory, int start, int size ) {
+			DumpMemory( @"c:\users\sekhmet\temp\prenewmem.txt" );
+
+			var oldSize = this.size;
 			this.start = start;
 			this.size = size;
 			this.memory = memory;
 			var hole = firstHole;
 			while (memory[hole + memory[hole] - 1] < memory.Length)
 				hole = memory[hole + memory[hole] - 1];
+			var holeSize = memory[hole];
+			if (holeSize + hole < memory.Length) {
+				var previousHole = hole;
+				hole = oldSize + 1;
+				memory[previousHole + memory[previousHole] - 1] = hole;
+			}
 
 			memory[hole] = memory.Length - hole;
 			memory[hole + memory[hole] - 1] = int.MaxValue;
+
+			DumpMemory( @"c:\users\sekhmet\temp\postnewmem.txt" );
 		}
 
-		//[System.Diagnostics.Conditional( "DEBUG" )]
+		[System.Diagnostics.Conditional( "DEBUG" )]
 		void DumpMemory( string file ) {
-			//#if DEBUG
+#if DEBUG
 			using (var writer = new System.IO.StreamWriter( file )) {
 				var hole = firstHole;
 				var obj = 3;
@@ -264,7 +282,7 @@ namespace VM {
 						break;
 				}
 			}
-			//#endif
+#endif
 		}
 
 		[System.Diagnostics.Conditional( "DEBUG" )]
@@ -313,48 +331,54 @@ namespace VM {
 		private void AssertHeap() {
 #if DEBUG
 			lock (this) {
-				var holeMap = new SortedList<int, int>();
-				var hole = firstHole;
-				while (hole < memory.Length) {
+				Func<SortedList<int, int>> makeHoleMap = () => {
+					var holeMap = new SortedList<int, int>();
+					int hole = firstHole;
+					while (hole < memory.Length) {
+						holeMap.Add( hole, hole );
+						int holeSize = memory[hole];
+						Sekhmet.Assert.IsTrue( holeSize < memory.Length );
+						int nextHole = memory[hole + holeSize - 1];
+						Sekhmet.Assert.IsTrue( nextHole > hole );
+						Sekhmet.Assert.AreNotEqual( hole + holeSize, nextHole );
+						hole = nextHole;
+					}
 					holeMap.Add( hole, hole );
-					var holeSize = memory[hole];
-					Sekhmet.Assert.IsTrue( holeSize < memory.Length );
-					var nextHole = memory[hole + holeSize - 1];
-					Sekhmet.Assert.IsTrue( nextHole > hole );
-					hole = nextHole;
-				}
-				holeMap.Add( hole, hole );
+					return holeMap;
+				};
+				{
+					var holeMap = makeHoleMap();
+					int holeIdx = 0;
+					int hole = holeMap.Values[holeIdx];
+					int obj = 3;
 
-				var holeIdx = 0;
-				hole = holeMap.Values[holeIdx];
-				var obj = 3;
+					while (true) {
+						if (hole > memory.Length && obj > memory.Length)
+							break;
+						if (hole < obj) {
+							int holeEnd = memory[hole] + hole - 1;
+							if (obj < memory.Length)
+								Sekhmet.Assert.AreEqual( holeEnd + 1, obj - 2 );
+							hole = holeMap.Values[++holeIdx];
+						} else if (obj < hole) {
+							int objSize = memory[obj + ObjectBase.SIZE_OFFSET] >> ObjectBase.SIZE_RSHIFT;
+							Sekhmet.Assert.IsTrue( objSize < memory.Length );
+							Sekhmet.Assert.IsTrue( obj + objSize <= memory.Length );
+							int objEnd = obj + (memory[obj + ObjectBase.SIZE_OFFSET] >> ObjectBase.SIZE_RSHIFT) - 1;
 
-				while (true) {
-					if (hole > memory.Length && obj > memory.Length)
-						break;
-					if (hole < obj) {
-						var holeEnd = memory[hole] + hole - 1;
-						if (obj < memory.Length)
-							Sekhmet.Assert.AreEqual( holeEnd + 1, obj - 2 );
-						hole = holeMap.Values[++holeIdx];
-					} else if (obj < hole) {
-						var objSize = memory[obj + ObjectBase.SIZE_OFFSET] >> ObjectBase.SIZE_RSHIFT;
-						Sekhmet.Assert.IsTrue( objSize < memory.Length );
-						Sekhmet.Assert.IsTrue( obj + objSize <= memory.Length );
-						var objEnd = obj + (memory[obj + ObjectBase.SIZE_OFFSET] >> ObjectBase.SIZE_RSHIFT) - 1;
+							int cls = memory[obj + ObjectBase.CLASS_POINTER_OFFSET];
+							int clsCls;
+							if (cls > 0) {
+								clsCls = KnownClasses.Resolve( memory[cls + ObjectBase.CLASS_POINTER_OFFSET] ).Start;
+								Sekhmet.Assert.AreEqual( clsCls, KnownClasses.System_Reflection_Class.Start );
+								Sekhmet.Assert.IsTrue( clsCls < 6521 );
+							}
 
-						int cls = memory[obj + ObjectBase.CLASS_POINTER_OFFSET];
-						int clsCls;
-						if (cls > 0) {
-							clsCls = KnownClasses.Resolve( memory[cls + ObjectBase.CLASS_POINTER_OFFSET] ).Start;
-							Sekhmet.Assert.AreEqual( clsCls, KnownClasses.System_Reflection_Class.Start );
-							Sekhmet.Assert.IsTrue( clsCls < 6521 );
+							if (objEnd + 1 == hole)
+								obj = hole + memory[hole] + 2;
+							else
+								obj += objSize + 2;
 						}
-
-						if (objEnd + 1 == hole)
-							obj = hole + memory[hole] + 2;
-						else
-							obj += objSize + 2;
 					}
 				}
 			}
