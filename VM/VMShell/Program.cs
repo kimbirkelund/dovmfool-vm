@@ -12,7 +12,7 @@ namespace VMShell {
 			var argsMan = new ArgumentsManager();
 			var inputFileArg = argsMan.AddArgument( new PathArgument( "InputFile", true, true ) { IsRequired = true, Position = 0, Description = "The input file to execute." } );
 			var swapperArg = argsMan.AddArgument( new FlagArgument( "Swapper" ) { IsRequired = false, ArgumentGroup = 1, Description = "Enables the swapper test." } );
-			var pauserArg = argsMan.AddArgument( new FlagArgument( "Pauser" ) { IsRequired = false, ArgumentGroup = 1, Description = "Enables the pauser test." } );
+			var pauserArg = argsMan.AddArgument( new FlagArgument( "Pauser" ) { IsRequired = false, ArgumentGroup = 2, Description = "Enables the pauser test." } );
 
 			try {
 				argsMan.Parse( args );
