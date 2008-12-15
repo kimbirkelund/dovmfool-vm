@@ -8,36 +8,45 @@ using System.Threading;
 namespace VMShell {
 	class Program {
 		static bool isDebug;
-		static void Main( string[] args ) {
+		static int Main( string[] args ) {
 			var argsMan = new ArgumentsManager();
 			var inputFileArg = argsMan.AddArgument( new PathArgument( "InputFile", true, true ) { IsRequired = true, Position = 0, Description = "The input file to execute." } );
 			var swapperArg = argsMan.AddArgument( new FlagArgument( "Swapper" ) { IsRequired = false, ArgumentGroup = 1, Description = "Enables the swapper test." } );
 			var pauserArg = argsMan.AddArgument( new FlagArgument( "Pauser" ) { IsRequired = false, ArgumentGroup = 1, Description = "Enables the pauser test." } );
-			argsMan.Parse( args );
 
+			try {
+				argsMan.Parse( args );
+			} catch (Exception ex) {
+				Console.WriteLine( ex.Message );
+				Console.WriteLine();
+				argsMan.PrintUsage( "VMShell.exe", Console.WindowWidth, Console.Out );
+				return -1;
+			}
 			System.Diagnostics.Trace.Listeners.Add( new System.Diagnostics.ConsoleTraceListener() );
 
-			//try {
-			Thread thread = null;
-			if (swapperArg.Value)
-				thread = new Thread( Swapper );
-			else if (pauserArg.Value)
-				thread = new Thread( Pauser );
+			try {
+				Thread thread = null;
+				if (swapperArg.Value)
+					thread = new Thread( Swapper );
+				else if (pauserArg.Value)
+					thread = new Thread( Pauser );
 
-			VM.VirtualMachine.BeginExecuting( inputFileArg.Value );
-			if (thread != null) {
-				thread.IsBackground = true;
-				thread.Start();
+				VM.VirtualMachine.BeginExecuting( inputFileArg.Value );
+				if (thread != null) {
+					thread.IsBackground = true;
+					thread.Start();
+				}
+				var ret = VM.VirtualMachine.EndExecuting();
+				if (ret != null)
+					Console.WriteLine( ret );
+			} catch (Exception e) {
+				if (e.InnerException != null)
+					Console.WriteLine( e.InnerException );
+				else
+					Console.WriteLine( e );
+				return -2;
 			}
-			var ret = VM.VirtualMachine.EndExecuting();
-			if (ret != null)
-				Console.WriteLine( ret );
-			//} catch (Exception e) {
-			//    if (e.InnerException != null)
-			//        Console.WriteLine( e.InnerException );
-			//    else
-			//        Console.WriteLine( e );
-			//}
+			return 1;
 		}
 
 		static void Swapper() {
