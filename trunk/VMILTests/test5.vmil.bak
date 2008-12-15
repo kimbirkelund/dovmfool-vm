@@ -1,6 +1,7 @@
 .class public Program {
        .handler public Main(sys) {
        		.entrypoint
+
        		load-argument sys
 		push-literal "get-console:0"
 		send-message

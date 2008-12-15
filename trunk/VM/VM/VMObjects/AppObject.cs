@@ -75,17 +75,17 @@ namespace VM.VMObjects {
 		}
 
 		internal static int[] GetReferences( int adr ) {
-			var size = VirtualMachine.MemoryManager[adr + VMObjects.ObjectBase.SIZE_OFFSET] >> VMObjects.ObjectBase.SIZE_RSHIFT;
+			var fieldCount = ((AppObject) adr).ToWeakHandle().Class().ToWeakHandle().TotalFieldCount() * 2;
 			var firstField = VirtualMachine.MemoryManager[adr + AppObjectConsts.FIELDS_OFFSET_OFFSET];
-			var fieldRefs = size - firstField;
 
 			List<int> refs = new List<int>();
-			for (int i = 0; i < fieldRefs; i += 2) {
+			for (int i = 0; i < fieldCount; i += 2) {
 				int cls = VirtualMachine.MemoryManager[adr + firstField + i];
 				if (cls < 0)
 					cls = KnownClasses.Resolve( cls ).Start;
 				if (cls != 0) {
-					refs.Add( cls );
+					if (cls > 0)
+						refs.Add( cls );
 					if (cls != KnownClasses.System_Integer.Start) {
 						var val = VirtualMachine.MemoryManager[adr + firstField + i + 1];
 						if (val != 0)

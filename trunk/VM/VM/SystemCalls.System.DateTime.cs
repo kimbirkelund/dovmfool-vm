@@ -13,7 +13,7 @@ namespace VM {
 					DateTime Last = new DateTime( DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.AddHours( -1 ).Hour, 0, 0, 0 );
 
 					TimeSpan TS = (TimeSpan) (DateTime.Now - Last);
-					return ((int) TS.TotalMilliseconds).ToHandle().ToUValue();
+					return ((int) TS.TotalMilliseconds);
 				}
 			}
 		}

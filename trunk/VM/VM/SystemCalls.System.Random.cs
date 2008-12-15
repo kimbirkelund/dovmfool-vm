@@ -8,11 +8,11 @@ namespace VM {
 		partial class System {
 			[SystemCallClass( "Rand" )]
 			class Rand {
+				static Random r = new Random(7657);
+
 				[SystemCallMethod( "next:1" )]
 				public static UValue ToString( UValue receiver, UValue[] arguments ) {
-					Random r = new Random();
-
-					return r.Next( arguments[0].Value ).ToHandle().ToUValue();
+					return r.Next( arguments[0].Value );
 				}
 			}
 		}

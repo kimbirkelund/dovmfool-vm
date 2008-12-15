@@ -45,7 +45,7 @@ namespace VM.VMObjects {
 			return obj1.Start == obj2.Start;
 		}
 
-		internal static int[] GetReferences( int adr ) {
+		internal static IEnumerable<int> GetReferences( int adr ) {
 			if ((VirtualMachine.MemoryManager[MessageHandlerBaseConsts.HEADER_OFFSET] & MessageHandlerBaseConsts.IS_EXTERNAL_MASK) != 0)
 				return DelegateMessageHandler.GetReferences( adr );
 			else
