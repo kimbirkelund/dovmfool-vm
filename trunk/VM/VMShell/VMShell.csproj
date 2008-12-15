@@ -76,14 +76,14 @@
   </Target>
   -->
   <PropertyGroup>
-    <PostBuildEvent>rm "$(SolutionDir)\vmshl\*.exe"
-rm "$(SolutionDir)\vmshl\*.dll"
-copy "$(TargetDir)\VMShell.exe" "$(SolutionDir)\vmshl"
-copy "$(TargetDir)\Sekhmet.dll" "$(SolutionDir)\vmshl"
-copy "$(TargetDir)\ShiftReduceParser.dll" "$(SolutionDir)\vmshl"
-copy "$(TargetDir)\VM.Debugging.dll" "$(SolutionDir)\vmshl"
-copy "$(TargetDir)\VM.dll" "$(SolutionDir)\vmshl"
-copy "$(TargetDir)\VMILLib.dll" "$(SolutionDir)\vmshl"
+    <PostBuildEvent>rm "$(SolutionDir)\..\vmshl\*.exe"
+rm "$(SolutionDir)\..\vmshl\*.dll"
+copy "$(TargetDir)\VMShell.exe" "$(SolutionDir)\..\vmshl"
+copy "$(TargetDir)\Sekhmet.dll" "$(SolutionDir)\..\vmshl"
+copy "$(TargetDir)\ShiftReduceParser.dll" "$(SolutionDir)\..\vmshl"
+copy "$(TargetDir)\VM.Debugging.dll" "$(SolutionDir)\..\vmshl"
+copy "$(TargetDir)\VM.dll" "$(SolutionDir)\..\vmshl"
+copy "$(TargetDir)\VMILLib.dll" "$(SolutionDir)\..\vmshl"
 </PostBuildEvent>
   </PropertyGroup>
 </Project>
