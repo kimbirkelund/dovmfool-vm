@@ -27,9 +27,7 @@ namespace VM {
 
 		internal override T Allocate<T>( int size ) {
 			if (position + size >= SizeInWords)
-				throw VirtualMachine.OutOfMemoryException;
-			if (size > 0x40000000)
-				throw VirtualMachine.OutOfMemoryException;
+				return new T().New( 0 );
 
 			var pos = position + 2;
 			size += 2;

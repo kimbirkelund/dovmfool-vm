@@ -116,14 +116,23 @@ namespace VM {
 	class OutOfMemoryException : VMException {
 		Handle<AppObject> oomExcep;
 
-		public OutOfMemoryException()
-			: base( "Heap memory has been exhausted.".ToVMString().ToHandle() ) {
-			oomExcep = AppObject.CreateInstance( KnownClasses.System_OutOfMemoryException ).ToHandle();
-			using (var hMessage = Message.To<AppObject>())
-				oomExcep.Send( KnownStrings.initialize_1, hMessage );
+		public OutOfMemoryException( bool createVMInstance )
+			: base() {
+			if (createVMInstance) {
+				oomExcep = AppObject.CreateInstance( KnownClasses.System_OutOfMemoryException ).ToHandle();
+				using (var str = "Heap memory has been exhausted.".ToVMString().ToHandle())
+				using (var hMessage = str.To<AppObject>())
+					oomExcep.Send( KnownStrings.initialize_1, hMessage );
+			}
 		}
+		public OutOfMemoryException() : this( true ) { }
 
 		internal override AppObject ToVMException() {
+			if (oomExcep == null) {
+				oomExcep = AppObject.CreateInstance( KnownClasses.System_OutOfMemoryException ).ToHandle();
+				using (var hMessage = Message.To<AppObject>())
+					oomExcep.Send( KnownStrings.initialize_1, hMessage );
+			}
 			return oomExcep;
 		}
 
@@ -133,6 +142,10 @@ namespace VM {
 			if (oomExcep != null)
 				oomExcep.Dispose();
 			oomExcep = null;
+		}
+
+		public override string ToString() {
+			return "Heap memory has been exhausted.";
 		}
 	}
 
