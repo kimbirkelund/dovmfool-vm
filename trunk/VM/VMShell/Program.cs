@@ -13,6 +13,10 @@ namespace VMShell {
 			var inputFileArg = argsMan.AddArgument( new PathArgument( "InputFile", true, true ) { IsRequired = true, Position = 0, Description = "The input file to execute." } );
 			var swapperArg = argsMan.AddArgument( new FlagArgument( "Swapper" ) { IsRequired = false, ArgumentGroup = 1, Description = "Enables the swapper test." } );
 			var pauserArg = argsMan.AddArgument( new FlagArgument( "Pauser" ) { IsRequired = false, ArgumentGroup = 2, Description = "Enables the pauser test." } );
+			var initialHeapSizeArg = argsMan.AddArgument( new IntegerArgument( "InitialHeapSize", 1 ) { IsRequired = false, Description = "Specifies the initial size of the heap." } );
+			var maxHeapSizeArg = argsMan.AddArgument( new IntegerArgument( "MaxHeapSize", 1 ) { IsRequired = false, Description = "Specifies the maximum size the heap can grow to." } );
+			var heapGrowFactorArg = argsMan.AddArgument( new IntegerArgument( "HeapGrowFactor", 2 ) { IsRequired = false, Description = "Specifies the factor by which the heap is grown." } );
+			var disableGCArg = argsMan.AddArgument( new FlagArgument( "DisableGarbageCollection" ) { IsRequired = false, Description = "Specifying this argument disables garbage collection." } );
 
 			try {
 				argsMan.Parse( args );
@@ -24,6 +28,17 @@ namespace VMShell {
 			}
 			System.Diagnostics.Trace.Listeners.Add( new System.Diagnostics.ConsoleTraceListener() );
 
+			var initialHeapSize = 10000;
+			if (initialHeapSizeArg.IsPresent)
+				initialHeapSize = initialHeapSizeArg.Value;
+			var maxHeapSize = 100000000;
+			if (maxHeapSizeArg.IsPresent)
+				maxHeapSize = maxHeapSizeArg.Value;
+			var heapGrowFactor = 2;
+			if (heapGrowFactorArg.IsPresent)
+				heapGrowFactor = heapGrowFactorArg.Value;
+			var useGC = !disableGCArg;
+
 			try {
 				Thread thread = null;
 				if (swapperArg.Value)
@@ -31,7 +46,7 @@ namespace VMShell {
 				else if (pauserArg.Value)
 					thread = new Thread( Pauser );
 
-				VM.VirtualMachine.BeginExecuting( inputFileArg.Value );
+				VM.VirtualMachine.BeginExecuting( inputFileArg.Value, useGC, initialHeapSize, maxHeapSize, heapGrowFactor );
 				if (thread != null) {
 					thread.IsBackground = true;
 					thread.Start();

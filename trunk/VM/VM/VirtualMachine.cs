@@ -27,14 +27,14 @@ namespace VM {
 				NewThread( null, new NewThreadEventArgs( thread ) );
 		}
 
-		static void Initialize() {
+		static void Initialize( bool useGC, int initialHeapSize, int maxHeapSize, int heapGrowFactor ) {
 			if (initialized)
 				return;
 			initialized = true;
 			Logger = new Logger();
 			Logger.Handlers.Add( new ConsoleLogHandler() );
 
-			MemoryManager = new MemoryManager( 7000, 200000000 );
+			MemoryManager = new MemoryManager( useGC, initialHeapSize, maxHeapSize, heapGrowFactor );
 			InterpreterThread.InterpreterFactory = new Interpreter.Factory();
 
 			KnownClasses.Initialize();
@@ -103,8 +103,8 @@ namespace VM {
 			}
 		}
 
-		public static void BeginExecuting( string inputFile ) {
-			Initialize();
+		public static void BeginExecuting( string inputFile, bool useGC, int initialHeapSize, int maxHeapSize, int heapGrowFactor ) {
+			Initialize( useGC, initialHeapSize, maxHeapSize, heapGrowFactor );
 
 			Handle<MessageHandlerBase> entrypoint;
 			using (var loader = new ClassLoader( inputFile ))
@@ -145,8 +145,8 @@ namespace VM {
 			return res;
 		}
 
-		public static Handle<AppObject> Execute( string inputFile ) {
-			BeginExecuting( inputFile );
+		public static Handle<AppObject> Execute( string inputFile, bool useGC, int initialHeapSize, int maxHeapSize, int heapGrowFactor ) {
+			BeginExecuting( inputFile, useGC, initialHeapSize, maxHeapSize, heapGrowFactor );
 			return EndExecuting();
 		}
 
