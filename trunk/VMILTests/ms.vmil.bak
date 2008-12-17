@@ -4,7 +4,7 @@
        .handler public main(sys) {      	
       		.entrypoint
       		.locals {arr, i, st, et, size}
-      		push-literal 1000
+      		push-literal 5000
       		store-local size      		      		
       		push-literal 0
 			store-local i

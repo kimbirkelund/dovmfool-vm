@@ -98,7 +98,7 @@ namespace VM {
 				EnableAddressVerification();
 
 				AssertHeap();
-				VirtualMachine.Logger.PostLine( "MEMAlloc", "Object allocated at {0}.ObjSize: {0}. HeapSize: {0}. Free: {1}. Allocated: {2}.", pos, size, SizeInWords, FreeSizeInWords, AllocatedSizeInWords );
+				VirtualMachine.Logger.PostLine( "MEMAlloc", "Object allocated at {0}. ObjSize: {1}. HeapSize: {2}. Free: {3}. Allocated: {4}.", pos, size, SizeInWords, FreeSizeInWords, AllocatedSizeInWords );
 				return obj;
 			}
 		}
@@ -228,7 +228,7 @@ namespace VM {
 			while (memory[hole + memory[hole] - 1] < memory.Length)
 				hole = memory[hole + memory[hole] - 1];
 			var holeSize = memory[hole];
-			if (holeSize + hole < memory.Length) {
+			if (holeSize + hole < oldSize) {
 				var previousHole = hole;
 				hole = oldSize + 1;
 				memory[previousHole + memory[previousHole] - 1] = hole;
@@ -242,7 +242,7 @@ namespace VM {
 
 		[System.Diagnostics.Conditional( "DEBUG" )]
 		void DumpMemory( string file ) {
-#if DEBUG
+			//#if DEBUG
 			using (var writer = new System.IO.StreamWriter( file )) {
 				var hole = firstHole;
 				var obj = 3;
@@ -285,7 +285,7 @@ namespace VM {
 						break;
 				}
 			}
-#endif
+			//#endif
 		}
 
 		[System.Diagnostics.Conditional( "DEBUG" )]
