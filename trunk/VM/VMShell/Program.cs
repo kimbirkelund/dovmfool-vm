@@ -17,6 +17,7 @@ namespace VMShell {
 			var maxHeapSizeArg = argsMan.AddArgument( new IntegerArgument( "MaxHeapSize", 1 ) { IsRequired = false, Description = "Specifies the maximum size the heap can grow to." } );
 			var heapGrowFactorArg = argsMan.AddArgument( new IntegerArgument( "HeapGrowFactor", 2 ) { IsRequired = false, Description = "Specifies the factor by which the heap is grown." } );
 			var disableGCArg = argsMan.AddArgument( new FlagArgument( "DisableGarbageCollection" ) { IsRequired = false, Description = "Specifying this argument disables garbage collection." } );
+			var logArg = argsMan.AddArgument( new IntegerArgument( "LogLevel", 0, 2 ) { IsRequired = false, Description = "Enables logging at the specified level. Default is no logging." } );
 
 			try {
 				argsMan.Parse( args );
@@ -26,7 +27,6 @@ namespace VMShell {
 				argsMan.PrintUsage( "VMShell.exe", Console.WindowWidth, Console.Out );
 				return -1;
 			}
-			System.Diagnostics.Trace.Listeners.Add( new System.Diagnostics.ConsoleTraceListener() );
 
 			var initialHeapSize = 10000;
 			if (initialHeapSizeArg.IsPresent)
@@ -42,20 +42,26 @@ namespace VMShell {
 #if RELEASE
 			try {
 #endif
-				Thread thread = null;
-				if (swapperArg.Value)
-					thread = new Thread( Swapper );
-				else if (pauserArg.Value)
-					thread = new Thread( Pauser );
+			Thread thread = null;
+			if (swapperArg.Value)
+				thread = new Thread( Swapper );
+			else if (pauserArg.Value)
+				thread = new Thread( Pauser );
 
-				VM.VirtualMachine.BeginExecuting( inputFileArg.Value, useGC, initialHeapSize, maxHeapSize, heapGrowFactor );
-				if (thread != null) {
-					thread.IsBackground = true;
-					thread.Start();
-				}
-				var ret = VM.VirtualMachine.EndExecuting();
-				if (ret != null)
-					Console.WriteLine( ret );
+			if (logArg.IsPresent && logArg.Value > 0) {
+				var h = new Sekhmet.Logging.ConsoleLogHandler();
+				VM.VirtualMachine.Logger.Handlers.Add( h );
+				if (logArg.Value == 1)
+					h.IgnoreCategories.Add( "MEMAlloc" );
+			}
+			VM.VirtualMachine.BeginExecuting( inputFileArg.Value, useGC, initialHeapSize, maxHeapSize, heapGrowFactor );
+			if (thread != null) {
+				thread.IsBackground = true;
+				thread.Start();
+			}
+			var ret = VM.VirtualMachine.EndExecuting();
+			if (ret != null)
+				Console.WriteLine( ret );
 #if RELEASE
 			} catch (Exception e) {
 					Console.WriteLine( e );

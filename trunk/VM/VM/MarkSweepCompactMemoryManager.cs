@@ -98,6 +98,7 @@ namespace VM {
 				EnableAddressVerification();
 
 				AssertHeap();
+				VirtualMachine.Logger.PostLine( "MEMAlloc", "Object allocated at {0}.ObjSize: {0}. HeapSize: {0}. Free: {1}. Allocated: {2}.", pos, size, SizeInWords, FreeSizeInWords, AllocatedSizeInWords );
 				return obj;
 			}
 		}
@@ -108,6 +109,7 @@ namespace VM {
 
 
 		void Collect() {
+			VirtualMachine.Logger.PostLine( "MEMGC", "Collection started. HeapSize: {0}. Free: {1}. Allocated: {2}.", SizeInWords, FreeSizeInWords, AllocatedSizeInWords );
 			var interps = VirtualMachine.GetInterpreters();
 			interps.ForEach( i => i.BeginPause() );
 			interps.ForEach( i => i.EndPause() );
@@ -141,6 +143,7 @@ namespace VM {
 
 			MemoryManagerBase.MakeWeakHandles = false;
 			interps.ForEach( i => i.Resume() );
+			VirtualMachine.Logger.PostLine( "MEMGC", "Collection done. HeapSize: {0}. Free: {1}. Allocated: {2}.", SizeInWords, FreeSizeInWords, AllocatedSizeInWords );
 		}
 
 		void Mark( IEnumerable<int> roots ) {

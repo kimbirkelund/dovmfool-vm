@@ -69,12 +69,14 @@ namespace VM {
 		}
 
 		internal void Expand() {
+			VirtualMachine.Logger.PostLine( "MEMGC", "Expanding memory. HeapSize: {0}. Free: {1}. Allocated: {2}.", SizeInWords, FreeSizeInWords, AllocatedSizeInWords );
 			lock (this) {
 				var temp = memory;
 				memory = new Word[Math.Min( temp.Length * heapGrowFactor, maxHeapSize )];
 				System.Array.Copy( temp, memory, temp.Length );
 				gens.ForEach( m => m.NewMemory( memory, 1, memory.Length - 1 ) );
 			}
+			VirtualMachine.Logger.PostLine( "MEMGC", "Expanded memory. HeapSize: {0}. Free: {1}. Allocated: {2}.", SizeInWords, FreeSizeInWords, AllocatedSizeInWords );
 		}
 
 		internal override void NewMemory( Word[] memory, int start, int size ) {
