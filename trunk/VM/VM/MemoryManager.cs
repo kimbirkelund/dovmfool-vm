@@ -15,11 +15,17 @@ namespace VM {
 
 		internal Word this[int index] {
 			get {
-				((MarkSweepCompactMemoryManager) gens[0]).AssertValidAddress( true, index );
+#if DEBUG
+				if (gens[0] is MarkSweepCompactMemoryManager)
+					((MarkSweepCompactMemoryManager) gens[0]).AssertValidAddress( true, index );
+#endif
 				return memory[index];
 			}
 			set {
-				((MarkSweepCompactMemoryManager) gens[0]).AssertValidAddress( false, index );
+#if DEBUG
+				if (gens[0] is MarkSweepCompactMemoryManager)
+					((MarkSweepCompactMemoryManager) gens[0]).AssertValidAddress( false, index );
+#endif
 				memory[index] = value;
 			}
 		}
@@ -45,8 +51,11 @@ namespace VM {
 				if (memory.Length < maxHeapSize) {
 					Expand();
 					goto retry;
-				} else
+				} else {
+					if (VirtualMachine.OutOfMemoryException == null)
+						throw new OutOfMemoryException( false );
 					throw VirtualMachine.OutOfMemoryException;
+				}
 			}
 			return res;
 		}

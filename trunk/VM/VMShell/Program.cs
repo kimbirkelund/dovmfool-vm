@@ -39,7 +39,9 @@ namespace VMShell {
 				heapGrowFactor = heapGrowFactorArg.Value;
 			var useGC = !disableGCArg;
 
+#if RELEASE
 			try {
+#endif
 				Thread thread = null;
 				if (swapperArg.Value)
 					thread = new Thread( Swapper );
@@ -54,13 +56,12 @@ namespace VMShell {
 				var ret = VM.VirtualMachine.EndExecuting();
 				if (ret != null)
 					Console.WriteLine( ret );
+#if RELEASE
 			} catch (Exception e) {
-				if (e.InnerException != null)
-					Console.WriteLine( e.InnerException );
-				else
 					Console.WriteLine( e );
 				return -2;
 			}
+#endif
 			return 1;
 		}
 
