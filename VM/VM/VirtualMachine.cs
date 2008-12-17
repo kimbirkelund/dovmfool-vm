@@ -19,7 +19,9 @@ namespace VM {
 		internal static Handle<AppObject> SystemInstance { get; private set; }
 		static Dictionary<Handle<VMObjects.String>, Handle<VMObjects.Class>> classes = new Dictionary<Handle<VM.VMObjects.String>, Handle<Class>>();
 		internal static IEnumerable<Handle<Class>> Classes { get { return classes.Values; } }
-		internal static Logger Logger { get; private set; }
+
+		static Logger logger=new Logger();
+		public static Logger Logger { get { return logger; } }
 
 		internal static event EventHandler<NewThreadEventArgs> NewThread;
 		static void OnNewInterpreter( InterpreterThread thread ) {
@@ -31,8 +33,7 @@ namespace VM {
 			if (initialized)
 				return;
 			initialized = true;
-			Logger = new Logger();
-			Logger.Handlers.Add( new ConsoleLogHandler() );
+			logger.RunInSeperateThread = true;
 
 			MemoryManager = new MemoryManager( useGC, initialHeapSize, maxHeapSize, heapGrowFactor );
 			InterpreterThread.InterpreterFactory = new Interpreter.Factory();
@@ -138,6 +139,7 @@ namespace VM {
 				c.Value.Dispose();
 			} );
 			VMObjects.String.Strings().ForEach( s => s.Dispose() );
+			Logger.Dispose();
 			SystemInstance.Dispose();
 			OutOfMemoryException.Dispose();
 			KnownClasses.Dispose();

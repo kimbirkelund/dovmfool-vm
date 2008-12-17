@@ -36,6 +36,7 @@ namespace VM {
 			var obj = new T().New( pos + start );
 			this[pos + VMObjects.ObjectBase.CLASS_POINTER_OFFSET] = obj.VMClass.Start;
 			this[pos + VMObjects.ObjectBase.SIZE_OFFSET] = size << ObjectBase.SIZE_RSHIFT;
+			VirtualMachine.Logger.PostLine( "MEMAlloc", "Object allocated at {0}.ObjSize: {0}. HeapSize: {0}. Free: {1}. Allocated: {2}.", pos, size, SizeInWords, FreeSizeInWords, AllocatedSizeInWords );
 			return obj;
 		}
 
