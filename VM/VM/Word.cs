@@ -63,7 +63,6 @@ namespace VM {
 
 		public static explicit operator ObjectBase( Word w ) { return new ObjectBase( (int) w.v ); }
 		public static explicit operator AppObject( Word w ) { return new AppObject( (int) w.v ); }
-		public static explicit operator AppObjectSet( Word w ) { return new AppObjectSet( (int) w.v ); }
 		public static explicit operator Class( Word w ) { return new Class( (int) w.v ); }
 		public static explicit operator MessageHandlerBase( Word w ) { return new MessageHandlerBase( (int) w.v ); }
 		public static explicit operator VMILMessageHandler( Word w ) { return new VMILMessageHandler( (int) w.v ); }
@@ -74,7 +73,6 @@ namespace VM {
 
 		public static implicit operator Word( ObjectBase w ) { return new Word( w.Start ); }
 		public static implicit operator Word( AppObject w ) { return new Word( w.Start ); }
-		public static implicit operator Word( AppObjectSet w ) { return new Word( w.Start ); }
 		public static implicit operator Word( Class w ) { return new Word( w.Start ); }
 		public static implicit operator Word( MessageHandlerBase w ) { return new Word( w.Start ); }
 		public static implicit operator Word( VMILMessageHandler w ) { return new Word( w.Start ); }
