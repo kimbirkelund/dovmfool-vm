@@ -60,8 +60,10 @@ namespace VMShell {
 				thread.Start();
 			}
 			var ret = VM.VirtualMachine.EndExecuting();
-			if (ret != null)
+			if (ret != null) {
 				Console.WriteLine( ret );
+				ret.Dispose();
+			}
 #if RELEASE
 			} catch (Exception e) {
 					Console.WriteLine( e );

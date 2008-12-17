@@ -260,9 +260,11 @@
 		.fields { className }
 		.handler public initialize(message, className) {
 			load-this
-			push-literal "Object can not be cast to specified type."
+			load-argument message
 			push-literal "initialize:1"
 			send-message
+			load-argument className
+			store-field className
 		}
 	}
 

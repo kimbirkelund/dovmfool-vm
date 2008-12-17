@@ -358,6 +358,11 @@ namespace VM {
 				return e;
 			}
 		}
+
+		protected override void InitializeFromVMException( Handle<AppObject> ex ) {
+			base.InitializeFromVMException( ex );
+			ClassName = ex.GetField( 1 ).ToHandle<VMObjects.String>();
+		}
 	}
 
 	[global::System.Serializable]

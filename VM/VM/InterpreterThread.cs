@@ -178,10 +178,6 @@ namespace VM {
 					Interpreter.Dispose();
 					Interpreter = null;
 				}
-				if (finalResult != null) {
-					finalResult.Dispose();
-					finalResult = null;
-				}
 			}
 		}
 
