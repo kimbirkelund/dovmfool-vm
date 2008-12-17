@@ -81,7 +81,6 @@
     <Compile Include="UValue.cs" />
     <Compile Include="VMException.cs" />
     <Compile Include="VMObjects\AppObject.cs" />
-    <Compile Include="VMObjects\AppObjectSet.cs" />
     <Compile Include="VMObjects\Array.cs" />
     <Compile Include="VMObjects\Character.cs" />
     <Compile Include="VMObjects\Characters.cs" />

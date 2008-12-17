@@ -56,10 +56,6 @@ namespace VM.VMObjects {
 			return new AppObject( obj.start );
 		}
 
-		public static explicit operator AppObjectSet( ObjectBase obj ) {
-			return new AppObjectSet( obj.start );
-		}
-
 		public static explicit operator Class( ObjectBase obj ) {
 			return new Class( obj.start );
 		}
@@ -85,10 +81,6 @@ namespace VM.VMObjects {
 		}
 
 		public static implicit operator ObjectBase( AppObject obj ) {
-			return new ObjectBase( obj.Start );
-		}
-
-		public static implicit operator ObjectBase( AppObjectSet obj ) {
 			return new ObjectBase( obj.Start );
 		}
 
