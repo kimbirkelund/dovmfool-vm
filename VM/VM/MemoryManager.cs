@@ -7,8 +7,8 @@ using VM.VMObjects;
 
 namespace VM {
 	class MemoryManager : MemoryManagerBase {
-		int initialSize, maxSize;
-		public override int SizeInWords { get { return initialSize; } }
+		int initialHeapSize, maxHeapSize, heapGrowFactor;
+		public override int SizeInWords { get { return memory.Length; } }
 		public override int FreeSizeInWords { get { return gens.Sum( m => m.FreeSizeInWords ); } }
 		public override int AllocatedSizeInWords { get { return NurserySize + gens.Sum( m => m.AllocatedSizeInWords ); } }
 		public readonly int NurserySize;
@@ -27,19 +27,22 @@ namespace VM {
 		Word[] memory;
 		MemoryManagerBase[] gens;
 
-		public MemoryManager( int initialHeapSize, int maxHeapSize ) {
-			this.initialSize = initialHeapSize;
-			this.maxSize = maxHeapSize;
-			memory = new Word[initialSize];
-			gens = new[] { new MarkSweepCompactMemoryManager( memory, 1, initialSize - 1 ) };
-			//gens = new[] { new NoncollectingMemoryManager( memory, 1, initialSize - 1 ) };
+		public MemoryManager( bool useGC, int initialHeapSize, int maxHeapSize, int heapGrowFactor ) {
+			this.initialHeapSize = initialHeapSize;
+			this.maxHeapSize = maxHeapSize;
+			this.heapGrowFactor = heapGrowFactor;
+			memory = new Word[initialHeapSize];
+			if (useGC)
+				gens = new[] { new MarkSweepCompactMemoryManager( memory, 1, this.initialHeapSize - 1 ) };
+			else
+				gens = new[] { new NoncollectingMemoryManager( memory, 1, this.initialHeapSize - 1 ) };
 		}
 
 		internal override T Allocate<T>( int size ) {
 		retry:
 			var res = gens[0].Allocate<T>( size );
 			if (res.IsNull()) {
-				if (memory.Length < maxSize) {
+				if (memory.Length < maxHeapSize) {
 					Expand();
 					goto retry;
 				} else
@@ -59,7 +62,7 @@ namespace VM {
 		internal void Expand() {
 			lock (this) {
 				var temp = memory;
-				memory = new Word[Math.Min( temp.Length * 2, maxSize )];
+				memory = new Word[Math.Min( temp.Length * heapGrowFactor, maxHeapSize )];
 				System.Array.Copy( temp, memory, temp.Length );
 				gens.ForEach( m => m.NewMemory( memory, 1, memory.Length - 1 ) );
 			}
